@@ -13,3 +13,8 @@ plugins:
 # Paths
 source: .
 destination: ./_site
+
+#sass
+sass:
+  sass_dir: _sass
+  style: compressed
