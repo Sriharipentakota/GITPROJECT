@@ -1,0 +1,34 @@
+.navbar {
+    width: 100%;
+    height: 80px;
+    background-color: rgb(19, 19, 19);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  
+  .links {
+    margin-right: 50px;
+    display: flex;
+    align-items: center;
+  }
+  
+  .links a {
+    text-decoration: none;
+    color: white;
+    margin-left: 20px;
+    font-size: 25px;
+  }
+  .cartImage{
+    font-size: 16px;
+    font-weight: 400;
+    display: flex;
+    align-items: flex-start;
+    margin-bottom: 10px;
+  }
+  .cartDiv{
+    display: flex;
+  }
+  .log-out{
+    padding-right: 20px;
+  }

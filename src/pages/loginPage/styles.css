@@ -1,0 +1,85 @@
+/* @import "~bootstrap/scss/bootstrap"; */
+/* @import '/node_modules/bootstrap/scss/bootstrap.scss'; */
+
+body {
+    background-color: #f8f9fa;
+  }
+  
+  .login-container {
+    max-width: 500px;
+    margin: 50px auto;
+    padding: 30px;
+    border-radius: 20px;
+    box-shadow: 0 0 40px rgba(0,0,0,0.1);
+    overflow: hidden;
+  }
+  
+  .login-form, .signup-form {
+    margin-bottom: 25px;
+  }
+  
+  .btn-facebook, .btn-google {
+    padding: 12px 20px;
+    font-size: 14px;
+    border-radius: 30px;
+    transition: all 0.3s ease;
+  }
+  
+  .btn-facebook:hover, .btn-google:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  }
+  
+  .social-login {
+    text-align: center;
+  }
+  
+  .social-login button {
+    margin: 15px 5px;
+  }
+  
+  @media (max-width: 768px) {
+    .login-container {
+      max-width: 100%;
+    }
+  }
+
+  .is-invalid {
+    border-color: #dc3545;
+  }
+  
+  .text-danger {
+    color: #dc3545;
+  }
+
+
+  .login-signup-form {
+    position: relative;
+  }
+  
+  .login-signup-form form {
+    display: none;
+    animation: flip 0.5s ease-in-out;
+  }
+  
+  @keyframes flip {
+    from { transform: rotateY(0deg); }
+    to { transform: rotateY(180deg); }
+  }
+  
+  .login-signup-form.show form:first-child {
+    display: block;
+  }
+  
+  .login-signup-form.show form:nth-child(2) {
+    display: block;
+    transform: rotateY(180deg);
+  }
+
+  .email-field,.password-field{
+display: flex;
+justify-content: center;
+  }
+  
+  
+  
