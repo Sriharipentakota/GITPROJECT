@@ -1,5 +1,7 @@
 import { createContext, useEffect, useState } from "react";
 import { PRODUCTS } from "../product";
+import { toast } from 'react-toastify';
+
 
 export  const ShopContext = createContext(null);
 
@@ -13,6 +15,8 @@ const getDefaultCart = () => {
 
 export const ShopContextProvider = (props) => {
   const [cartItems, setCartItems] = useState(getDefaultCart());
+  const [cartObj,setCartObj]=useState({})
+  console.log("123",cartItems,cartObj,Object.values(cartItems).some(value => value))
 
   const getTotalCartAmount = () => {
     let totalAmount = 0;
@@ -27,10 +31,12 @@ export const ShopContextProvider = (props) => {
 
   const addToCart = (itemId) => {
     setCartItems((prev) => ({ ...prev, [itemId]: prev[itemId] + 1 }));
+    alert(`Added ${PRODUCTS.find(p => p.id === itemId).productName} to cart!`) 
   };
 
   const removeFromCart = (itemId) => {
     setCartItems((prev) => ({ ...prev, [itemId]: prev[itemId] - 1 }));
+    console.log("itemID",itemId)
   };
 
   const updateCartItemCount = (newAmount, itemId) => {
@@ -41,6 +47,17 @@ export const ShopContextProvider = (props) => {
     setCartItems(getDefaultCart());
   };
 
+const sumNonZeroValues = (obj) => {
+  console.log("obj1234",(Object.values(obj)
+  .map(value => value > 0 ? 1 : 0) 
+ 
+  ),obj)
+  setCartObj(Object.values(obj)
+          .map(value => value > 0 ? 1 : 0) 
+          .reduce((acc, value) => acc + value, 0));
+};
+
+
   const contextValue = {
     cartItems,
     addToCart,
@@ -48,6 +65,8 @@ export const ShopContextProvider = (props) => {
     removeFromCart,
     getTotalCartAmount,
     checkout,
+    sumNonZeroValues,
+    cartObj
   };
 
   return (

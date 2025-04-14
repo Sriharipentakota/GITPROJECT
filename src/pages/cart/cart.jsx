@@ -6,9 +6,9 @@ import { useNavigate } from "react-router-dom";
 import "./cart.css";
 
 export const Cart = () => {
-  const { cartItems, getTotalCartAmount, checkout } = useContext(ShopContext);
+  const { cartItems, getTotalCartAmount, checkout ,cartObj} = useContext(ShopContext);
   const totalAmount = getTotalCartAmount();
-
+console.log("cartObj",cartObj)
   const navigate = useNavigate();
 
   return (
@@ -27,7 +27,7 @@ export const Cart = () => {
       {totalAmount > 0 ? (
         <div className="checkout">
           <p> Subtotal: ${totalAmount} </p>
-          <button onClick={() => navigate("/")}> Continue Shopping </button>
+          <button onClick={() => navigate("/shop")}> Continue Shopping </button>
           <button
             onClick={() => {
               checkout();
@@ -37,9 +37,13 @@ export const Cart = () => {
             {" "}
             Checkout{" "}
           </button>
+          <button onClick={() => navigate("/payment")}> Confirm Your Order</button>
         </div>
       ) : (
+        <>
         <h1> Your Shopping Cart is Empty</h1>
+        <button className="back-btn" onClick={() => navigate("/shop")}>Back to shopping</button>
+        </>
       )}
     </div>
   );
