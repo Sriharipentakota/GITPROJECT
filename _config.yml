@@ -1,0 +1,20 @@
+# _config.yml
+title: My Jekyll Site
+description: A simple description of your site
+baseurl: "" # the subpath of your site, e.g. /blog
+url: "https://yourdomain.com" # the base hostname & protocol for your site
+
+# Build settings
+markdown: kramdown
+theme: minima
+plugins:
+  - jekyll-feed
+
+# Paths
+source: .
+destination: ./_site
+
+#sass
+sass:
+  sass_dir: _sass
+  style: compressed
