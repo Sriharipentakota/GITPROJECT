@@ -6,9 +6,9 @@ import { useNavigate } from "react-router-dom";
 import "./cart.css";
 
 export const Cart = () => {
-  const { cartItems, getTotalCartAmount, checkout ,cartObj} = useContext(ShopContext);
+  const { cartItems, getTotalCartAmount, checkout, cartObj } = useContext(ShopContext);
   const totalAmount = getTotalCartAmount();
-console.log("cartObj",cartObj)
+  console.log("cartObj", cartObj)
   const navigate = useNavigate();
 
   return (
@@ -20,10 +20,11 @@ console.log("cartObj",cartObj)
         {PRODUCTS.map((product) => {
           if (cartItems[product.id] !== 0) {
             return <CartItem data={product} />;
+          } else {
+            return null;
           }
         })}
       </div>
-
       {totalAmount > 0 ? (
         <div className="checkout">
           <p> Subtotal: ${totalAmount} </p>
@@ -41,8 +42,8 @@ console.log("cartObj",cartObj)
         </div>
       ) : (
         <>
-        <h1> Your Shopping Cart is Empty</h1>
-        <button className="back-btn" onClick={() => navigate("/shop")}>Back to shopping</button>
+          <h1> Your Shopping Cart is Empty</h1>
+          <button className="back-btn" onClick={() => navigate("/shop")}>Back to shopping</button>
         </>
       )}
     </div>
