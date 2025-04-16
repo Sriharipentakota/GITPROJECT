@@ -18,7 +18,7 @@ const Login = () => {
   const { accountCreated } = location.state || {};
 
   const storedUser = JSON.parse(localStorage.getItem('users'));
-  console.log("object2", storedUser?.find(user => user.email === email && user.password === password))
+  console.log("object2", storedUser?.find(user => user?.email === email && user?.password === password))
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -34,22 +34,26 @@ const Login = () => {
     }
 
     const storedUser = JSON.parse(localStorage.getItem('users'));
-    let matchedUser = storedUser?.find(user => user.email === email && user.password === password)
-    console.log("object", storedUser)
+    let matchedUser = storedUser?.find(user => user?.email === email && user?.password === password)
+    let matchedUserEmail = storedUser?.find(user => user?.email === email);
+    console.log(matchedUserEmail, "matchedUserEmail")
 
-    if (!matchedUser) {
-      alert("No user found in localStorage");
+    if (!matchedUserEmail) {
+      alert("There is no account created with the provided email.");
+      return;
+    } else if (!matchedUser) {
+      alert("Password is incorrect. Please try again.");
       return;
     }
 
-    if (email !== matchedUser.email) {
+    if (email !== matchedUser?.email) {
       setErrors(prevErrors => ({
         ...prevErrors,
         emailError: "Email does not match"
       }));
     }
 
-    if (password !== matchedUser.password) {
+    if (password !== matchedUser?.password) {
       setErrors(prevErrors => ({
         ...prevErrors,
         passwordError: "Password does not match"

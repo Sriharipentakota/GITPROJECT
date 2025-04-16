@@ -18,3 +18,9 @@
     list-style: none;
     font-size: 24px;
 }
+
+@media (min-width: 960px) {
+    .footer-container {
+        width: 1500px
+    }
+}

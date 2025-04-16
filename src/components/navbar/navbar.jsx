@@ -9,6 +9,7 @@ import { ShopContext } from '../../context/shop-context';
 export const Navbar = () => {
   const { cartObj, cartItems } = useContext(ShopContext);
   const entryObj = Object.values(cartItems).some(value => value)
+  console.log("object123", Object.values(cartItems).some(value => value), cartObj)
   return (
     <>
       <div className='navbar'>

@@ -3,12 +3,15 @@ import { ShopContext } from "../../context/shop-context";
 
 export const CartItem = (props) => {
   const { id, productName, price, productImage } = props.data;
-  const { cartItems, addToCart, removeFromCart, updateCartItemCount } =
+  const { cartItems, addToCart, removeFromCart, updateCartItemCount, sumNonZeroValues } =
     useContext(ShopContext);
+  setTimeout(() => {
+    sumNonZeroValues(cartItems)
+  }, 100);
 
   return (
     <div className="cartItem">
-      <img src={productImage}  alt="nothing-specified"/>
+      <img src={productImage} alt="nothing-specified" />
       <div className="description">
         <p>
           <b>{productName}</b>
