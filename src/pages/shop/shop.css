@@ -99,3 +99,15 @@
     margin: 0px;
   }
 }
+
+/* shop.css */
+.productGroup {
+  display: flex;
+  justify-content: space-around;
+}
+
+.slider-wrapper {
+  width: 100vw !important;
+}
+.carousel-status{
+display: none;}

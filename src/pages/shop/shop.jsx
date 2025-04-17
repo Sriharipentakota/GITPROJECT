@@ -13,10 +13,10 @@ export const Shop = () => {
 
       <div className="products">
         {PRODUCTS.map((product) => (
-          <Product data={product} />  
+          <Product data={product} />
         ))}
       </div>
-        <Footer />
+      <Footer />
     </div>
   );
 };
