@@ -3,7 +3,7 @@ import { useLocation } from "react-router-dom";
 
 const ProductsInfo = () => {
     const location = useLocation();
-    const { id, productName, price, productImage } = location.state || {};
+    const { productName, price, productImage } = location.state || {};
     return (
         <div >
             <div >
