@@ -12,9 +12,9 @@ const Login = () => {
   const location = useLocation();
   const { accountCreated } = location.state || {};
   const { passwordChanged } = location.state || {};
-  const isLoggedIn = sessionStorage.getItem('loggedIn');
 
   useEffect(() => {
+    const isLoggedIn = sessionStorage.getItem('loggedIn');
     if (isLoggedIn) {
       navigate('/shop');
     }
