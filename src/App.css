@@ -42,4 +42,8 @@
   .App {
     width: fit-content;
   }
+
+  .myCustomClass {
+    width: auto;
+  }
 }
