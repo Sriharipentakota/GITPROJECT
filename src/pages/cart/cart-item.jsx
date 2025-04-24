@@ -8,7 +8,7 @@ export const CartItem = (props) => {
   setTimeout(() => {
     sumNonZeroValues(cartItems)
   }, 100);
-
+  console.log(props.data, "props")
   return (
     <div className="cartItem">
       <img src={productImage} alt="nothing-specified" />

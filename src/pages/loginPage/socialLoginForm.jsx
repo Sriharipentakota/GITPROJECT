@@ -1,7 +1,11 @@
 import React from 'react';
 import "./styles.css";
+import { useLocation } from 'react-router-dom';
 
 const SocialLogin = () => {
+  const location = useLocation();
+  const { textArea, paymentDate, randomNumber } = location.state || {};
+console.log(textArea, paymentDate, randomNumber , "payment page");
   return (
     <div className="social-login">
       <h2 className="text-center mb-4">Or sign in with:</h2>

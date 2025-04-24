@@ -45,7 +45,7 @@ function App() {
             <Routes>
               <Route path='/' element={<Login />} />
               <Route path='/signup' element={<Signup />} />
-              <Route path='/googleForm' element={<SocialLogin />} />
+              <Route path='/payment-success' element={<SocialLogin />} />
               <Route path='/shop' element={<ProtectedRoute><Shop /></ProtectedRoute>} />
               <Route path="/contact" element={<Contact />} />
               <Route path='/cart' element={<Cart />} />
