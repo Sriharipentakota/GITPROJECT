@@ -8,7 +8,6 @@ import "./cart.css";
 export const Cart = () => {
   const { cartItems, getTotalCartAmount, checkout, cartObj } = useContext(ShopContext);
   const totalAmount = getTotalCartAmount();
-  console.log("cartObj", cartObj)
   const navigate = useNavigate();
 
   return (

@@ -23,7 +23,6 @@ export const Navbar = () => {
     sessionStorage.removeItem('loggedIn');
     e.preventDefault();
     setShow(true);
-    console.log(e, "show");
   }
 
   return (

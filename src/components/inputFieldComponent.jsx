@@ -5,7 +5,6 @@ const InputField = ({ type, value, onChange, placeholder, label }) => {
     const togglePasswordVisibility = () => {
         setShowPassword(!showPassword);
     };
-    console.log(value !== null, "values");
 
     return (
         <div className={`mb-3 ${type === 'password' ? 'password-field' : ''}`}>

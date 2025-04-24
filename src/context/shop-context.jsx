@@ -16,7 +16,6 @@ const getDefaultCart = () => {
 export const ShopContextProvider = (props) => {
   const [cartItems, setCartItems] = useState(getDefaultCart());
   const [cartObj, setCartObj] = useState({})
-  console.log("123", cartItems, cartObj, Object.values(cartItems).some(value => value))
 
   const getTotalCartAmount = () => {
     let totalAmount = 0;
