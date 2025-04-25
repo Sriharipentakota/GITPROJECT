@@ -60,7 +60,7 @@
   }
 
   .product {
-    margin: 0px !important;
+    margin: 10px ;
     height: auto;
   }
 }
@@ -71,7 +71,7 @@
   }
 
   .product {
-    margin: 0px !important;
+    margin: 10px ;
     height: auto;
   }
 }
@@ -84,7 +84,7 @@
 
   .product {
     height: auto;
-    margin: 0px;
+    margin: 10px;
   }
 }
 
@@ -96,7 +96,7 @@
 
   .product {
     height: auto;
-    margin: 0px;
+    margin: 10px;
   }
 }
 
