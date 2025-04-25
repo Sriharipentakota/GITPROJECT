@@ -6,7 +6,7 @@ import InputField from '../../components/inputFieldComponent';
 import { useNavigate } from 'react-router-dom';
 
 function PaymentPage() {
-  const { cartItems, getTotalCartAmount, checkout } = useContext(ShopContext);
+  const { cartItems} = useContext(ShopContext);
 
   const [textArea, setTextArea] = useState('');
   const [paymentDate, setPaymentDate] = useState('');
