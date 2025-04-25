@@ -1,5 +1,5 @@
 import './App.css';
-import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom'
+import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { Navbar } from './components/navbar/navbar';
 import { Cart } from './pages/cart/cart';
 import { Contact } from "./pages/contact";
@@ -28,35 +28,45 @@ const ConditionalWrapper = ({ children }) => {
   );
 }
 
-function App() {
+const AppContent = () => {
   const [isTargetUrl, setIsTargetUrl] = useState(false);
+  const location = useLocation();
 
   useEffect(() => {
-    const currentUrl = window.location.href;
-    if (currentUrl.includes("signup")) {
+    const currentUrl = location.pathname;
+    if (currentUrl.includes("signup") || currentUrl.includes("forgot") || location.pathname === '/') {
       setIsTargetUrl(true);
+    } else {
+      setIsTargetUrl(false);
     }
-  }, []);
+  }, [location]);
+
   return (
-    <div className={isTargetUrl ? "myCustomClass App" : " App"}>
+    <div className={isTargetUrl ? "myCustomClass App" : "App"}>
       <ShopContextProvider>
-        <Router>
-          <ConditionalWrapper>
-            <Routes>
-              <Route path='/' element={<Login />} />
-              <Route path='/signup' element={<Signup />} />
-              <Route path='/payment-success' element={<SocialLogin />} />
-              <Route path='/shop' element={<ProtectedRoute><Shop /></ProtectedRoute>} />
-              <Route path="/contact" element={<Contact />} />
-              <Route path='/cart' element={<Cart />} />
-              <Route path='/payment' element={<PaymentPage />} />
-              <Route path='/products' element={<ProductsInfo />} />
-              <Route path='/forgot' element={<ForgotPasswordForm />} />
-            </Routes>
-          </ConditionalWrapper>
-        </Router>
+        <ConditionalWrapper>
+          <Routes>
+            <Route path={"/" || "/login"} element={<Login />} />
+            <Route path='/signup' element={<Signup />} />
+            <Route path='/payment-success' element={<SocialLogin />} />
+            <Route path='/shop' element={<ProtectedRoute><Shop /></ProtectedRoute>} />
+            <Route path="/contact" element={<Contact />} />
+            <Route path='/cart' element={<Cart />} />
+            <Route path='/payment' element={<PaymentPage />} />
+            <Route path='/products' element={<ProductsInfo />} />
+            <Route path='/forgot' element={<ForgotPasswordForm />} />
+          </Routes>
+        </ConditionalWrapper>
       </ShopContextProvider>
     </div>
+  );
+}
+
+function App() {
+  return (
+    <Router>
+      <AppContent />
+    </Router>
   );
 }
 
