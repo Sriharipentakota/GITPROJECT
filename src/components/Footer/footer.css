@@ -7,20 +7,60 @@
     border-radius: 12px;
     padding: 16px;
     background-color: rgb(19, 19, 19);
-    color: white
+    color: white;
 }
 
 .icons-container {
     border-bottom: 1px solid lightgray;
+    padding-bottom: 16px;
 }
 
 .ul-container {
     list-style: none;
-    font-size: 24px;
+    padding: 0;
+    font-size: 20px;
 }
 
-/* @media (min-width: 960px) {
-    .footer-container {
-        width: 1500px
+.ul-container li {
+    margin-bottom: 8px;
+}
+
+@media (max-width: 768px) {
+    .footer-container h2 {
+        font-size: 18px;
+        text-align: center;
     }
-} */
+
+    .icons-div {
+        font-size: 20px;
+    }
+
+    .ul-container {
+        font-size: 18px;
+    }
+
+    .footer-container {
+        padding: 12px;
+    }
+}
+
+@media (max-width: 576px) {
+    .icons-container {
+        flex-direction: column;
+        text-align: center;
+        gap: 10px;
+    }
+
+    .footer-container h2 {
+        font-size: 16px;
+    }
+
+    .ul-container {
+        font-size: 16px;
+    }
+
+    .footer-container {
+        border-radius: 8px;
+        padding: 10px;
+    }
+}

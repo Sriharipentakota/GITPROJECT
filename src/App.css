@@ -40,13 +40,13 @@
 
 @media (max-width: 576px) {
   .App {
-    /* width: auto;
-    padding: 30px; */
+    box-sizing: border-box;
     width: fit-content;
   }
 
   .myCustomClass {
     width: auto;
     padding: 30px;
+    transform: none;
   }
 }
