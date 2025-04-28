@@ -2,3 +2,291 @@
     width: -webkit-fill-available;
     height: -webkit-fill-available;
 }
+
+.payment-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #f8f9fa;
+    /* Light gray background */
+    padding: 20px;
+}
+
+.payment-summary {
+    background-color: #fff;
+    /* White background for the card */
+    border: 1px solid #ddd;
+    /* Light border */
+    border-radius: 8px;
+    width: 100%;
+    max-width: 600px;
+    /* Restrict maximum width */
+    padding: 20px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    /* Subtle shadow for depth */
+    margin: 50px auto;
+}
+
+.payment-summary h2 {
+    text-align: center;
+    margin-bottom: 20px;
+    color: #343a40;
+    /* Dark gray for the heading */
+}
+
+.order-details {
+    font-size: 16px;
+    line-height: 1.6;
+    color: #495057;
+    /* Slightly lighter dark gray for the text */
+}
+
+.order-details p {
+    margin: 10px 0;
+}
+
+.confirm-button {
+    display: block;
+    margin: 20px auto 0;
+    padding: 10px 20px;
+    font-size: 16px;
+    font-weight: bold;
+    color: #fff;
+    background-color: #007bff;
+    /* Bootstrap primary blue */
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.confirm-button:hover {
+    background-color: #0056b3;
+    /* Darker blue on hover */
+}
+
+.order-summary-header {
+    display: flex;
+    justify-content: space-around;
+}
+
+.edit-icon {
+    cursor: pointer;
+    color: #007bff;
+    font-size: 20px;
+    margin-left: 10px;
+}
+
+.payment-options-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+    text-align: center;
+    background-color: #f9f9f9;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    font-family: 'Arial', sans-serif;
+}
+
+.payment-options-container h2 {
+    margin-bottom: 20px;
+    font-size: 24px;
+    color: #333;
+}
+
+.payment-methods {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-around;
+    gap: 20px;
+}
+
+.payment-method {
+    flex: 1 1 calc(50% - 20px);
+    /* Two items per row */
+    max-width: 300px;
+    padding: 20px;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.payment-method:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.payment-icon {
+    font-size: 36px;
+    color: #007bff;
+    margin-bottom: 10px;
+}
+
+.payment-method p {
+    margin: 0;
+    font-size: 16px;
+    color: #333;
+    font-weight: bold;
+}
+
+.payment-details {
+    margin: 20px 0;
+    text-align: left;
+}
+
+.payment-details h3 {
+    font-size: 20px;
+    margin-bottom: 10px;
+}
+
+.payment-details input,
+.payment-details select {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    font-size: 14px;
+}
+
+.confirm-button {
+    display: block;
+    width: 100%;
+    padding: 12px;
+    background-color: #007bff;
+    color: #fff;
+    font-size: 16px;
+    font-weight: bold;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.confirm-button:hover {
+    background-color: #0056b3;
+}
+
+/* order comfirmed page css */
+.confirmation-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+    text-align: center;
+    background-color: #f9f9f9;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    font-family: 'Arial', sans-serif;
+}
+
+.confirmation-container h2 {
+    margin-bottom: 20px;
+    font-size: 28px;
+    color: #333;
+    font-weight: bold;
+}
+
+.confirmation-container p {
+    margin: 10px 0;
+    font-size: 16px;
+    color: #555;
+    line-height: 1.6;
+}
+
+.confirmation-container p strong {
+    color: #333;
+}
+
+.confirmation-container .order-details {
+    margin: 20px 0;
+    padding: 20px;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    text-align: left;
+}
+
+.confirmation-container .order-details p {
+    font-size: 16px;
+    color: #555;
+    line-height: 1.6;
+}
+
+.confirmation-container .order-details p strong {
+    color: #333;
+}
+
+.confirmation-container .success-message {
+    margin-top: 20px;
+    font-size: 18px;
+    color: #28a745;
+    font-weight: bold;
+}
+
+.confirmation-container .button-container {
+    margin-top: 20px;
+}
+
+.confirmation-container .home-button {
+    padding: 10px 20px;
+    font-size: 16px;
+    color: #fff;
+    background-color: #007bff;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.confirmation-container .home-button:hover {
+    background-color: #0056b3;
+}
+
+.input-with-icon {
+    display: flex;
+    align-items: center;
+    position: relative;
+}
+
+.input-with-icon input {
+    flex: 1;
+    padding-right: 40px;
+    /* Add space for the icon */
+}
+
+.card-icon {
+    position: absolute;
+    right: 10px;
+    font-size: 20px;
+    color: #007bff;
+    top: 10px;
+}
+
+.error-message {
+    color: red;
+    font-size: 14px;
+    margin-top: 5px;
+}
+
+.confirm-button {
+    padding: 10px 20px;
+    font-size: 16px;
+    border: none;
+    cursor: pointer;
+}
+
+.confirm-button.enabled {
+    background-color: #4CAF50;
+    /* Green */
+    color: white;
+}
+
+.confirm-button.disabled {
+    background-color: #ccc;
+    /* Gray */
+    color: #666;
+    cursor: not-allowed;
+}

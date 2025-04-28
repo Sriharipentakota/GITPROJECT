@@ -7,12 +7,14 @@ import { Shop } from './pages/shop/shop';
 import { ShopContextProvider } from "./context/shop-context";
 import Login from './pages/loginPage/loginForm';
 import Signup from './pages/loginPage/signUpForm';
-import SocialLogin from './pages/loginPage/socialLoginForm';
 import PaymentPage from './pages/paymentPage/paymentPage';
 import { useEffect, useState } from 'react';
 import ProductsInfo from './components/navbar/productsInfo';
 import ProtectedRoute from './components/protectedRoute';
 import ForgotPasswordForm from './pages/loginPage/forgotPasswordForm';
+import ProductPayment from './components/productPayment';
+import PaymentOptions from './components/productPaymentOptions';
+import OrderConfirmed from './components/orderConfirmed';
 
 const ConditionalWrapper = ({ children }) => {
   const location = useLocation();
@@ -48,13 +50,15 @@ const AppContent = () => {
           <Routes>
             <Route path={"/" || "/login"} element={<Login />} />
             <Route path='/signup' element={<Signup />} />
-            <Route path='/payment-success' element={<SocialLogin />} />
+            <Route path='/payment-success' element={<ProductPayment />} />
             <Route path='/shop' element={<ProtectedRoute><Shop /></ProtectedRoute>} />
             <Route path="/contact" element={<Contact />} />
             <Route path='/cart' element={<Cart />} />
             <Route path='/payment' element={<PaymentPage />} />
             <Route path='/products' element={<ProductsInfo />} />
             <Route path='/forgot' element={<ForgotPasswordForm />} />
+            <Route path='/payment-options' element={<PaymentOptions />} />
+            <Route  path="/order-confirmed" element={<OrderConfirmed />} />
           </Routes>
         </ConditionalWrapper>
       </ShopContextProvider>

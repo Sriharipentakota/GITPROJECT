@@ -39,10 +39,10 @@
 }
 
 @media (max-width: 576px) {
-  .App {
+  /* .App {
     box-sizing: border-box;
     width: fit-content;
-  }
+  } */
 
   .myCustomClass {
     width: auto;

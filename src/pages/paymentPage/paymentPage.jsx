@@ -1,47 +1,81 @@
-import React, { useContext, useState } from 'react'
-import "./paymentPage.css"
+import React, { useContext, useState } from 'react';
+import "./paymentPage.css";
 import { ShopContext } from '../../context/shop-context';
 import { PRODUCTS } from '../../product';
 import InputField from '../../components/inputFieldComponent';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 function PaymentPage() {
-  const { cartItems} = useContext(ShopContext);
-
-  const [textArea, setTextArea] = useState('');
-  const [paymentDate, setPaymentDate] = useState('');
+  const { cartItems } = useContext(ShopContext);
+  const location = useLocation();
   const navigate = useNavigate();
 
+  const { textArea: initialTextArea, paymentDate: initialPaymentDate, randomNumber: initialRandomNumber, filteredProductsLength: initialFilteredProductsLength, filteredProducts: initialFilteredProducts } = location.state || {};
 
-  const filteredProducts = PRODUCTS.filter(product => cartItems[product.id] !== 0);
-  const filteredProductsLength = filteredProducts?.length;
-  console.log(filteredProductsLength, "length");
-  const randomNumber = (Math.floor(Math.random() * 1000000) + 1)
-  console.log(textArea, paymentDate, randomNumber, "textArea")
+  // States for form fields
+  const [textArea, setTextArea] = useState(initialTextArea || ''); // Pre-fill from state if available
+  const [paymentDate, setPaymentDate] = useState(initialPaymentDate || ''); // Pre-fill from state if available
+  const [randomNumber] = useState(initialRandomNumber || Math.floor(Math.random() * 1000000) + 1);
+
+  // Filter products based on cart items
+  const filteredProducts = initialFilteredProducts || PRODUCTS.filter(product => cartItems[product.id] !== 0);
+  const filteredProductsLength = initialFilteredProductsLength || filteredProducts?.length;
+
+  console.log(textArea, paymentDate, randomNumber, "textArea");
+
   function handleSubmit(e) {
-
     e.preventDefault();
-    navigate("/payment-success", { state: { textArea, paymentDate, randomNumber } });
+    // Navigate to ProductPayment with the form data
+    navigate("/payment-success", { state: { textArea, paymentDate, randomNumber, filteredProductsLength, filteredProducts } });
   }
+
   return (
     <>
-      <div className="payment-div">
-        <h1>Place your order</h1>
+      <div className="payment-header mt-5">
+        <h1>Place Your Order</h1>
       </div>
-      <form onSubmit={handleSubmit}>
-        <div className='order-main-div'>
-          <div className='order-div'>
-            <div>Order ID :- <b>{randomNumber}</b> </div>
-            <div>selected Products :-{filteredProducts.map(e => e.name).join(', ')}</div>
-            <div>Quantity :-  {filteredProductsLength}</div>
-            <div style={{ display: "flex", justifyContent: "space-between" }}>Delivery Date :- <InputField type="date" onChange={(e) => setPaymentDate(e.target.value)} /> </div>
-            <div style={{ display: "flex" }}>Shipping Address :- <textarea className="form-control" id="exampleFormControlTextarea1" rows="3" onChange={(e) => setTextArea(e.target.value)}></textarea> </div>
+      <div className="payment-container">
+        <form onSubmit={handleSubmit} className="payment-form">
+          <div className="order-summary">
+            <div className="order-id">
+              <p><strong>Order ID:</strong> <b>{randomNumber}</b></p>
+            </div>
+            <div className="order-products">
+              <p><strong>Selected Products:</strong> {filteredProducts.map(e => e.name).join(', ')}</p>
+            </div>
+            <div className="order-quantity">
+              <p><strong>Quantity:</strong> {filteredProductsLength}</p>
+            </div>
           </div>
-          <button type="submit" className="btn btn-primary w-100">Submit Order</button>
-        </div >
-      </form>
+
+          <div className="form-group">
+            <label htmlFor="delivery-date"><strong>Delivery Date:</strong></label>
+            <InputField
+              id="delivery-date"
+              type="date"
+              value={paymentDate}
+              onChange={(e) => setPaymentDate(e.target.value)}
+              className="date-picker"
+            />
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="shipping-address"><strong>Shipping Address:</strong></label>
+            <textarea
+              className="form-control"
+              id="shipping-address"
+              rows="3"
+              value={textArea}
+              onChange={(e) => setTextArea(e.target.value)}
+              placeholder="Enter your shipping address"
+            ></textarea>
+          </div>
+
+          <button type="submit" className="btn btn-primary submit-button">Submit Order</button>
+        </form>
+      </div>
     </>
-  )
+  );
 }
 
 export default PaymentPage;

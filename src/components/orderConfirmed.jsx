@@ -1,0 +1,37 @@
+import React from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import './component.css';
+
+const OrderConfirmed = () => {
+    const location = useLocation();
+    const navigate = useNavigate();
+    const { randomNumber, filteredProducts, textArea, paymentDate, filteredProductsLength, paymentMethod, paymentDetails } = location.state || {};
+
+    return (
+        <div className="confirmation-container">
+            <h2>Order Confirmed!</h2>
+            <p><strong>Order ID:</strong> {randomNumber}</p>
+            <p><strong>Products:</strong> {filteredProducts.map(e => e.name).join(', ')}</p>
+            <p><strong>Quantity:</strong> {filteredProductsLength}</p>
+            <p><strong>Delivery Date:</strong> {paymentDate}</p>
+            <p><strong>Shipping Address:</strong> {textArea}</p>
+            <p><strong>Payment Method:</strong> {paymentMethod}</p>
+
+            {/* Additional details for COD */}
+            {paymentMethod === 'Cash on Delivery' && (
+                <>
+                    <p><strong>Person Name:</strong> {paymentDetails.personName}</p>
+                    <p><strong>Mobile Number:</strong> {paymentDetails.mobileNumber}</p>
+                </>
+            )}
+            <button
+                onClick={() => { navigate("/shop") }} // Assuming you want to navigate back to the shop page
+                className="confirm-button"
+            >
+                Continue Shopping
+            </button>
+        </div>
+    );
+};
+
+export default OrderConfirmed;

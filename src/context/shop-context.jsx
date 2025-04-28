@@ -1,7 +1,5 @@
-import { createContext, useState } from "react";
+import { createContext, useState, useEffect } from "react";
 import { PRODUCTS } from "../product";
-
-
 
 export const ShopContext = createContext(null);
 
@@ -15,7 +13,7 @@ const getDefaultCart = () => {
 
 export const ShopContextProvider = (props) => {
   const [cartItems, setCartItems] = useState(getDefaultCart());
-  const [cartObj, setCartObj] = useState({})
+  const [cartObj, setCartObj] = useState({});
 
   const getTotalCartAmount = () => {
     let totalAmount = 0;
@@ -30,7 +28,7 @@ export const ShopContextProvider = (props) => {
 
   const addToCart = (itemId) => {
     setCartItems((prev) => ({ ...prev, [itemId]: prev[itemId] + 1 }));
-    alert(`Added ${PRODUCTS.find(p => p.id === itemId).productName} to cart!`)
+    alert(`Added ${PRODUCTS.find((p) => p.id === itemId).productName} to cart!`);
   };
 
   const removeFromCart = (itemId) => {
@@ -45,13 +43,13 @@ export const ShopContextProvider = (props) => {
     setCartItems(getDefaultCart());
   };
 
-  const sumNonZeroValues = (obj) => {
-    setCartObj(Object.values(obj)
-      .map(value => value > 0 ? 1 : 0)
-      .reduce((acc, value) => acc + value, 0));
-  };
-
-
+  // Use useEffect to update cartObj whenever cartItems change
+  useEffect(() => {
+    const nonZeroValues = Object.values(cartItems)
+      .map((value) => (value > 0 ? 1 : 0))
+      .reduce((acc, value) => acc + value, 0);
+    setCartObj(nonZeroValues);
+  }, [cartItems]); // Dependency on cartItems
 
   const contextValue = {
     cartItems,
@@ -60,8 +58,7 @@ export const ShopContextProvider = (props) => {
     removeFromCart,
     getTotalCartAmount,
     checkout,
-    sumNonZeroValues,
-    cartObj
+    cartObj, 
   };
 
   return (

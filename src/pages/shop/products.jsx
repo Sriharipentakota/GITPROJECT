@@ -4,9 +4,8 @@ import { useNavigate } from "react-router-dom";
 
 export const Product = (props) => {
   const { id, productName, price, productImage } = props.data;
-  const { addToCart, cartItems, sumNonZeroValues } = useContext(ShopContext);
+  const { addToCart, cartItems } = useContext(ShopContext);
   const cartItemCount = cartItems[id];
-  sumNonZeroValues(cartItems)
   const navigate = useNavigate();
   const handleProducts = () => {
     navigate("/products", {

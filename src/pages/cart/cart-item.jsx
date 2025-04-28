@@ -3,11 +3,8 @@ import { ShopContext } from "../../context/shop-context";
 
 export const CartItem = (props) => {
   const { id, productName, price, productImage } = props.data;
-  const { cartItems, addToCart, removeFromCart, updateCartItemCount, sumNonZeroValues } =
+  const { cartItems, addToCart, removeFromCart, updateCartItemCount } =
     useContext(ShopContext);
-  setTimeout(() => {
-    sumNonZeroValues(cartItems)
-  }, 100);
   console.log(props.data, "props")
   return (
     <div className="cartItem">
