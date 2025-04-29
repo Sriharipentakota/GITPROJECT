@@ -2,7 +2,7 @@ import './App.css';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { Navbar } from './components/navbar/navbar';
 import { Cart } from './pages/cart/cart';
-import { Contact } from "./pages/contact";
+import { Contact } from "./pages/contact/contact";
 import { Shop } from './pages/shop/shop';
 import { ShopContextProvider } from "./context/shop-context";
 import Login from './pages/loginPage/loginForm';
@@ -12,9 +12,9 @@ import { useEffect, useState } from 'react';
 import ProductsInfo from './components/navbar/productsInfo';
 import ProtectedRoute from './components/protectedRoute';
 import ForgotPasswordForm from './pages/loginPage/forgotPasswordForm';
-import ProductPayment from './components/productPayment';
-import PaymentOptions from './components/productPaymentOptions';
-import OrderConfirmed from './components/orderConfirmed';
+import ProductPayment from './components/payment/productPayment';
+import PaymentOptions from './components/payment/productPaymentOptions';
+import OrderConfirmed from './components/payment/orderConfirmed';
 
 const ConditionalWrapper = ({ children }) => {
   const location = useLocation();

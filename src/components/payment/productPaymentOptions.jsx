@@ -1,9 +1,9 @@
 import React, { useContext, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import './component.css';
+import '../../components/component.css';
 import { FaCreditCard, FaUniversity, FaMobileAlt, FaMoneyBillWave, FaCcVisa, FaCcMastercard, FaCcAmex } from 'react-icons/fa'; // Import alternative icons
 import { Tooltip } from 'react-tooltip';
-import { ShopContext } from '../context/shop-context';
+import { ShopContext } from '../../context/shop-context';
 import { ThreeDots } from 'react-loader-spinner';
 
 const PaymentOptions = () => {

@@ -1,6 +1,6 @@
 import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import './component.css';
+import '../../components/component.css';
 import { MdEdit } from "react-icons/md";
 import { Tooltip } from 'react-tooltip';
 
