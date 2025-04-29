@@ -1,13 +1,10 @@
-.icons-div {
-    font-size: 24px;
-}
-
+/* Footer Container */
 .footer-container {
-    border: 0.5px solid grey;
-    border-radius: 12px;
-    padding: 16px;
-    background-color: rgb(19, 19, 19);
+    border-top: 2px solid grey;
+    padding: 20px;
+    background-color: #222;
     color: white;
+    font-family: Arial, sans-serif;
 }
 
 .icons-container {
@@ -15,16 +12,86 @@
     padding-bottom: 16px;
 }
 
+.icons-div {
+    font-size: 24px;
+}
+
+.icons-div i:hover {
+    color: #007bff;
+    cursor: pointer;
+}
+
+/* Footer Content Sections */
 .ul-container {
     list-style: none;
     padding: 0;
-    font-size: 20px;
+    font-size: 18px;
 }
 
 .ul-container li {
     margin-bottom: 8px;
 }
 
+.ul-container li a {
+    text-decoration: none;
+    color: white;
+}
+
+.ul-container li a:hover {
+    text-decoration: underline;
+    color: #007bff;
+}
+
+.newsletter-form {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.newsletter-input {
+    flex: 1;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 16px;
+}
+
+.newsletter-btn {
+    padding: 10px 20px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+.newsletter-btn:hover {
+    background-color: #0056b3;
+}
+
+.payment-methods i {
+    font-size: 30px;
+    color: white;
+}
+
+.payment-methods i:hover {
+    color: #007bff;
+    cursor: pointer;
+}
+
+.footer-bottom {
+    margin-top: 20px;
+    font-size: 14px;
+    color: #aaa;
+}
+
+.footer-bottom p {
+    margin: 0;
+}
+
+/* Responsive Design */
 @media (max-width: 768px) {
     .footer-container h2 {
         font-size: 18px;
@@ -36,11 +103,11 @@
     }
 
     .ul-container {
-        font-size: 18px;
+        font-size: 16px;
     }
 
     .footer-container {
-        padding: 12px;
+        padding: 16px;
     }
 }
 
@@ -56,11 +123,19 @@
     }
 
     .ul-container {
-        font-size: 16px;
+        font-size: 14px;
     }
 
     .footer-container {
-        border-radius: 8px;
-        padding: 10px;
+        padding: 12px;
+    }
+
+    .newsletter-form {
+        flex-direction: column;
+        gap: 5px;
+    }
+
+    .newsletter-btn {
+        width: 100%;
     }
 }
