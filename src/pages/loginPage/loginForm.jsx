@@ -43,6 +43,7 @@ const Login = () => {
     if (email && password) {
       setLoading(true); // Show loading animation
       sessionStorage.setItem('loggedIn', true);
+      sessionStorage.setItem('loggedInUser', JSON.stringify({ name: matchedUser.name, email }));
       alert("Login successful!");
       setTimeout(() => {
         navigate("/shop");
