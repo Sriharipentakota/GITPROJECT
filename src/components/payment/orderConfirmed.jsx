@@ -6,9 +6,27 @@ const OrderConfirmed = () => {
     const location = useLocation();
     const navigate = useNavigate();
     const { randomNumber, filteredProducts, textArea, paymentDate, filteredProductsLength, paymentMethod, paymentDetails } = location.state || {};
+    const loggedInUser = JSON.parse(sessionStorage.getItem('loggedInUser')); // Get logged-in user's details
+
     const handleOrderConfirmation = () => {
-        navigate("/shop")
-    }
+        // Save order details in session storage
+        const newOrder = {
+            orderId: randomNumber,
+            products: filteredProducts,
+            quantity: filteredProductsLength,
+            deliveryDate: paymentDate,
+            shippingAddress: textArea,
+            paymentMethod,
+            paymentDetails
+        };
+
+        const userOrders = JSON.parse(sessionStorage.getItem(`${loggedInUser.email}`)) || [];
+        userOrders.push(newOrder);
+        sessionStorage.setItem(`${loggedInUser.email}`, JSON.stringify(userOrders));
+
+        // Navigate to shop
+        navigate("/shop");
+    };
 
     return (
         <div className="confirmation-container">
@@ -20,7 +38,6 @@ const OrderConfirmed = () => {
             <p><strong>Shipping Address:</strong> {textArea}</p>
             <p><strong>Payment Method:</strong> {paymentMethod}</p>
 
-           
             {paymentMethod === 'Cash on Delivery' && (
                 <>
                     <p><strong>Person Name:</strong> {paymentDetails.personName}</p>

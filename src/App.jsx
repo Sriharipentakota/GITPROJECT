@@ -15,6 +15,7 @@ import ForgotPasswordForm from './pages/loginPage/forgotPasswordForm';
 import ProductPayment from './components/payment/productPayment';
 import PaymentOptions from './components/payment/productPaymentOptions';
 import OrderConfirmed from './components/payment/orderConfirmed';
+import OrderHistory from './components/payment/orderHistory';
 
 const ConditionalWrapper = ({ children }) => {
   const location = useLocation();
@@ -59,6 +60,7 @@ const AppContent = () => {
             <Route path='/forgot' element={<ForgotPasswordForm />} />
             <Route path='/payment-options' element={<PaymentOptions />} />
             <Route  path="/order-confirmed" element={<OrderConfirmed />} />
+            <Route  path="/order-history" element={<OrderHistory />} />
           </Routes>
         </ConditionalWrapper>
       </ShopContextProvider>
