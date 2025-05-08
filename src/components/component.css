@@ -1,6 +1,8 @@
 .modal-backdrop.show {
     width: -webkit-fill-available;
     height: -webkit-fill-available;
+    opacity: 0;
+    
 }
 
 .payment-container {
