@@ -16,6 +16,10 @@ import ProductPayment from './components/payment/productPayment';
 import PaymentOptions from './components/payment/productPaymentOptions';
 import OrderConfirmed from './components/payment/orderConfirmed';
 import OrderHistory from './components/payment/orderHistory';
+import AboutUs from './components/Footer/aboutUs';
+import PrivacyPolicy from './components/Footer/privacyPolicy';
+import TermsAndConditions from './components/Footer/termsAndConditions';
+import FAQ from './components/Footer/faq';
 
 const ConditionalWrapper = ({ children }) => {
   const location = useLocation();
@@ -59,8 +63,12 @@ const AppContent = () => {
             <Route path='/products' element={<ProductsInfo />} />
             <Route path='/forgot' element={<ForgotPasswordForm />} />
             <Route path='/payment-options' element={<PaymentOptions />} />
-            <Route  path="/order-confirmed" element={<OrderConfirmed />} />
-            <Route  path="/order-history" element={<OrderHistory />} />
+            <Route path="/order-confirmed" element={<OrderConfirmed />} />
+            <Route path="/order-history" element={<OrderHistory />} />
+            <Route path="/about-us" element={<AboutUs />} />
+            <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+            <Route path="/terms-and-conditions" element={<TermsAndConditions />} />
+            <Route path="/faq" element={<FAQ />} />
           </Routes>
         </ConditionalWrapper>
       </ShopContextProvider>
