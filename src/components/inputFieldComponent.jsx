@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-const InputField = ({ type, value, onChange, placeholder, label }) => {
+const InputField = ({ type, value, onChange, placeholder, label,className }) => {
     const [showPassword, setShowPassword] = useState(false);
     const togglePasswordVisibility = () => {
         setShowPassword(!showPassword);
@@ -15,7 +15,7 @@ console.log(type,"type");
                 onChange={onChange}
                 placeholder={placeholder}
                 required
-                className={`form-control ${type === 'password' ? 'password-input-field' : ''}`}
+                className={`${className} ${type === 'password' ? 'password-input-field' : ''}`}
                 aria-label={label}
             />
             {(type === 'password' && value) && (

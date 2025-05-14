@@ -1,15 +1,21 @@
-import React, { useContext, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import '../../components/component.css';
 import { FaCreditCard, FaUniversity, FaMobileAlt, FaMoneyBillWave, FaCcVisa, FaCcMastercard, FaCcAmex } from 'react-icons/fa'; // Import alternative icons
 import { Tooltip } from 'react-tooltip';
 import { ShopContext } from '../../context/shop-context';
 import { ThreeDots } from 'react-loader-spinner';
+import InputField from '../inputFieldComponent';
 
 const PaymentOptions = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { checkout } = useContext(ShopContext);
+  const { checkout, getTotalCartAmount } = useContext(ShopContext);
+  useEffect(() => {
+    if (getTotalCartAmount() === 0) {
+      navigate("/shop");
+    }
+  }, [getTotalCartAmount, navigate]);
   const { randomNumber, filteredProducts, textArea, paymentDate, filteredProductsLength } = location.state || {};
 
   const [selectedMethod, setSelectedMethod] = useState('');
@@ -31,10 +37,9 @@ const PaymentOptions = () => {
   const [expiryError, setExpiryError] = useState('');
   const [upiIdField, setUpiIdField] = useState(false);
   const [loading, setLoading] = useState(false);
-  // console.log(paymentDetails, "paymentDetails");
+
   const handleCardNumberChange = (e) => {
     const value = e.target.value;
-    // console.log(value.length, "value");
     if (/^\d*$/.test(value) && value.length <= 16) {
       setCardError(''); // Clear the error if valid
       setPaymentDetails({ ...paymentDetails, cardNumber: value });
@@ -42,10 +47,9 @@ const PaymentOptions = () => {
       setCardError('Card number must be exactly 16 digits.');
     } else if (value.length < 16) {
       setCardError('Card number must be exactly 15 digits.');
-    };
-  }
+    }
+  };
 
-  // Handle changes for CVV
   const handleCvvChange = (e) => {
     const value = e.target.value;
     if (/^\d*$/.test(value) && value.length <= 3) {
@@ -55,20 +59,15 @@ const PaymentOptions = () => {
       setCvvError('CVV must be exactly 3 digits.');
     }
   };
+
   const handleExpiryChange = (e) => {
     let value = e.target.value.replace(/[^0-9]/g, ''); // Remove non-numeric characters
-
-    // If the value is being cleared, reset it without adding the slash
     if (value.length === 0) {
       setPaymentDetails({ ...paymentDetails, expiry: '' });
       setExpiryError(''); // Clear any errors
       return;
     }
-
-    // Limit to 4 characters (MMYY)
     if (value.length > 4) value = value.slice(0, 4);
-
-    // Add slash (/) after MM if required
     if (value.length >= 2) {
       const month = parseInt(value.slice(0, 2), 10);
       if (month < 1 || month > 12) {
@@ -76,21 +75,18 @@ const PaymentOptions = () => {
       } else {
         setExpiryError('');
       }
-      value = `${value.slice(0, 2)}${value.length > 2 ? '/' : ''}${value.slice(2)}`; // Add slash dynamically
+      value = `${value.slice(0, 2)}${value.length > 2 ? '/' : ''}${value.slice(2)}`;
     } else {
-      setExpiryError(''); // Clear any errors if the input is incomplete
+      setExpiryError('');
     }
-
     setPaymentDetails({ ...paymentDetails, expiry: value });
   };
+
   const handleUpiOptionChange = (e) => {
     const value = e.target.value;
-    // console.log(value, "upi value");
     setUpiIdField(value === 'others' ? true : false);
-    setPaymentDetails({ ...paymentDetails, upiOption: value })
-  }
-  // console.log(upiIdField, "upiIdField");
-
+    setPaymentDetails({ ...paymentDetails, upiOption: value });
+  };
 
   const getCardIcon = () => {
     const firstDigit = paymentDetails.cardNumber.charAt(0);
@@ -100,7 +96,7 @@ const PaymentOptions = () => {
       case '2':
         return <FaCcMastercard className="card-icon" data-tooltip-id="master-card" data-tooltip-content="Master Card" />;
       case '3':
-        return <FaCreditCard className="card-icon" data-tooltip-id="rupay-card" data-tooltip-content="Rupay Card" />; // Use a generic icon for Rupay or other cards
+        return <FaCreditCard className="card-icon" data-tooltip-id="rupay-card" data-tooltip-content="Rupay Card" />;
       case '4':
         return <FaCcAmex className="card-icon" data-tooltip-id="amex-card" data-tooltip-content="AMEX Card" />;
       default:
@@ -190,40 +186,47 @@ const PaymentOptions = () => {
             {selectedMethod === 'Credit/Debit Card' && (
               <div className="card-details">
                 <h3>Enter Card Details</h3>
-                <div className="input-with-icon">
-                  <input
-                    type="text"
-                    placeholder="Card Number"
-                    value={paymentDetails.cardNumber}
-                    onChange={handleCardNumberChange}
-                  />
-                  {getCardIcon()}
-                </div>
+                <InputField
+                  type="text"
+                  placeholder="Card Number"
+                  value={paymentDetails.cardNumber}
+                  onChange={handleCardNumberChange}
+                  aria-label="Card Number"
+                  className="card-input-field"
+                  label="Card Number" />
+                {getCardIcon()}
                 {cardError && <p className="error-message">{cardError}</p>}
-                <input
+                <InputField
                   type="text"
                   placeholder="CVV"
                   value={paymentDetails.cvv}
                   onChange={handleCvvChange}
+                  aria-label="CVV"
+                  className="cvv-input-field"
+                  label="CVV"
                 />
                 {cvvError && <p className="error-message">{cvvError}</p>}
-                <input
+                <InputField
                   type="text"
                   placeholder="Expiry Date (MM/YY)"
                   value={paymentDetails.expiry}
                   onChange={handleExpiryChange}
+                  aria-label="Expiry Date"
+                  className="expiry-input-field"
+                  label="Expiry Date (MM/YY)"
                 />
                 {expiryError && <p className="error-message">{expiryError}</p>}
-                <input
+                <InputField
                   type="text"
                   placeholder="Card Holder Name"
                   value={paymentDetails.cardHolderName}
                   onChange={(e) => setPaymentDetails({ ...paymentDetails, cardHolderName: e.target.value })}
+                  aria-label="Card Holder Name"
+                  className="card-holder-input-field"
+                  label="Card Holder Name"
                 />
               </div>
             )}
-
-
             {selectedMethod === 'UPI' && (
               <div className="upi-details">
                 <h3>UPI Payment</h3>
@@ -237,14 +240,17 @@ const PaymentOptions = () => {
                   <option value="Paytm">Paytm</option>
                   <option value="others">Others</option>
                 </select>
-                {upiIdField &&
-                  <input
+                {upiIdField && (
+                  <InputField
                     type="text"
                     placeholder="Enter UPI ID"
                     value={paymentDetails.upiId}
                     onChange={(e) => setPaymentDetails({ ...paymentDetails, upiId: e.target.value })}
+                    aria-label="UPI ID"
+                    className="upi-id-input-field"
+                    label="UPI ID"
                   />
-                }
+                )}
               </div>
             )}
 
@@ -264,17 +270,23 @@ const PaymentOptions = () => {
                   <option value="ICIC">ICICI</option>
                   <option value="others">others</option>
                 </select>
-                <input
+                <InputField
                   type="text"
                   placeholder="Account Number"
                   value={paymentDetails.accountNumber}
                   onChange={(e) => setPaymentDetails({ ...paymentDetails, accountNumber: e.target.value })}
+                  aria-label="Account Number"
+                  className="account-number-input-field"
+                  label="Account Number"
                 />
-                <input
+                <InputField
                   type="text"
                   placeholder="IFSC Code"
                   value={paymentDetails.ifsc}
                   onChange={(e) => setPaymentDetails({ ...paymentDetails, ifsc: e.target.value })}
+                  aria-label="IFSC Code"
+                  className="ifsc-input-field"
+                  label="IFSC Code"
                 />
               </div>
             )}
@@ -282,17 +294,23 @@ const PaymentOptions = () => {
             {selectedMethod === 'Cash on Delivery' && (
               <div className="cod-details">
                 <h3>Cash on Delivery</h3>
-                <input
+                <InputField
                   type="text"
                   placeholder="Person Name"
                   value={paymentDetails.personName}
                   onChange={(e) => setPaymentDetails({ ...paymentDetails, personName: e.target.value })}
+                  aria-label="Person Name"
+                  className="person-name-input-field"
+                  label="Person Name"
                 />
-                <input
+                <InputField
                   type="text"
                   placeholder="Mobile Number"
                   value={paymentDetails.mobileNumber}
                   onChange={(e) => setPaymentDetails({ ...paymentDetails, mobileNumber: e.target.value })}
+                  aria-label="Mobile Number"
+                  className="mobile-number-input-field"
+                  label="Mobile Number"
                 />
                 <p>Delivery Date: <strong>{paymentDate}</strong></p>
               </div>
@@ -305,7 +323,6 @@ const PaymentOptions = () => {
           >
             Proceed
           </button>
-
 
           <Tooltip id="master-card" />
           <Tooltip id="visa-card" />

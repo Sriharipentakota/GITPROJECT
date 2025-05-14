@@ -9,7 +9,6 @@ export const Cart = () => {
   const { cartItems, getTotalCartAmount, checkout } = useContext(ShopContext);
   const totalAmount = getTotalCartAmount();
   const navigate = useNavigate();
-
   return (
     <div className="cart">
       <div>

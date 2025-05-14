@@ -1,9 +1,16 @@
-import React, { useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../../components/component.css'; // Updated CSS file for improved design
+import { ShopContext } from '../../context/shop-context';
 
 const OrderHistory = () => {
     const navigate = useNavigate();
+    const { getTotalCartAmount } = useContext(ShopContext);
+    // useEffect(() => {
+    //     if (getTotalCartAmount() === 0) {
+    //         navigate("/shop");
+    //     }
+    // }, [getTotalCartAmount, navigate]);
     const loggedInUser = JSON.parse(sessionStorage.getItem('loggedInUser'));
     const [orders, setOrders] = useState(
         JSON.parse(sessionStorage.getItem(`${loggedInUser.email}`)) || []
@@ -36,7 +43,7 @@ const OrderHistory = () => {
     return (
         <div className="order-history-container">
             <h2 className="order-history-title">Your Orders</h2>
-            {orders.length === 0 ? (
+            {(orders?.length === 0 && getTotalCartAmount() === 0) ? (
                 <p className="no-orders-message">You have no orders yet.</p>
             ) : (
                 <div className="order-cards-container">

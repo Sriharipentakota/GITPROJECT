@@ -1,12 +1,20 @@
-import React from 'react';
+import React, { useContext, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import '../../components/component.css';
+import { ShopContext } from '../../context/shop-context';
 
 const OrderConfirmed = () => {
     const location = useLocation();
     const navigate = useNavigate();
+    const { getTotalCartAmount } = useContext(ShopContext);
+    // useEffect(() => {
+    //     if (getTotalCartAmount() === 0) {
+    //         navigate("/shop");
+    //     }
+    // }, [getTotalCartAmount, navigate]);
+
     const { randomNumber, filteredProducts, textArea, paymentDate, filteredProductsLength, paymentMethod, paymentDetails } = location.state || {};
-    const loggedInUser = JSON.parse(sessionStorage.getItem('loggedInUser')); // Get logged-in user's details
+    const loggedInUser = JSON.parse(sessionStorage.getItem('loggedInUser'));
 
     const handleOrderConfirmation = () => {
         // Save order details in session storage
@@ -32,7 +40,7 @@ const OrderConfirmed = () => {
         <div className="confirmation-container">
             <h2>Order Confirmed!</h2>
             <p><strong>Order ID:</strong> {randomNumber}</p>
-            <p><strong>Products:</strong> {filteredProducts.map(e => e.name).join(', ')}</p>
+            <p><strong>Products:</strong> {filteredProducts?.map(e => e.name).join(', ')}</p>
             <p><strong>Quantity:</strong> {filteredProductsLength}</p>
             <p><strong>Delivery Date:</strong> {paymentDate}</p>
             <p><strong>Shipping Address:</strong> {textArea}</p>
@@ -45,7 +53,7 @@ const OrderConfirmed = () => {
                 </>
             )}
             <button
-                onClick={handleOrderConfirmation} 
+                onClick={handleOrderConfirmation}
                 className="confirm-button"
             >
                 Continue Shopping

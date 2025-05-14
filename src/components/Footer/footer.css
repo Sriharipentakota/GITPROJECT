@@ -49,6 +49,10 @@
     margin-top: 10px;
 }
 
+.newsletter-form>div {
+    margin-bottom: 0 !important;
+}
+
 .newsletter-input {
     flex: 1;
     padding: 10px;

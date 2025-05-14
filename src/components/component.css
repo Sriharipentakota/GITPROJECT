@@ -2,7 +2,7 @@
     width: -webkit-fill-available;
     height: -webkit-fill-available;
     opacity: 0;
-    
+
 }
 
 .payment-container {
@@ -151,6 +151,13 @@
     border: 1px solid #ddd;
     border-radius: 5px;
     font-size: 14px;
+}
+
+.card-details>div,
+.cod-details>div,
+.net-banking-details>div,
+.upi-details>div {
+    margin-bottom: 0 !important;
 }
 
 .confirm-button {

@@ -25,7 +25,7 @@ export const ShopContextProvider = (props) => {
     }
     return totalAmount;
   };
-
+console.log(getTotalCartAmount(), "getTotalCartAmount");
   const addToCart = (itemId) => {
     setCartItems((prev) => ({ ...prev, [itemId]: prev[itemId] + 1 }));
     alert(`Added ${PRODUCTS.find((p) => p.id === itemId).productName} to cart!`);

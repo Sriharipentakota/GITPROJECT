@@ -1,4 +1,4 @@
-import React, { useContext, useState } from 'react';
+import React, { useContext, useState, useEffect } from 'react';
 import "./paymentPage.css";
 import { ShopContext } from '../../context/shop-context';
 import { PRODUCTS } from '../../product';
@@ -6,7 +6,7 @@ import InputField from '../../components/inputFieldComponent';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 function PaymentPage() {
-  const { cartItems } = useContext(ShopContext);
+  const { cartItems, getTotalCartAmount } = useContext(ShopContext);
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -18,14 +18,21 @@ function PaymentPage() {
   const [randomNumber] = useState(initialRandomNumber || Math.floor(Math.random() * 1000000) + 1);
 
   // Filter products based on cart items
-  const filteredProducts = initialFilteredProducts || PRODUCTS.filter(product => cartItems[product.id] !== 0);
+  const filteredProducts = initialFilteredProducts || PRODUCTS?.filter(product => cartItems[product.id] !== 0);
   const filteredProductsLength = initialFilteredProductsLength || filteredProducts?.length;
 
-  console.log(textArea, paymentDate, randomNumber, "textArea");
+  console.log(getTotalCartAmount(), "textArea");
+
+  // Redirect to /shop if cart is empty
+  useEffect(() => {
+    if (getTotalCartAmount() === 0) {
+      console.log("hello");
+      navigate("/shop");
+    }
+  }, [getTotalCartAmount, navigate]);
 
   function handleSubmit(e) {
     e.preventDefault();
-    // Navigate to ProductPayment with the form data
     navigate("/payment-success", { state: { textArea, paymentDate, randomNumber, filteredProductsLength, filteredProducts } });
   }
 
@@ -41,7 +48,7 @@ function PaymentPage() {
               <p><strong>Order ID:</strong> <b>{randomNumber}</b></p>
             </div>
             <div className="order-products">
-              <p><strong>Selected Products:</strong> {filteredProducts.map(e => e.name).join(', ')}</p>
+              <p><strong>Selected Products:</strong> {filteredProducts?.map(e => e.name).join(', ')}</p>
             </div>
             <div className="order-quantity">
               <p><strong>Quantity:</strong> {filteredProductsLength}</p>

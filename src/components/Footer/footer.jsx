@@ -1,6 +1,7 @@
 import React from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "./footer.css";
+import InputField from "../inputFieldComponent";
 
 export const Footer = () => {
     return (
@@ -25,7 +26,7 @@ export const Footer = () => {
                 <div className="text-center text-md-start">
                     <h3>About Us</h3>
                     <p>
-                        We are a one-stop destination for all your shopping needs. 
+                        We are a one-stop destination for all your shopping needs.
                         Discover the best deals and quality products across various categories.
                     </p>
                 </div>
@@ -64,7 +65,12 @@ export const Footer = () => {
                 <div className="text-center text-md-start">
                     <h3>Subscribe to our Newsletter</h3>
                     <form className="newsletter-form">
-                        <input type="email" placeholder="Enter your email" className="newsletter-input" />
+                        <InputField
+                            type="email"
+                            placeholder="Enter your email"
+                            className="newsletter-input"
+                            label="Email"
+                        />
                         <button type="submit" className="newsletter-btn">Subscribe</button>
                     </form>
                     <p>Get the latest updates about our products and offers.</p>
