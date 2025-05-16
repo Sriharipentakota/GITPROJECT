@@ -6,6 +6,7 @@ import { Tooltip } from 'react-tooltip';
 import { ShopContext } from '../../context/shop-context';
 import { ThreeDots } from 'react-loader-spinner';
 import InputField from '../inputFieldComponent';
+import loaderImg from "../../assets/download-loader.gif";
 
 const PaymentOptions = () => {
   const location = useLocation();
@@ -149,7 +150,7 @@ const PaymentOptions = () => {
     <>
       {loading ? (
         <div className="loading-container">
-          <ThreeDots
+          {/* <ThreeDots
             height="80"
             width="80"
             radius="9"
@@ -158,7 +159,8 @@ const PaymentOptions = () => {
             wrapperClassName="landing-loader"
             visible={true}
             variant="bounce"
-          />
+          /> */}
+          <img src={loaderImg}  alt='image'/>
         </div>
       ) : (
         <div className="payment-options-container">

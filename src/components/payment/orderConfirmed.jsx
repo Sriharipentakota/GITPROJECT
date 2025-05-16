@@ -6,12 +6,6 @@ import { ShopContext } from '../../context/shop-context';
 const OrderConfirmed = () => {
     const location = useLocation();
     const navigate = useNavigate();
-    const { getTotalCartAmount } = useContext(ShopContext);
-    // useEffect(() => {
-    //     if (getTotalCartAmount() === 0) {
-    //         navigate("/shop");
-    //     }
-    // }, [getTotalCartAmount, navigate]);
 
     const { randomNumber, filteredProducts, textArea, paymentDate, filteredProductsLength, paymentMethod, paymentDetails } = location.state || {};
     const loggedInUser = JSON.parse(sessionStorage.getItem('loggedInUser'));
