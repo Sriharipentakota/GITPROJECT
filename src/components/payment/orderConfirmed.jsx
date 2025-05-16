@@ -1,7 +1,6 @@
-import React, { useContext, useEffect } from 'react';
+import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import '../../components/component.css';
-import { ShopContext } from '../../context/shop-context';
 
 const OrderConfirmed = () => {
     const location = useLocation();

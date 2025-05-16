@@ -4,7 +4,6 @@ import '../../components/component.css';
 import { FaCreditCard, FaUniversity, FaMobileAlt, FaMoneyBillWave, FaCcVisa, FaCcMastercard, FaCcAmex } from 'react-icons/fa'; // Import alternative icons
 import { Tooltip } from 'react-tooltip';
 import { ShopContext } from '../../context/shop-context';
-import { ThreeDots } from 'react-loader-spinner';
 import InputField from '../inputFieldComponent';
 import loaderImg from "../../assets/download-loader.gif";
 
@@ -160,7 +159,7 @@ const PaymentOptions = () => {
             visible={true}
             variant="bounce"
           /> */}
-          <img src={loaderImg}  alt='image'/>
+          <img src={loaderImg}  alt='nothing specified'/>
         </div>
       ) : (
         <div className="payment-options-container">
