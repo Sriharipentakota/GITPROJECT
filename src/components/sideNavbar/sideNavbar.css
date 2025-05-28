@@ -1,0 +1,65 @@
+.sidebar {
+  width: 60px;
+  /* Initial collapsed width */
+  transition: width 0.3s ease;
+  /* Smooth transition for width */
+  overflow: hidden;
+  /* Hide content when collapsed */
+  background-color: #f4f4f4;
+  border-right: 1px solid #ddd;
+  padding: 15px 5px;
+  /* Adjust padding for collapsed view */
+  height: 100vh;
+  /* Full height */
+  position: fixed;
+  /* Fix sidebar to the left */
+  top: 0;
+  left: 0;
+}
+
+.sidebar.expanded {
+  width: 200px;
+  /* Expanded width */
+  padding: 15px;
+  /* Normal padding */
+}
+
+.sidebar-content {
+  opacity: 0;
+  /* Hide content initially */
+  transition: opacity 0.3s ease;
+  /* Smooth transition for opacity */
+}
+
+.sidebar.expanded .sidebar-content {
+  opacity: 1;
+  /* Show content when expanded */
+}
+
+.sidebar {
+  width: 200px;
+  background: #f4f4f4;
+  padding: 20px;
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100vh;
+}
+
+.sidebar ul {
+  list-style: none;
+  padding: 0;
+}
+
+.sidebar li {
+  margin: 10px 0;
+}
+
+.sidebar a {
+  text-decoration: none;
+  color: #333;
+}
+
+.sidebar a:hover {
+  text-decoration: underline;
+}
