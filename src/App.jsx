@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import Sidebar from "./Sidebar";
 import ConceptExample from "./ConceptExample";
 import { conceptGroups } from "./concepts";
+import "./App.css";
 
 function App() {
   const firstGroup = conceptGroups[0];
