@@ -8,13 +8,13 @@ const PrivacyPolicy = () => {
                 Your privacy is important to us. This Privacy Policy explains how we collect, use, and protect your personal information when you use our services.
             </p>
             <h3>Information We Collect</h3>
-            <ul>
+            <ul style={{ listStyle: "none" }}>
                 <li>Personal details such as name, email, and contact information.</li>
                 <li>Payment details for processing transactions securely.</li>
                 <li>Browsing behavior to improve your shopping experience.</li>
             </ul>
             <h3>How We Use Your Information</h3>
-            <ul>
+            <ul style={{ listStyle: "none" }}>
                 <li>To process your orders and provide customer support.</li>
                 <li>To improve our website and services.</li>
                 <li>To send promotional emails (only if you opt-in).</li>

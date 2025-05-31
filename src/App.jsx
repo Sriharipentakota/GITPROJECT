@@ -20,6 +20,7 @@ import AboutUs from './components/Footer/aboutUs';
 import PrivacyPolicy from './components/Footer/privacyPolicy';
 import TermsAndConditions from './components/Footer/termsAndConditions';
 import FAQ from './components/Footer/faq';
+import CartWarningProvider from './components/contentWarningProvided';
 
 const ConditionalWrapper = ({ children }) => {
   const location = useLocation();
@@ -52,24 +53,26 @@ const AppContent = () => {
     <div className={isTargetUrl ? "myCustomClass App" : "App"}>
       <ShopContextProvider>
         <ConditionalWrapper>
-          <Routes>
-            <Route path={"/" || "/login"} element={<Login />} />
-            <Route path='/signup' element={<Signup />} />
-            <Route path='/forgot' element={<ForgotPasswordForm />} />
-            <Route path='/shop' element={<ProtectedRoute><Shop /></ProtectedRoute>} />
-            <Route path="/contact" element={<Contact />} />
-            <Route path='/cart' element={<Cart />} />
-            <Route path='/products' element={<ProductsInfo />} />
-            <Route path='/payment' element={<PaymentPage />} />
-            <Route path='/payment-success' element={<ProductPayment />} />
-            <Route path='/payment-options' element={<PaymentOptions />} />
-            <Route path="/order-confirmed" element={<OrderConfirmed />} />
-            <Route path="/order-history" element={<OrderHistory />} />
-            <Route path="/about-us" element={<AboutUs />} />
-            <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-            <Route path="/terms-and-conditions" element={<TermsAndConditions />} />
-            <Route path="/faq" element={<FAQ />} />
-          </Routes>
+          <CartWarningProvider>
+            <Routes>
+              <Route path={"/" || "/login"} element={<Login />} />
+              <Route path='/signup' element={<Signup />} />
+              <Route path='/forgot' element={<ForgotPasswordForm />} />
+              <Route path='/shop' element={<ProtectedRoute><Shop /></ProtectedRoute>} />
+              <Route path="/contact" element={<Contact />} />
+              <Route path='/cart' element={<Cart />} />
+              <Route path='/products' element={<ProductsInfo />} />
+              <Route path='/payment' element={<PaymentPage />} />
+              <Route path='/payment-success' element={<ProductPayment />} />
+              <Route path='/payment-options' element={<PaymentOptions />} />
+              <Route path="/order-confirmed" element={<OrderConfirmed />} />
+              <Route path="/order-history" element={<OrderHistory />} />
+              <Route path="/about-us" element={<AboutUs />} />
+              <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+              <Route path="/terms-and-conditions" element={<TermsAndConditions />} />
+              <Route path="/faq" element={<FAQ />} />
+            </Routes>
+          </CartWarningProvider>
         </ConditionalWrapper>
       </ShopContextProvider>
     </div>

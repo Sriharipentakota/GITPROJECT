@@ -9,6 +9,7 @@ export const Cart = () => {
   const { cartItems, getTotalCartAmount, checkout } = useContext(ShopContext);
   const totalAmount = getTotalCartAmount();
   const navigate = useNavigate();
+//  const [loading, setLoading] = useState(false);
   return (
     <div className="cart">
       <div>
