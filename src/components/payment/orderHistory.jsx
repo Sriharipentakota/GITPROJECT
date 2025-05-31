@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useContext, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../../components/component.css'; // Updated CSS file for improved design
 import { ShopContext } from '../../context/shop-context';
