@@ -179,6 +179,24 @@
 }
 
 /* order comfirmed page css */
+.confirmation-header {
+    display: flex;
+    align-items: center;
+    position: relative;
+    /* Optional: add padding or width as needed */
+}
+
+.confirmation-header h2 {}
+
+.invoice-icon {
+    font-size: 2rem;
+    /* adjust as needed */
+    margin-left: auto;
+    cursor: pointer;
+    color: #2196f3;
+    /* optional: style your icon */
+}
+
 .confirmation-container {
     max-width: 800px;
     margin: 30px auto;
@@ -191,10 +209,13 @@
 }
 
 .confirmation-container h2 {
-    margin-bottom: 20px;
+    margin-bottom: 0;
     font-size: 28px;
     color: #333;
     font-weight: bold;
+    flex: 1;
+    text-align: center;
+    margin: 0;
 }
 
 .confirmation-container p {
