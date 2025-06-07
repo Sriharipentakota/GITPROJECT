@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
 
-export default function Sidebar({ groups, selected, onSelect, open, setOpen }) {
+export default function Sidebar({title, groups, selected, onSelect, open, setOpen }) {
   const [openGroups, setOpenGroups] = useState(() =>
-    groups.reduce((acc, g) => ({ ...acc, [g.title]: true }), {})
+    groups?.reduce((acc, g) => ({ ...acc, [g.title]: true }), {})
   );
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 700);
 
@@ -56,9 +56,9 @@ export default function Sidebar({ groups, selected, onSelect, open, setOpen }) {
         }}
       >
         <h1 style={{ textAlign: "center", fontSize: 24, margin: "0 0 1.5rem" }}>
-          React Concepts
+          {title || "Concepts"}
         </h1>
-        {groups.map((group) => (
+        {groups?.map((group) => (
           <div key={group.title}>
             <div
               style={{
@@ -100,12 +100,12 @@ export default function Sidebar({ groups, selected, onSelect, open, setOpen }) {
                       style={{
                         background:
                           selected.group === group.title &&
-                          selected.concept.title === concept.title
+                            selected.concept.title === concept.title
                             ? "#0af"
                             : "transparent",
                         color:
                           selected.group === group.title &&
-                          selected.concept.title === concept.title
+                            selected.concept.title === concept.title
                             ? "#fff"
                             : "#ddd",
                         border: "none",

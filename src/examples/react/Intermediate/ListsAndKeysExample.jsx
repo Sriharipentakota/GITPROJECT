@@ -11,7 +11,7 @@ export default function ListsAndKeysExample() {
     { id: 2, text: "Understand Props" },
     { id: 3, text: "Master State" },
   ]);
-console.log("Rendering ListsAndKeysExample",setItems);
+
   return (
     <div>
       <ul>

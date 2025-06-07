@@ -1,19 +1,33 @@
 import React, { useState } from "react";
 import Sidebar from "./Sidebar";
 import ConceptExample from "./ConceptExample";
-import { conceptGroups } from "./concepts";
-import "./App.css";
+import { allConceptGroups } from "./allConceptGroups";
+
+const TOPICS = ["React", "HTML", "CSS", "JavaScript"];
 
 function App() {
-  const firstGroup = conceptGroups[0];
-  const firstConcept = firstGroup.concepts[0];
+  const [selectedTopic, setSelectedTopic] = useState("React");
+  const groups = allConceptGroups[selectedTopic];
+  const firstGroup = groups[0];
+  const firstConcept = firstGroup?.concepts[0];
+
   const [selectedConcept, setSelectedConcept] = useState({
     group: firstGroup.title,
     concept: firstConcept,
   });
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  // Close sidebar automatically on concept select (mobile)
+  // Reset concept selection when topic changes
+  const handleTopicChange = (e) => {
+    const newTopic = e.target.value;
+    setSelectedTopic(newTopic);
+    const newGroups = allConceptGroups[newTopic];
+    setSelectedConcept({
+      group: newGroups[0].title,
+      concept: newGroups[0].concepts[0]
+    });
+  };
+
   const handleSelect = (group, concept) => {
     setSelectedConcept({ group, concept });
     setSidebarOpen(false);
@@ -21,6 +35,14 @@ function App() {
 
   return (
     <div className="app-root">
+      {/* Top-level dropdown for topics */}
+      <div style={{ position: 'fixed', top: 12, left: 320, zIndex: 2000 }}>
+        <select value={selectedTopic} onChange={handleTopicChange} style={{ fontSize: 18, padding: 8 }}>
+          {TOPICS?.map(topic => (
+            <option key={topic} value={topic}>{topic}</option>
+          ))}
+        </select>
+      </div>
       <button
         className="sidebar-toggle"
         onClick={() => setSidebarOpen(open => !open)}
@@ -29,7 +51,8 @@ function App() {
         ☰
       </button>
       <Sidebar
-        groups={conceptGroups}
+        title={`${selectedTopic} Concepts`}
+        groups={groups}
         selected={selectedConcept}
         onSelect={handleSelect}
         open={sidebarOpen}
@@ -49,7 +72,7 @@ function App() {
           <ConceptExample example={selectedConcept.concept.example} />
         </div>
       </main>
-      {/* Responsive styles */}
+      {/* styles as before... */}
       <style>{`
         .app-root {
           font-family: sans-serif;

@@ -1,39 +1,39 @@
 // BEGINNER
-import JSXExample from "./examples/Beginner/JSXExamples";
-import ComponentsExample from "./examples/Beginner/ComponentsExamples";
-import PropsExample from "./examples/Beginner/PropsExamples";
-import StateExample from "./examples/Beginner/StateExamples";
-import RenderingElementsExample from "./examples/Beginner/RenderingExamples";
-import HandlingEventsExample from "./examples/Beginner/HandlingEvents";
+import JSXExample from "./examples/react/Beginner/JSXExamples";
+import ComponentsExample from "./examples/react/Beginner/ComponentsExamples";
+import PropsExample from "./examples/react/Beginner/PropsExamples";
+import StateExample from "./examples/react/Beginner/StateExamples";
+import RenderingElementsExample from "./examples/react/Beginner/RenderingExamples";
+import HandlingEventsExample from "./examples/react/Beginner/HandlingEvents";
 
 // INTERMEDIATE
-import ComponentLifecycleExample from "./examples/Intermediate/ComponentLifeCycleExample";
-import UseEffectExample from "./examples/Intermediate/UseEffectExample";
-import ConditionalRenderingExample from "./examples/Intermediate/ConditionalRendering";
-import ListsAndKeysExample from "./examples/Intermediate/ListsAndKeysExample";
-import FormsControlledComponentsExample from "./examples/Intermediate/FormsControlledComponents";
-import LiftingStateUpExample from "./examples/Intermediate/LiftingStateUpExample";
-import PropDrillingExample from "./examples/Intermediate/PropsDrilling";
+import ComponentLifecycleExample from "./examples/react/Intermediate/ComponentLifeCycleExample";
+import UseEffectExample from "./examples/react/Intermediate/UseEffectExample";
+import ConditionalRenderingExample from "./examples/react/Intermediate/ConditionalRendering";
+import ListsAndKeysExample from "./examples/react/Intermediate/ListsAndKeysExample";
+import FormsControlledComponentsExample from "./examples/react/Intermediate/FormsControlledComponents";
+import LiftingStateUpExample from "./examples/react/Intermediate/LiftingStateUpExample";
+import PropDrillingExample from "./examples/react/Intermediate/PropsDrilling";
 
 // ADVANCED
-import ContextAPIExample from "./examples/Advanced/ContextApiExample";
-import CustomHookExample from "./examples/Advanced/CustomhookExample";
-import RefsUseRefExample from "./examples/Advanced/RefsUseRefExample";
-import ErrorBoundaryExample from "./examples/Advanced/ErrorBoundaryExample";
-import HigherOrderComponentExample from "./examples/Advanced/HighOrderComponent";
-import RenderPropsExample from "./examples/Advanced/RenderingPropsExamples";
-import ReactRouterExample from "./examples/Advanced/ReactRouterExample";
-import CodeSplittingLazyLoadingExample from "./examples/Advanced/CodeSplittingAndLazyloading";
-import MemoizationExample from "./examples/Advanced/MemorizationExample";
-import PortalsExample from "./examples/Advanced/PortalsExamples";
+import ContextAPIExample from "./examples/react/Advanced/ContextApiExample";
+import CustomHookExample from "./examples/react/Advanced/CustomhookExample";
+import RefsUseRefExample from "./examples/react/Advanced/RefsUseRefExample";
+import ErrorBoundaryExample from "./examples/react/Advanced/ErrorBoundaryExample";
+import HigherOrderComponentExample from "./examples/react/Advanced/HighOrderComponent";
+import RenderPropsExample from "./examples/react/Advanced/RenderingPropsExamples";
+import ReactRouterExample from "./examples/react/Advanced/ReactRouterExample";
+import CodeSplittingLazyLoadingExample from "./examples/react/Advanced/CodeSplittingAndLazyloading";
+import MemoizationExample from "./examples/react/Advanced/MemorizationExample";
+import PortalsExample from "./examples/react/Advanced/PortalsExamples";
 
 
 //Expert
-import ServerSideRenderingExample from "./examples/Expert/ServerSideRenderingExample";
-import StaticSiteGenerationExample from "./examples/Expert/StaticSiteGenerationExample";
-import ConcurrentModeExample from "./examples/Expert/ConcurrentModeExample";
-import SuspenseErrorBoundaryDataFetchingExample from "./examples/Expert/SuspenseErrorBoundaryDataFetchingExample";
-import ReduxStateManagementExample from "./examples/Expert/ReduxStateManagementExample";
+import ServerSideRenderingExample from "./examples/react/Expert/ServerSideRenderingExample";
+import StaticSiteGenerationExample from "./examples/react/Expert/StaticSiteGenerationExample";
+import ConcurrentModeExample from "./examples/react/Expert/ConcurrentModeExample";
+import SuspenseErrorBoundaryDataFetchingExample from "./examples/react/Expert/SuspenseErrorBoundaryDataFetchingExample";
+import ReduxStateManagementExample from "./examples/react/Expert/ReduxStateManagementExample";
 
 export const conceptGroups = [
   {
