@@ -1,26 +1,21 @@
-import Button from 'react-bootstrap/Button';
-import Modal from 'react-bootstrap/Modal';
-import "./component.css";
+import React from 'react';
 
-function ModalComponent({ show, handleClose, onConfirm }) {
-    return (
-        <>
-            <Modal show={show} onHide={handleClose}>
-                <Modal.Header closeButton>
-                    <Modal.Title>Are you sure you want to log out?</Modal.Title>
-                </Modal.Header>
-                <Modal.Body>Logging off!</Modal.Body>
-                <Modal.Footer>
-                    <Button variant="secondary" onClick={onConfirm}>
-                        Yes
-                    </Button>
-                    <Button variant="primary" onClick={handleClose}>
-                        No
-                    </Button>
-                </Modal.Footer>
-            </Modal>
-        </>
-    );
-}
+const Modal = ({ isOpen, onClose, title, children }) => {
+  if (!isOpen) return null;
 
-export default ModalComponent;
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
+        <div className="flex justify-between items-center border-b p-4">
+          <h2 className="text-xl font-semibold">{title}</h2>
+          <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
+            ✕
+          </button>
+        </div>
+        {children}
+      </div>
+    </div>
+  );
+};
+
+export default Modal;
