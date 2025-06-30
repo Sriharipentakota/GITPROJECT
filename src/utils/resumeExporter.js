@@ -1,6 +1,7 @@
 import jsPDF from 'jspdf'
 import { Document, Packer, Paragraph, TextRun, HeadingLevel } from 'docx'
 import { saveAs } from 'file-saver'
+import { ImageRun } from 'docx'
 
 export async function exportToPDF(resumeData) {
   const doc = new jsPDF()
@@ -15,15 +16,15 @@ export async function exportToPDF(resumeData) {
     doc.setFontSize(fontSize)
     doc.setFont('helvetica', fontStyle)
     doc.setTextColor(color[0], color[1], color[2])
-    
+
     const lines = doc.splitTextToSize(text, pageWidth - 2 * margin)
-    
+
     // Check if we need a new page
     if (yPosition + lines.length * lineHeight > pageHeight - margin) {
       doc.addPage()
       yPosition = margin
     }
-    
+
     doc.text(lines, margin, yPosition)
     yPosition += lines.length * lineHeight + 2
   }
@@ -35,33 +36,41 @@ export async function exportToPDF(resumeData) {
     addText(title, 14, 'bold', [37, 99, 235]) // Blue color for sections
     yPosition += 3
   }
-
+  //profile photo
+  if (resumeData.personalInfo?.profilePhoto) {
+    doc.addImage(
+      resumeData.personalInfo.profilePhoto,
+      'JPEG', // or 'PNG' depending on the file type
+      margin, yPosition, 40, 40 // x, y, width, height
+    )
+    yPosition += 45
+  }
   // Personal Information
   if (resumeData.personalInfo) {
     const { name, email, phone, location, linkedin, website } = resumeData.personalInfo
-    
+
     if (name) {
       addText(name, 20, 'bold', [30, 41, 59]) // Dark color for name
       yPosition += 5
     }
-    
+
     const contactInfo = []
     if (email) contactInfo.push(email)
     if (phone) contactInfo.push(phone)
     if (location) contactInfo.push(location)
-    
+
     if (contactInfo.length > 0) {
       addText(contactInfo.join(' | '), 10, 'normal', [100, 116, 139])
     }
-    
+
     const links = []
     if (linkedin) links.push(linkedin)
     if (website) links.push(website)
-    
+
     if (links.length > 0) {
       addText(links.join(' | '), 9, 'normal', [37, 99, 235])
     }
-    
+
     yPosition += 10
   }
 
@@ -74,25 +83,25 @@ export async function exportToPDF(resumeData) {
   // Work Experience
   if (resumeData.experience && resumeData.experience.length > 0) {
     addSection('WORK EXPERIENCE')
-    
+
     resumeData.experience.forEach((exp, index) => {
       if (exp.position) {
         addText(exp.position, 12, 'bold', [30, 41, 59])
       }
-      
+
       const companyLine = []
       if (exp.company) companyLine.push(exp.company)
       if (exp.location) companyLine.push(exp.location)
       if (exp.duration) companyLine.push(exp.duration)
-      
+
       if (companyLine.length > 0) {
         addText(companyLine.join(' | '), 10, 'italic', [100, 116, 139])
       }
-      
+
       if (exp.description) {
         addText(exp.description, 10, 'normal')
       }
-      
+
       if (index < resumeData.experience.length - 1) {
         yPosition += 3
       }
@@ -102,21 +111,21 @@ export async function exportToPDF(resumeData) {
   // Education
   if (resumeData.education && resumeData.education.length > 0) {
     addSection('EDUCATION')
-    
+
     resumeData.education.forEach((edu, index) => {
       if (edu.degree) {
         addText(edu.degree, 11, 'bold', [30, 41, 59])
       }
-      
+
       const eduLine = []
       if (edu.school) eduLine.push(edu.school)
       if (edu.year) eduLine.push(edu.year)
       if (edu.gpa) eduLine.push(`GPA: ${edu.gpa}`)
-      
+
       if (eduLine.length > 0) {
         addText(eduLine.join(' | '), 10, 'normal', [100, 116, 139])
       }
-      
+
       if (index < resumeData.education.length - 1) {
         yPosition += 3
       }
@@ -132,13 +141,13 @@ export async function exportToPDF(resumeData) {
   // Certifications
   if (resumeData.certifications && resumeData.certifications.length > 0) {
     addSection('CERTIFICATIONS')
-    
+
     resumeData.certifications.forEach((cert, index) => {
       const certLine = []
       if (cert.name) certLine.push(cert.name)
       if (cert.issuer) certLine.push(cert.issuer)
       if (cert.year) certLine.push(cert.year)
-      
+
       if (certLine.length > 0) {
         addText(certLine.join(' | '), 10, 'normal')
       }
@@ -148,24 +157,24 @@ export async function exportToPDF(resumeData) {
   // Projects
   if (resumeData.projects && resumeData.projects.length > 0) {
     addSection('PROJECTS')
-    
+
     resumeData.projects.forEach((project, index) => {
       if (project.name) {
         addText(project.name, 11, 'bold', [30, 41, 59])
       }
-      
+
       if (project.description) {
         addText(project.description, 10, 'normal')
       }
-      
+
       const projectLinks = []
       if (project.url) projectLinks.push(`Demo: ${project.url}`)
       if (project.github) projectLinks.push(`Code: ${project.github}`)
-      
+
       if (projectLinks.length > 0) {
         addText(projectLinks.join(' | '), 9, 'normal', [37, 99, 235])
       }
-      
+
       if (index < resumeData.projects.length - 1) {
         yPosition += 3
       }
@@ -192,11 +201,24 @@ export async function exportToWord(resumeData) {
 
 function createWordContent(resumeData) {
   const content = []
-
+  //profile photo
+  if (resumeData.personalInfo?.profilePhoto) {
+    content.push(
+      new Paragraph({
+        children: [
+          new ImageRun({
+            data: resumeData.personalInfo.profilePhoto.split(',')[1], // Remove data:image/...;base64,
+            transformation: { width: 80, height: 80 }
+          })
+        ],
+        spacing: { after: 200 }
+      })
+    )
+  }
   // Personal Information
   if (resumeData.personalInfo) {
     const { name, email, phone, location, linkedin, website } = resumeData.personalInfo
-    
+
     if (name) {
       content.push(
         new Paragraph({
@@ -212,12 +234,12 @@ function createWordContent(resumeData) {
         })
       )
     }
-    
+
     const contactInfo = []
     if (email) contactInfo.push(email)
     if (phone) contactInfo.push(phone)
     if (location) contactInfo.push(location)
-    
+
     if (contactInfo.length > 0) {
       content.push(
         new Paragraph({
@@ -232,11 +254,11 @@ function createWordContent(resumeData) {
         })
       )
     }
-    
+
     const links = []
     if (linkedin) links.push(linkedin)
     if (website) links.push(website)
-    
+
     if (links.length > 0) {
       content.push(
         new Paragraph({
@@ -269,7 +291,7 @@ function createWordContent(resumeData) {
         spacing: { before: 200, after: 100 }
       })
     )
-    
+
     content.push(
       new Paragraph({
         children: [
@@ -299,7 +321,7 @@ function createWordContent(resumeData) {
         spacing: { before: 200, after: 100 }
       })
     )
-    
+
     resumeData.experience.forEach((exp, index) => {
       if (exp.position) {
         content.push(
@@ -316,12 +338,12 @@ function createWordContent(resumeData) {
           })
         )
       }
-      
+
       const companyLine = []
       if (exp.company) companyLine.push(exp.company)
       if (exp.location) companyLine.push(exp.location)
       if (exp.duration) companyLine.push(exp.duration)
-      
+
       if (companyLine.length > 0) {
         content.push(
           new Paragraph({
@@ -337,7 +359,7 @@ function createWordContent(resumeData) {
           })
         )
       }
-      
+
       if (exp.description) {
         content.push(
           new Paragraph({
@@ -370,7 +392,7 @@ function createWordContent(resumeData) {
         spacing: { before: 200, after: 100 }
       })
     )
-    
+
     resumeData.education.forEach((edu, index) => {
       if (edu.degree) {
         content.push(
@@ -387,12 +409,12 @@ function createWordContent(resumeData) {
           })
         )
       }
-      
+
       const eduLine = []
       if (edu.school) eduLine.push(edu.school)
       if (edu.year) eduLine.push(edu.year)
       if (edu.gpa) eduLine.push(`GPA: ${edu.gpa}`)
-      
+
       if (eduLine.length > 0) {
         content.push(
           new Paragraph({
@@ -426,7 +448,7 @@ function createWordContent(resumeData) {
         spacing: { before: 200, after: 100 }
       })
     )
-    
+
     content.push(
       new Paragraph({
         children: [
@@ -456,13 +478,13 @@ function createWordContent(resumeData) {
         spacing: { before: 200, after: 100 }
       })
     )
-    
+
     resumeData.certifications.forEach((cert, index) => {
       const certLine = []
       if (cert.name) certLine.push(cert.name)
       if (cert.issuer) certLine.push(cert.issuer)
       if (cert.year) certLine.push(cert.year)
-      
+
       if (certLine.length > 0) {
         content.push(
           new Paragraph({
@@ -495,7 +517,7 @@ function createWordContent(resumeData) {
         spacing: { before: 200, after: 100 }
       })
     )
-    
+
     resumeData.projects.forEach((project, index) => {
       if (project.name) {
         content.push(
@@ -512,7 +534,7 @@ function createWordContent(resumeData) {
           })
         )
       }
-      
+
       if (project.description) {
         content.push(
           new Paragraph({
@@ -526,11 +548,11 @@ function createWordContent(resumeData) {
           })
         )
       }
-      
+
       const projectLinks = []
       if (project.url) projectLinks.push(`Demo: ${project.url}`)
       if (project.github) projectLinks.push(`Code: ${project.github}`)
-      
+
       if (projectLinks.length > 0) {
         content.push(
           new Paragraph({

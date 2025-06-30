@@ -19,6 +19,7 @@ function ResumeEditor({ onBack, onNext }) {
   }
 
   const sections = [
+    // { key: 'ProfilePhoto', title: 'Profile Photo', icon: FiEdit3 },
     { key: 'personalInfo', title: 'Personal Information', icon: FiEdit3 },
     { key: 'summary', title: 'Professional Summary', icon: FiEdit3 },
     { key: 'experience', title: 'Work Experience', icon: FiEdit3 },
@@ -103,12 +104,16 @@ function ResumeEditor({ onBack, onNext }) {
 }
 
 function ResumePreview({ data }) {
+  console.log(data, "data");
   return (
     <div className="resume-preview-content">
       {data.personalInfo && (
         <div className="preview-section">
           <h2>{data.personalInfo.name || 'Your Name'}</h2>
           <div className="contact-info">
+            {((data.personalInfo?.profilePhoto) || "") && (
+              <img src={data.personalInfo.profilePhoto} alt="Profile" style={{ width: 120, height: 120, borderRadius: '50%' }} />
+            )}
             {data.personalInfo.email && <span>{data.personalInfo.email}</span>}
             {data.personalInfo.phone && <span>{data.personalInfo.phone}</span>}
             {data.personalInfo.location && <span>{data.personalInfo.location}</span>}

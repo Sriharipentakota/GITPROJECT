@@ -21,6 +21,8 @@ function EditableSection({ sectionKey, sectionTitle, data, onSave, onCancel }) {
     switch (sectionKey) {
       case 'personalInfo':
         return renderPersonalInfoForm()
+      case 'profilePhoto':
+        return renderProfilePhotoForm()
       case 'summary':
         return renderSummaryForm()
       case 'experience':
@@ -40,6 +42,24 @@ function EditableSection({ sectionKey, sectionTitle, data, onSave, onCancel }) {
 
   const renderPersonalInfoForm = () => (
     <div className="form-grid">
+      <div className="form-group">
+        <label className="form-label">Profile Photo</label>
+        <input
+          type="file"
+          accept="image/*"
+          onChange={async (e) => {
+            const file = e.target.files[0]
+            if (file) {
+              const reader = new FileReader()
+              reader.onload = (ev) => setFormData({ ...formData, profilePhoto: ev.target.result })
+              reader.readAsDataURL(file)
+            }
+          }}
+        />
+        {formData.profilePhoto && (
+          <img src={formData.profilePhoto} alt="Profile" style={{ width: 120, height: 120, borderRadius: '50%', marginTop: 10 }} />
+        )}
+      </div>
       <div className="form-group">
         <label className="form-label">Full Name</label>
         <input
@@ -100,6 +120,26 @@ function EditableSection({ sectionKey, sectionTitle, data, onSave, onCancel }) {
           placeholder="https://yourportfolio.com"
         />
       </div>
+    </div>
+  )
+  const renderProfilePhotoForm = () => (
+    <div className="form-group">
+      <label className="form-label">Profile Photo</label>
+      <input
+        type="file"
+        accept="image/*"
+        onChange={async (e) => {
+          const file = e.target.files[0]
+          if (file) {
+            const reader = new FileReader()
+            reader.onload = (ev) => setFormData(ev.target.result)
+            reader.readAsDataURL(file)
+          }
+        }}
+      />
+      {formData && (
+        <img src={formData} alt="Profile" style={{ width: 120, height: 120, borderRadius: '50%', marginTop: 10 }} />
+      )}
     </div>
   )
 
@@ -532,7 +572,7 @@ function EditableSection({ sectionKey, sectionTitle, data, onSave, onCancel }) {
             </div>
           </div>
         ))}
-        
+
         <button type="button" className="btn btn-outline" onClick={addProject}>
           <FiPlus /> Add Project
         </button>
