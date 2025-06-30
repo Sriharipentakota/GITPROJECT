@@ -14,10 +14,19 @@ export function ResumeProvider({ children }) {
   const [resumeData, setResumeData] = useState(null)
 
   const updateSection = (sectionKey, data) => {
-    setResumeData(prev => ({
-      ...prev,
-      [sectionKey]: data
-    }))
+    console.log('Context updateSection called:', sectionKey, 'with data:', data)
+    
+    setResumeData(prev => {
+      const newData = {
+        ...prev,
+        [sectionKey]: data
+      }
+      console.log('Context - Previous data:', prev)
+      console.log('Context - New data after update:', newData)
+      
+      // Force a re-render by creating a completely new object
+      return JSON.parse(JSON.stringify(newData))
+    })
   }
 
   const value = {

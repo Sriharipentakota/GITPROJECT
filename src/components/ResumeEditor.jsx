@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { FiEdit3, FiSave, FiX, FiPlus, FiTrash2 } from 'react-icons/fi'
+import { FiEdit3, FiSave, FiX, FiPlus, FiTrash2, FiUser, FiAward, FiGlobe, FiHeart, FiMonitor, FiUsers, FiMessageSquare, FiTool } from 'react-icons/fi'
 import { useResumeContext } from '../context/ResumeContext'
 import EditableSection from './EditableSection'
 
@@ -19,44 +19,229 @@ function ResumeEditor({ onBack, onNext }) {
   }
 
   const sections = [
-    // { key: 'ProfilePhoto', title: 'Profile Photo', icon: FiEdit3 },
-    { key: 'personalInfo', title: 'Personal Information', icon: FiEdit3 },
-    { key: 'summary', title: 'Professional Summary', icon: FiEdit3 },
-    { key: 'experience', title: 'Work Experience', icon: FiEdit3 },
-    { key: 'education', title: 'Education', icon: FiEdit3 },
-    { key: 'skills', title: 'Skills', icon: FiEdit3 },
-    { key: 'certifications', title: 'Certifications', icon: FiEdit3 },
-    { key: 'projects', title: 'Projects', icon: FiEdit3 }
+    // Core Resume Sections
+    { key: 'personalInfo', title: 'Personal Information', icon: FiEdit3, required: true, category: 'resume' },
+    { key: 'profilePhoto', title: 'Profile Photo', icon: FiUser, required: false, category: 'resume' },
+    { key: 'summary', title: 'Professional Summary', icon: FiEdit3, required: true, category: 'resume' },
+    { key: 'experience', title: 'Work Experience', icon: FiEdit3, required: true, category: 'resume' },
+    { key: 'education', title: 'Education', icon: FiEdit3, required: true, category: 'resume' },
+    { key: 'skills', title: 'Technical Skills', icon: FiEdit3, required: true, category: 'resume' },
+    { key: 'projects', title: 'Projects', icon: FiEdit3, required: false, category: 'resume' },
+    { key: 'certifications', title: 'Certifications', icon: FiAward, required: false, category: 'resume' },
+    { key: 'achievements', title: 'Achievements', icon: FiAward, required: false, category: 'resume' },
+    { key: 'languages', title: 'Languages', icon: FiGlobe, required: false, category: 'resume' },
+    { key: 'interests', title: 'Interests', icon: FiHeart, required: false, category: 'resume' },
+    
+    // Portfolio-Specific Sections
+    { key: 'portfolioInfo', title: 'Portfolio Information', icon: FiMonitor, required: false, category: 'portfolio' },
+    { key: 'aboutMe', title: 'About Me (Extended)', icon: FiUser, required: false, category: 'portfolio' },
+    { key: 'socialLinks', title: 'Social Media Links', icon: FiGlobe, required: false, category: 'portfolio' },
+    { key: 'testimonials', title: 'Client Testimonials', icon: FiMessageSquare, required: false, category: 'portfolio' },
+    { key: 'services', title: 'Services Offered', icon: FiTool, required: false, category: 'portfolio' }
   ]
+
+  const isRequiredSectionComplete = (section) => {
+    const data = resumeData[section.key]
+    
+    if (section.key === 'personalInfo') {
+      return data && data.name && data.name.trim() !== '' && 
+             data.email && data.email.trim() !== '' && 
+             data.phone && data.phone.trim() !== '' &&
+             data.location && data.location.trim() !== ''
+    }
+    
+    if (section.key === 'summary') {
+      return data && typeof data === 'string' && data.trim().length >= 50
+    }
+    
+    if (section.key === 'experience') {
+      return Array.isArray(data) && data.length > 0 && 
+             data.every(exp => exp.position && exp.position.trim() !== '' && 
+                              exp.company && exp.company.trim() !== '' &&
+                              exp.duration && exp.duration.trim() !== '' &&
+                              exp.description && exp.description.trim() !== '')
+    }
+    
+    if (section.key === 'education') {
+      return Array.isArray(data) && data.length > 0 && 
+             data.every(edu => edu.degree && edu.degree.trim() !== '' && 
+                              edu.school && edu.school.trim() !== '' &&
+                              edu.year && edu.year.trim() !== '')
+    }
+    
+    if (section.key === 'skills') {
+      return Array.isArray(data) && data.length > 0 && 
+             data.every(skill => skill && skill.toString().trim() !== '')
+    }
+    
+    return false
+  }
+
+  const getCompletionStatus = () => {
+    const requiredSections = sections.filter(s => s.required)
+    const completedRequired = requiredSections.filter(section => isRequiredSectionComplete(section))
+    
+    return {
+      completed: completedRequired.length,
+      total: requiredSections.length,
+      percentage: Math.round((completedRequired.length / requiredSections.length) * 100),
+      incompleteSections: requiredSections.filter(section => !isRequiredSectionComplete(section))
+    }
+  }
+
+  const getPortfolioCompletionStatus = () => {
+    const portfolioSections = sections.filter(s => s.category === 'portfolio')
+    const completedPortfolio = portfolioSections.filter(section => {
+      const data = resumeData[section.key]
+      if (Array.isArray(data)) {
+        return data.length > 0
+      }
+      if (typeof data === 'object' && data !== null) {
+        return Object.values(data).some(value => value && value.toString().trim() !== '')
+      }
+      return data && data.toString().trim() !== ''
+    })
+    
+    return {
+      completed: completedPortfolio.length,
+      total: portfolioSections.length,
+      percentage: Math.round((completedPortfolio.length / portfolioSections.length) * 100)
+    }
+  }
+
+  const completion = getCompletionStatus()
+  const portfolioCompletion = getPortfolioCompletionStatus()
+
+  const resumeSections = sections.filter(s => s.category === 'resume')
+  const portfolioSections = sections.filter(s => s.category === 'portfolio')
+
+  const handleCompleteRequiredSections = () => {
+    if (completion.incompleteSections.length > 0) {
+      // Navigate to the first incomplete section
+      setEditingSection(completion.incompleteSections[0].key)
+    }
+  }
 
   return (
     <div className="resume-editor fade-in">
       <div className="text-center mb-4">
-        <h1 className="section-title">Edit Your Resume</h1>
+        <h1 className="section-title">Build Your ATS-Optimized Resume & Portfolio</h1>
         <p className="section-subtitle">
-          Review and edit each section to create your perfect resume
+          Complete all sections to create a professional resume and stunning portfolio website
         </p>
+        
+        <div className="completion-status">
+          <div className="completion-section">
+            <h4>Resume Completion</h4>
+            <div className="completion-bar">
+              <div 
+                className="completion-progress" 
+                style={{ width: `${completion.percentage}%` }}
+              ></div>
+            </div>
+            <span className="completion-text">
+              {completion.completed}/{completion.total} required sections completed ({completion.percentage}%)
+            </span>
+            {completion.incompleteSections.length > 0 && (
+              <div className="incomplete-sections">
+                <small>Incomplete: {completion.incompleteSections.map(s => s.title).join(', ')}</small>
+              </div>
+            )}
+          </div>
+          
+          <div className="completion-section">
+            <h4>Portfolio Enhancement</h4>
+            <div className="completion-bar">
+              <div 
+                className="completion-progress portfolio-progress" 
+                style={{ width: `${portfolioCompletion.percentage}%` }}
+              ></div>
+            </div>
+            <span className="completion-text">
+              {portfolioCompletion.completed}/{portfolioCompletion.total} portfolio sections completed ({portfolioCompletion.percentage}%)
+            </span>
+          </div>
+        </div>
       </div>
 
       <div className="editor-layout">
         <div className="editor-sidebar">
-          <h3>Resume Sections</h3>
-          <div className="section-list">
-            {sections.map((section) => (
-              <div
-                key={section.key}
-                className={`section-item ${editingSection === section.key ? 'active' : ''}`}
-                onClick={() => setEditingSection(section.key)}
-              >
-                <section.icon className="section-icon" />
-                <span>{section.title}</span>
-                {resumeData[section.key] && (
-                  <div className="section-status">
-                    <FiEdit3 size={12} />
+          <div className="section-category">
+            <h3>📄 Resume Sections</h3>
+            <div className="section-list">
+              {resumeSections.map((section) => {
+                const isComplete = section.required ? isRequiredSectionComplete(section) : 
+                  resumeData[section.key] && (
+                    Array.isArray(resumeData[section.key]) 
+                      ? resumeData[section.key].length > 0 
+                      : resumeData[section.key]
+                  )
+                
+                return (
+                  <div
+                    key={section.key}
+                    className={`section-item ${editingSection === section.key ? 'active' : ''} ${isComplete ? 'completed' : ''}`}
+                    onClick={() => setEditingSection(section.key)}
+                  >
+                    <section.icon className="section-icon" />
+                    <div className="section-info">
+                      <span className="section-name">{section.title}</span>
+                      {section.required && <span className="required-badge">Required</span>}
+                    </div>
+                    {isComplete && (
+                      <div className="section-status">
+                        <FiEdit3 size={12} />
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
-            ))}
+                )
+              })}
+            </div>
+          </div>
+
+          <div className="section-category">
+            <h3>🌐 Portfolio Sections</h3>
+            <div className="section-list">
+              {portfolioSections.map((section) => {
+                const hasData = resumeData[section.key] && (
+                  Array.isArray(resumeData[section.key]) 
+                    ? resumeData[section.key].length > 0 
+                    : (typeof resumeData[section.key] === 'object' && resumeData[section.key] !== null)
+                      ? Object.values(resumeData[section.key]).some(value => value && value.toString().trim() !== '')
+                      : resumeData[section.key] && resumeData[section.key].toString().trim() !== ''
+                )
+                
+                return (
+                  <div
+                    key={section.key}
+                    className={`section-item ${editingSection === section.key ? 'active' : ''} ${hasData ? 'completed' : ''}`}
+                    onClick={() => setEditingSection(section.key)}
+                  >
+                    <section.icon className="section-icon" />
+                    <div className="section-info">
+                      <span className="section-name">{section.title}</span>
+                      <span className="portfolio-badge">Portfolio</span>
+                    </div>
+                    {hasData && (
+                      <div className="section-status">
+                        <FiEdit3 size={12} />
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+          
+          <div className="ats-tips">
+            <h4>ATS Optimization Tips</h4>
+            <ul>
+              <li>Use standard section headers</li>
+              <li>Include relevant keywords</li>
+              <li>Keep formatting simple</li>
+              <li>Use bullet points for achievements</li>
+              <li>Include quantifiable results</li>
+            </ul>
           </div>
         </div>
 
@@ -77,14 +262,39 @@ function ResumeEditor({ onBack, onNext }) {
               <div className="placeholder-content">
                 <FiEdit3 className="placeholder-icon" />
                 <h3>Select a section to edit</h3>
-                <p>Choose a section from the sidebar to start editing your resume</p>
+                <p>Choose a section from the sidebar to start building your resume and portfolio</p>
+                <div className="quick-start">
+                  <h4>Quick Start Guide:</h4>
+                  <div className="quick-start-columns">
+                    <div className="quick-start-column">
+                      <h5>📄 Resume Essentials:</h5>
+                      <ol>
+                        <li>Fill in your Personal Information</li>
+                        <li>Write a compelling Professional Summary</li>
+                        <li>Add your Work Experience</li>
+                        <li>Include your Education</li>
+                        <li>List your Technical Skills</li>
+                      </ol>
+                    </div>
+                    <div className="quick-start-column">
+                      <h5>🌐 Portfolio Enhancement:</h5>
+                      <ol>
+                        <li>Add Portfolio Information</li>
+                        <li>Write an extended About Me</li>
+                        <li>Include Social Media Links</li>
+                        <li>Add Client Testimonials</li>
+                        <li>List Services You Offer</li>
+                      </ol>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           )}
         </div>
 
         <div className="editor-preview">
-          <h3>Resume Preview</h3>
+          <h3>Live Preview</h3>
           <div className="resume-preview">
             <ResumePreview data={resumeData} />
           </div>
@@ -93,10 +303,16 @@ function ResumeEditor({ onBack, onNext }) {
 
       <div className="editor-actions">
         <button className="btn btn-secondary" onClick={onBack}>
-          Back to Upload
+          Back to Start
         </button>
-        <button className="btn btn-primary" onClick={onNext}>
-          Continue to Export
+        <button 
+          className="btn btn-primary" 
+          onClick={completion.percentage < 100 ? handleCompleteRequiredSections : onNext}
+        >
+          {completion.percentage < 100 ? 
+            `Complete Required Sections (${completion.percentage}%)` : 
+            'Continue to Export'
+          }
         </button>
       </div>
     </div>
@@ -104,19 +320,26 @@ function ResumeEditor({ onBack, onNext }) {
 }
 
 function ResumePreview({ data }) {
-  console.log(data, "data");
   return (
     <div className="resume-preview-content">
+      {data.profilePhoto && data.profilePhoto.url && (
+        <div className="preview-photo">
+          <img src={data.profilePhoto.url} alt="Profile" className="profile-photo" />
+        </div>
+      )}
+
       {data.personalInfo && (
         <div className="preview-section">
           <h2>{data.personalInfo.name || 'Your Name'}</h2>
           <div className="contact-info">
-            {((data.personalInfo?.profilePhoto) || "") && (
-              <img src={data.personalInfo.profilePhoto} alt="Profile" style={{ width: 120, height: 120, borderRadius: '50%' }} />
-            )}
-            {data.personalInfo.email && <span>{data.personalInfo.email}</span>}
-            {data.personalInfo.phone && <span>{data.personalInfo.phone}</span>}
-            {data.personalInfo.location && <span>{data.personalInfo.location}</span>}
+            {data.personalInfo.email && <span>{String(data.personalInfo.email)}</span>}
+            {data.personalInfo.phone && <span>{String(data.personalInfo.phone)}</span>}
+            {data.personalInfo.location && <span>{String(data.personalInfo.location)}</span>}
+          </div>
+          <div className="contact-links">
+            {data.personalInfo.linkedin && <span>{String(data.personalInfo.linkedin)}</span>}
+            {data.personalInfo.website && <span>{String(data.personalInfo.website)}</span>}
+            {data.personalInfo.github && <span>{String(data.personalInfo.github)}</span>}
           </div>
         </div>
       )}
@@ -124,21 +347,22 @@ function ResumePreview({ data }) {
       {data.summary && (
         <div className="preview-section">
           <h3>Professional Summary</h3>
-          <p>{data.summary}</p>
+          <p>{String(data.summary)}</p>
         </div>
       )}
 
       {data.experience && data.experience.length > 0 && (
         <div className="preview-section">
-          <h3>Work Experience</h3>
+          <h3>Professional Experience</h3>
           {data.experience.map((exp, index) => (
             <div key={index} className="experience-item">
-              <h4>{exp.position}</h4>
+              <h4>{String(exp.position || '')}</h4>
               <div className="company-info">
-                <span>{exp.company}</span>
-                <span>{exp.duration}</span>
+                <span>{String(exp.company || '')}</span>
+                <span>{String(exp.duration || '')}</span>
               </div>
-              <p>{exp.description}</p>
+              {exp.location && <div className="location">{String(exp.location)}</div>}
+              <p>{String(exp.description || '')}</p>
             </div>
           ))}
         </div>
@@ -149,11 +373,14 @@ function ResumePreview({ data }) {
           <h3>Education</h3>
           {data.education.map((edu, index) => (
             <div key={index} className="education-item">
-              <h4>{edu.degree}</h4>
+              <h4>{String(edu.degree || '')}</h4>
               <div className="school-info">
-                <span>{edu.school}</span>
-                <span>{edu.year}</span>
+                <span>{String(edu.school || '')}</span>
+                <span>{String(edu.year || '')}</span>
               </div>
+              {edu.location && <div className="location">{String(edu.location)}</div>}
+              {edu.gpa && <div className="gpa">GPA: {String(edu.gpa)}</div>}
+              {edu.honors && <div className="honors">{String(edu.honors)}</div>}
             </div>
           ))}
         </div>
@@ -161,10 +388,78 @@ function ResumePreview({ data }) {
 
       {data.skills && data.skills.length > 0 && (
         <div className="preview-section">
-          <h3>Skills</h3>
+          <h3>Technical Skills</h3>
           <div className="skills-list">
             {data.skills.map((skill, index) => (
-              <span key={index} className="skill-tag">{skill}</span>
+              <span key={index} className="skill-tag">{String(skill)}</span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {data.projects && data.projects.length > 0 && (
+        <div className="preview-section">
+          <h3>Projects</h3>
+          {data.projects.map((project, index) => (
+            <div key={index} className="project-item">
+              <h4>{String(project.name || '')}</h4>
+              <p>{String(project.description || '')}</p>
+              {(project.url || project.github) && (
+                <div className="project-links">
+                  {project.url && <span>Demo: {String(project.url)}</span>}
+                  {project.github && <span>Code: {String(project.github)}</span>}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {data.certifications && data.certifications.length > 0 && (
+        <div className="preview-section">
+          <h3>Certifications</h3>
+          {data.certifications.map((cert, index) => (
+            <div key={index} className="certification-item">
+              <h4>{String(cert.name || '')}</h4>
+              <div className="cert-info">
+                <span>{String(cert.issuer || '')}</span>
+                <span>{String(cert.year || '')}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {data.achievements && data.achievements.length > 0 && (
+        <div className="preview-section">
+          <h3>Key Achievements</h3>
+          <ul className="achievements-list">
+            {data.achievements.map((achievement, index) => (
+              <li key={index}>{String(achievement)}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {data.languages && data.languages.length > 0 && (
+        <div className="preview-section">
+          <h3>Languages</h3>
+          <div className="languages-list">
+            {data.languages.map((lang, index) => (
+              <span key={index} className="language-item">
+                {String(lang.language || '')} - {String(lang.proficiency || '')}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {data.interests && data.interests.length > 0 && (
+        <div className="preview-section">
+          <h3>Interests</h3>
+          <div className="interests-list">
+            {data.interests.map((interest, index) => (
+              <span key={index} className="interest-tag">{String(interest)}</span>
             ))}
           </div>
         </div>

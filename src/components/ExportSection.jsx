@@ -1,10 +1,12 @@
 import { useState } from 'react'
-import { FiDownload, FiFileText, FiFile, FiCheck } from 'react-icons/fi'
+import { FiDownload, FiFileText, FiFile, FiCheck, FiMonitor, FiExternalLink } from 'react-icons/fi'
+import { useNavigate } from 'react-router-dom'
 import { useResumeContext } from '../context/ResumeContext'
 import { exportToPDF, exportToWord } from '../utils/resumeExporter'
 
 function ExportSection({ onBack }) {
   const { resumeData } = useResumeContext()
+  const navigate = useNavigate()
   const [exportStatus, setExportStatus] = useState('idle') // idle, exporting, success, error
   const [exportType, setExportType] = useState('')
   const [error, setError] = useState('')
@@ -27,83 +29,140 @@ function ExportSection({ onBack }) {
     }
   }
 
+  const handleCreatePortfolio = () => {
+    // Navigate to portfolio website
+    navigate('/portfolio')
+  }
+
+  const hasPortfolioData = () => {
+    return resumeData.portfolioInfo || 
+           resumeData.aboutMe || 
+           resumeData.socialLinks || 
+           (resumeData.testimonials && resumeData.testimonials.length > 0) ||
+           (resumeData.services && resumeData.services.length > 0)
+  }
+
   return (
     <div className="export-section fade-in">
       <div className="text-center mb-4">
-        <h1 className="section-title">Export Your Resume</h1>
+        <h1 className="section-title">Export Your Resume & Create Portfolio</h1>
         <p className="section-subtitle">
-          Download your ATS-optimized resume in your preferred format
+          Download your ATS-optimized resume and create a stunning portfolio website
         </p>
       </div>
 
-      <div className="export-options">
-        <div className="card export-card">
-          <div className="export-option">
-            <div className="export-icon">
-              <FiFileText />
+      <div className="export-grid">
+        <div className="export-category">
+          <h2>📄 Resume Downloads</h2>
+          <div className="export-options">
+            <div className="card export-card">
+              <div className="export-option">
+                <div className="export-icon">
+                  <FiFileText />
+                </div>
+                <div className="export-info">
+                  <h3>PDF Format</h3>
+                  <p>Perfect for online applications and email attachments</p>
+                  <ul className="export-features">
+                    <li>✓ ATS-Friendly formatting</li>
+                    <li>✓ Professional appearance</li>
+                    <li>✓ Universal compatibility</li>
+                    <li>✓ Optimized for 90%+ ATS score</li>
+                  </ul>
+                </div>
+                <button 
+                  className="btn btn-primary"
+                  onClick={() => handleExport('pdf')}
+                  disabled={exportStatus === 'exporting'}
+                >
+                  {exportStatus === 'exporting' && exportType === 'pdf' ? (
+                    <>
+                      <div className="loading"></div>
+                      Exporting...
+                    </>
+                  ) : (
+                    <>
+                      <FiDownload />
+                      Download PDF
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
-            <div className="export-info">
-              <h3>PDF Format</h3>
-              <p>Perfect for online applications and email attachments</p>
-              <ul className="export-features">
-                <li>✓ ATS-Friendly formatting</li>
-                <li>✓ Professional appearance</li>
-                <li>✓ Universal compatibility</li>
-                <li>✓ Optimized for 90%+ ATS score</li>
-              </ul>
+
+            <div className="card export-card">
+              <div className="export-option">
+                <div className="export-icon">
+                  <FiFile />
+                </div>
+                <div className="export-info">
+                  <h3>Word Format</h3>
+                  <p>Editable format for further customization</p>
+                  <ul className="export-features">
+                    <li>✓ Fully editable</li>
+                    <li>✓ ATS-Friendly structure</li>
+                    <li>✓ Easy to customize</li>
+                    <li>✓ Compatible with all systems</li>
+                  </ul>
+                </div>
+                <button 
+                  className="btn btn-outline"
+                  onClick={() => handleExport('word')}
+                  disabled={exportStatus === 'exporting'}
+                >
+                  {exportStatus === 'exporting' && exportType === 'word' ? (
+                    <>
+                      <div className="loading"></div>
+                      Exporting...
+                    </>
+                  ) : (
+                    <>
+                      <FiDownload />
+                      Download Word
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
-            <button 
-              className="btn btn-primary"
-              onClick={() => handleExport('pdf')}
-              disabled={exportStatus === 'exporting'}
-            >
-              {exportStatus === 'exporting' && exportType === 'pdf' ? (
-                <>
-                  <div className="loading"></div>
-                  Exporting...
-                </>
-              ) : (
-                <>
-                  <FiDownload />
-                  Download PDF
-                </>
-              )}
-            </button>
           </div>
         </div>
 
-        <div className="card export-card">
-          <div className="export-option">
-            <div className="export-icon">
-              <FiFile />
+        <div className="export-category">
+          <h2>🌐 Portfolio Website</h2>
+          <div className="portfolio-section">
+            <div className="card portfolio-card">
+              <div className="portfolio-option">
+                <div className="portfolio-icon">
+                  <FiMonitor />
+                </div>
+                <div className="portfolio-info">
+                  <h3>Create Portfolio Website</h3>
+                  <p>Generate a stunning, responsive portfolio website from your resume data</p>
+                  <ul className="portfolio-features">
+                    <li>✓ Modern, responsive design</li>
+                    <li>✓ Project showcase gallery</li>
+                    <li>✓ Contact form integration</li>
+                    <li>✓ Social media links</li>
+                    <li>✓ Client testimonials</li>
+                    <li>✓ Services section</li>
+                    <li>✓ Mobile-optimized</li>
+                    <li>✓ Professional animations</li>
+                  </ul>
+                  {hasPortfolioData() && (
+                    <div className="portfolio-enhancement">
+                      <p><strong>✨ Enhanced with your portfolio data!</strong></p>
+                    </div>
+                  )}
+                </div>
+                <button 
+                  className="btn btn-success btn-large"
+                  onClick={handleCreatePortfolio}
+                >
+                  <FiExternalLink />
+                  Create Portfolio Website
+                </button>
+              </div>
             </div>
-            <div className="export-info">
-              <h3>Word Format</h3>
-              <p>Editable format for further customization</p>
-              <ul className="export-features">
-                <li>✓ Fully editable</li>
-                <li>✓ ATS-Friendly structure</li>
-                <li>✓ Easy to customize</li>
-                <li>✓ Compatible with all systems</li>
-              </ul>
-            </div>
-            <button 
-              className="btn btn-outline"
-              onClick={() => handleExport('word')}
-              disabled={exportStatus === 'exporting'}
-            >
-              {exportStatus === 'exporting' && exportType === 'word' ? (
-                <>
-                  <div className="loading"></div>
-                  Exporting...
-                </>
-              ) : (
-                <>
-                  <FiDownload />
-                  Download Word
-                </>
-              )}
-            </button>
           </div>
         </div>
       </div>
