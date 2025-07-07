@@ -1,478 +1,339 @@
-export const parseResumeData = (text) => {
-  const data = {
+import * as pdfjsLib from 'pdfjs-dist'
+import mammoth from 'mammoth'
+
+// Configure PDF.js worker to use the local package instead of CDN
+pdfjsLib.GlobalWorkerOptions.workerSrc = new URL('pdfjs-dist/build/pdf.worker.min.js', import.meta.url).toString()
+
+export async function parseResumeFile(file) {
+  const fileType = file.type
+  let text = ''
+
+  try {
+    if (fileType === 'application/pdf') {
+      const arrayBuffer = await file.arrayBuffer()
+      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise
+      
+      // Extract text from all pages
+      const textPromises = []
+      for (let i = 1; i <= pdf.numPages; i++) {
+        textPromises.push(extractTextFromPage(pdf, i))
+      }
+      
+      const pageTexts = await Promise.all(textPromises)
+      text = pageTexts.join('\n')
+    } else if (fileType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' || 
+               fileType === 'application/msword') {
+      const arrayBuffer = await file.arrayBuffer()
+      const result = await mammoth.extractRawText({ arrayBuffer })
+      text = result.value
+    } else {
+      throw new Error('Unsupported file format')
+    }
+
+    return parseResumeText(text)
+  } catch (error) {
+    console.error('Error parsing resume:', error)
+    throw new Error('Failed to parse resume file. Please ensure the file is not corrupted and try again.')
+  }
+}
+
+async function extractTextFromPage(pdf, pageNumber) {
+  try {
+    const page = await pdf.getPage(pageNumber)
+    const textContent = await page.getTextContent()
+    return textContent.items.map(item => item.str).join(' ')
+  } catch (error) {
+    console.error(`Error extracting text from page ${pageNumber}:`, error)
+    return ''
+  }
+}
+
+function parseResumeText(text) {
+  const lines = text.split('\n').map(line => line.trim()).filter(line => line.length > 0)
+  
+  const resumeData = {
+    personalInfo: extractPersonalInfo(lines, text),
+    profilePhoto: null, // Will be set separately when user uploads photo
+    summary: extractSummary(lines),
+    experience: extractExperience(lines),
+    education: extractEducation(lines),
+    skills: extractSkills(lines),
+    certifications: extractCertifications(lines),
+    projects: extractProjects(lines)
+  }
+
+  return resumeData
+}
+
+function extractPersonalInfo(lines, text) {
+  const personalInfo = {
     name: '',
-    title: '',
     email: '',
     phone: '',
     location: '',
-    website: '',
     linkedin: '',
-    github: '',
-    summary: '',
-    objective: '',
-    experience: [],
-    education: [],
-    skills: [],
-    projects: [],
-    certifications: [],
-    awards: [],
-    languages: [],
-    interests: [],
-    references: '',
-    rawText: text
+    website: ''
   }
 
-  const lines = text.split('\n').map(line => line.trim()).filter(line => line.length > 0)
-  const textLower = text.toLowerCase()
+  // Extract name (usually first line or first substantial line)
+  if (lines.length > 0) {
+    personalInfo.name = lines[0] || ''
+  }
 
-  // Enhanced name extraction
-  data.name = extractName(lines)
-  
-  // Enhanced contact information extraction
-  extractContactInfo(text, data)
-  
-  // Extract professional title
-  data.title = extractTitle(lines, data.name)
-  
-  // Extract all sections with improved parsing
-  data.summary = extractSection(text, ['summary', 'profile', 'about me', 'professional summary', 'career summary'])
-  data.objective = extractSection(text, ['objective', 'career objective', 'professional objective'])
-  
-  // Enhanced experience parsing
-  const experienceText = extractSection(text, ['experience', 'work experience', 'professional experience', 'employment history', 'work history'])
-  if (experienceText) {
-    data.experience = parseExperienceSection(experienceText)
-  }
-  
-  // Enhanced education parsing
-  const educationText = extractSection(text, ['education', 'academic background', 'educational background', 'qualifications', 'academic qualifications'])
-  if (educationText) {
-    data.education = parseEducationSection(educationText)
-  }
-  
-  // Enhanced skills parsing
-  const skillsText = extractSection(text, ['skills', 'technical skills', 'core competencies', 'competencies', 'technologies', 'expertise'])
-  if (skillsText) {
-    data.skills = parseSkillsSection(skillsText)
-  }
-  
-  // Projects section
-  const projectsText = extractSection(text, ['projects', 'key projects', 'notable projects', 'personal projects', 'academic projects'])
-  if (projectsText) {
-    data.projects = parseProjectsSection(projectsText)
-  }
-  
-  // Certifications
-  const certificationsText = extractSection(text, ['certifications', 'certificates', 'professional certifications', 'licenses'])
-  if (certificationsText) {
-    data.certifications = parseCertificationsSection(certificationsText)
-  }
-  
-  // Awards and achievements
-  const awardsText = extractSection(text, ['awards', 'achievements', 'honors', 'recognition', 'accomplishments'])
-  if (awardsText) {
-    data.awards = parseAwardsSection(awardsText)
-  }
-  
-  // Languages
-  const languagesText = extractSection(text, ['languages', 'language skills', 'linguistic skills'])
-  if (languagesText) {
-    data.languages = parseLanguagesSection(languagesText)
-  }
-  
-  // Interests/Hobbies
-  const interestsText = extractSection(text, ['interests', 'hobbies', 'personal interests', 'activities'])
-  if (interestsText) {
-    data.interests = parseInterestsSection(interestsText)
-  }
-  
-  // References
-  data.references = extractSection(text, ['references', 'professional references'])
-
-  return data
-}
-
-const extractName = (lines) => {
-  // Look for name in first few lines
-  for (let i = 0; i < Math.min(5, lines.length); i++) {
-    const line = lines[i]
-    if (line.length > 2 && line.length < 50 && 
-        !line.includes('@') && !line.includes('http') && 
-        !line.match(/^\d/) && !line.includes('|') &&
-        line.split(' ').length >= 2 && line.split(' ').length <= 4 &&
-        !line.toLowerCase().includes('resume') &&
-        !line.toLowerCase().includes('cv')) {
-      return line
-    }
-  }
-  return 'Professional Name'
-}
-
-const extractContactInfo = (text, data) => {
-  // Email
-  const emailRegex = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g
+  // Extract email
+  const emailRegex = /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/
   const emailMatch = text.match(emailRegex)
-  if (emailMatch) data.email = emailMatch[0]
+  if (emailMatch) {
+    personalInfo.email = emailMatch[0]
+  }
 
-  // Phone
-  const phoneRegex = /(\+?1?[-.\s]?)?(\(?[0-9]{3}\)?[-.\s]?)?[0-9]{3}[-.\s]?[0-9]{4}/g
+  // Extract phone
+  const phoneRegex = /(\+?1?[-.\s]?)?\(?([0-9]{3})\)?[-.\s]?([0-9]{3})[-.\s]?([0-9]{4})/
   const phoneMatch = text.match(phoneRegex)
-  if (phoneMatch) data.phone = phoneMatch[0]
+  if (phoneMatch) {
+    personalInfo.phone = phoneMatch[0]
+  }
 
-  // LinkedIn
-  const linkedinRegex = /(linkedin\.com\/in\/[^\s]+|linkedin\.com\/pub\/[^\s]+)/gi
+  // Extract LinkedIn
+  const linkedinRegex = /linkedin\.com\/in\/[\w-]+/i
   const linkedinMatch = text.match(linkedinRegex)
-  if (linkedinMatch) data.linkedin = linkedinMatch[0]
-
-  // GitHub
-  const githubRegex = /(github\.com\/[^\s]+)/gi
-  const githubMatch = text.match(githubRegex)
-  if (githubMatch) data.github = githubMatch[0]
-
-  // Website
-  const urlRegex = /(https?:\/\/[^\s]+|www\.[^\s]+)/g
-  const urlMatch = text.match(urlRegex)
-  if (urlMatch) {
-    const nonSocialUrls = urlMatch.filter(url => 
-      !url.includes('linkedin') && !url.includes('github')
-    )
-    if (nonSocialUrls.length > 0) data.website = nonSocialUrls[0]
+  if (linkedinMatch) {
+    personalInfo.linkedin = 'https://' + linkedinMatch[0]
   }
 
-  // Location
-  const locationRegex = /([A-Z][a-z]+,?\s+[A-Z]{2}|[A-Z][a-z]+,\s+[A-Z][a-z]+)/g
-  const locationMatch = text.match(locationRegex)
-  if (locationMatch) data.location = locationMatch[0]
-}
-
-const extractTitle = (lines, name) => {
-  const titleKeywords = ['developer', 'engineer', 'manager', 'analyst', 'designer', 'consultant', 'specialist', 'coordinator', 'director', 'lead', 'senior', 'junior', 'architect', 'scientist', 'researcher']
-  
-  for (let i = 0; i < Math.min(8, lines.length); i++) {
-    const line = lines[i]
-    if (line === name) continue
-    
-    const lineLower = line.toLowerCase()
-    for (const keyword of titleKeywords) {
-      if (lineLower.includes(keyword) && line.length < 80) {
-        return line
-      }
+  // Extract website/portfolio
+  const websiteRegex = /https?:\/\/[^\s]+/g
+  const websiteMatches = text.match(websiteRegex)
+  if (websiteMatches) {
+    const nonLinkedInUrls = websiteMatches.filter(url => !url.includes('linkedin.com'))
+    if (nonLinkedInUrls.length > 0) {
+      personalInfo.website = nonLinkedInUrls[0]
     }
   }
-  return ''
+
+  return personalInfo
 }
 
-const extractSection = (text, keywords) => {
-  const textLower = text.toLowerCase()
-  
-  for (const keyword of keywords) {
-    const regex = new RegExp(`\\b${keyword}\\b`, 'i')
-    const match = textLower.match(regex)
-    if (match) {
-      const index = match.index
-      const startIndex = text.indexOf('\n', index)
-      const endIndex = findNextSectionStart(text, startIndex + 1)
-      if (startIndex !== -1) {
-        return text.substring(startIndex, endIndex).trim()
-      }
+function extractSummary(lines) {
+  const summaryKeywords = ['summary', 'profile', 'objective', 'about']
+  const summaryIndex = lines.findIndex(line => 
+    summaryKeywords.some(keyword => line.toLowerCase().includes(keyword))
+  )
+
+  if (summaryIndex === -1) return ''
+
+  // Find the next section or take next 3-5 lines
+  let endIndex = summaryIndex + 1
+  while (endIndex < lines.length && endIndex < summaryIndex + 6) {
+    const line = lines[endIndex].toLowerCase()
+    if (line.includes('experience') || line.includes('education') || line.includes('skills')) {
+      break
     }
+    endIndex++
   }
-  
-  return null
+
+  return lines.slice(summaryIndex + 1, endIndex).join(' ')
 }
 
-const findNextSectionStart = (text, startIndex) => {
-  const sectionKeywords = [
-    'experience', 'education', 'skills', 'projects', 'certifications', 
-    'awards', 'languages', 'interests', 'references', 'objective',
-    'summary', 'qualifications', 'achievements', 'hobbies'
-  ]
-  let minIndex = text.length
-  
-  for (const keyword of sectionKeywords) {
-    const regex = new RegExp(`\\b${keyword}\\b`, 'i')
-    const match = text.toLowerCase().substring(startIndex).match(regex)
-    if (match) {
-      const index = startIndex + match.index
-      if (index < minIndex) {
-        minIndex = index
-      }
-    }
-  }
-  
-  return minIndex
-}
-
-const parseExperienceSection = (section) => {
-  const lines = section.split('\n').filter(line => line.trim().length > 0)
+function extractExperience(lines) {
   const experiences = []
-  let currentExp = null
+  const experienceKeywords = ['experience', 'employment', 'work history', 'professional experience']
+  
+  const startIndex = lines.findIndex(line => 
+    experienceKeywords.some(keyword => line.toLowerCase().includes(keyword))
+  )
 
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i].trim()
-    
-    if (isJobTitleLine(line) || isCompanyLine(line)) {
-      if (currentExp) {
-        experiences.push(currentExp)
+  if (startIndex === -1) return experiences
+
+  let currentExperience = null
+  let inExperienceSection = true
+
+  for (let i = startIndex + 1; i < lines.length && inExperienceSection; i++) {
+    const line = lines[i]
+    const lowerLine = line.toLowerCase()
+
+    // Check if we've reached another section
+    if (lowerLine.includes('education') || lowerLine.includes('skills') || 
+        lowerLine.includes('certification') || lowerLine.includes('project')) {
+      inExperienceSection = false
+      break
+    }
+
+    // Check if this line looks like a job title/company
+    if (line.length > 0 && !line.startsWith(' ') && !line.startsWith('\t')) {
+      if (currentExperience) {
+        experiences.push(currentExperience)
       }
-      
-      const duration = extractDuration(line)
-      const parts = line.replace(duration, '').split(/[-–|@]/g).map(p => p.trim())
-      
-      currentExp = {
-        title: parts[0] || line,
-        company: parts[1] || '',
-        duration: duration,
-        location: extractLocationFromLine(line),
-        description: []
+      currentExperience = {
+        position: line,
+        company: '',
+        duration: '',
+        location: '',
+        description: ''
       }
-    } else if (currentExp && line.length > 0) {
-      if (line.startsWith('•') || line.startsWith('-') || line.startsWith('*')) {
-        currentExp.description.push(line.substring(1).trim())
-      } else {
-        currentExp.description.push(line)
-      }
+    } else if (currentExperience && line.length > 0) {
+      // Add to description
+      currentExperience.description += (currentExperience.description ? ' ' : '') + line
     }
   }
-  
-  if (currentExp) {
-    experiences.push(currentExp)
+
+  if (currentExperience) {
+    experiences.push(currentExperience)
   }
-  
-  return experiences.map(exp => ({
-    ...exp,
-    description: exp.description.join(' ')
-  }))
+
+  return experiences
 }
 
-const parseEducationSection = (section) => {
-  const lines = section.split('\n').filter(line => line.trim().length > 0)
+function extractEducation(lines) {
   const education = []
-  let currentEd = null
+  const educationKeywords = ['education', 'academic', 'degree', 'university', 'college']
+  
+  const startIndex = lines.findIndex(line => 
+    educationKeywords.some(keyword => line.toLowerCase().includes(keyword))
+  )
 
-  for (const line of lines) {
-    const trimmedLine = line.trim()
-    
-    if (isDegreeOrSchoolLine(trimmedLine)) {
-      if (currentEd) {
-        education.push(currentEd)
+  if (startIndex === -1) return education
+
+  let currentEducation = null
+  let inEducationSection = true
+
+  for (let i = startIndex + 1; i < lines.length && inEducationSection; i++) {
+    const line = lines[i]
+    const lowerLine = line.toLowerCase()
+
+    // Check if we've reached another section
+    if (lowerLine.includes('experience') || lowerLine.includes('skills') || 
+        lowerLine.includes('certification') || lowerLine.includes('project')) {
+      inEducationSection = false
+      break
+    }
+
+    if (line.length > 0 && !line.startsWith(' ') && !line.startsWith('\t')) {
+      if (currentEducation) {
+        education.push(currentEducation)
       }
-      
-      const year = extractYear(trimmedLine)
-      const parts = trimmedLine.replace(year, '').split(/[-–|@]/g).map(p => p.trim())
-      
-      currentEd = {
-        degree: parts[0] || trimmedLine,
-        institution: parts[1] || '',
-        year: year,
-        gpa: extractGPA(trimmedLine),
-        description: []
+      currentEducation = {
+        degree: line,
+        school: '',
+        year: '',
+        location: '',
+        gpa: ''
       }
-    } else if (currentEd && trimmedLine.length > 0) {
-      currentEd.description.push(trimmedLine)
     }
   }
-  
-  if (currentEd) {
-    education.push(currentEd)
+
+  if (currentEducation) {
+    education.push(currentEducation)
   }
-  
-  return education.map(ed => ({
-    ...ed,
-    description: ed.description.join(' ')
-  }))
+
+  return education
 }
 
-const parseSkillsSection = (section) => {
+function extractSkills(lines) {
   const skills = []
-  const lines = section.split('\n').filter(line => line.trim().length > 0)
+  const skillsKeywords = ['skills', 'technical skills', 'competencies', 'technologies']
   
-  for (const line of lines) {
-    const trimmedLine = line.trim()
-    
-    // Split by common delimiters
-    const skillsInLine = trimmedLine.split(/[,•·|;\n]/)
-      .map(skill => skill.trim().replace(/^[-*•]/, '').trim())
-      .filter(skill => skill.length > 0 && skill.length < 50)
-    
-    skills.push(...skillsInLine)
+  const startIndex = lines.findIndex(line => 
+    skillsKeywords.some(keyword => line.toLowerCase().includes(keyword))
+  )
+
+  if (startIndex === -1) return skills
+
+  let inSkillsSection = true
+
+  for (let i = startIndex + 1; i < lines.length && inSkillsSection; i++) {
+    const line = lines[i]
+    const lowerLine = line.toLowerCase()
+
+    // Check if we've reached another section
+    if (lowerLine.includes('experience') || lowerLine.includes('education') || 
+        lowerLine.includes('certification') || lowerLine.includes('project')) {
+      inSkillsSection = false
+      break
+    }
+
+    if (line.length > 0) {
+      // Split by common separators
+      const lineSkills = line.split(/[,•·\|\/]/).map(skill => skill.trim()).filter(skill => skill.length > 0)
+      skills.push(...lineSkills)
+    }
   }
-  
-  return [...new Set(skills)].slice(0, 30) // Remove duplicates and limit
+
+  return [...new Set(skills)] // Remove duplicates
 }
 
-const parseProjectsSection = (section) => {
-  const lines = section.split('\n').filter(line => line.trim().length > 0)
+function extractCertifications(lines) {
+  const certifications = []
+  const certKeywords = ['certification', 'certificate', 'credentials', 'licenses']
+  
+  const startIndex = lines.findIndex(line => 
+    certKeywords.some(keyword => line.toLowerCase().includes(keyword))
+  )
+
+  if (startIndex === -1) return certifications
+
+  for (let i = startIndex + 1; i < lines.length; i++) {
+    const line = lines[i]
+    const lowerLine = line.toLowerCase()
+
+    if (lowerLine.includes('experience') || lowerLine.includes('education') || 
+        lowerLine.includes('skills') || lowerLine.includes('project')) {
+      break
+    }
+
+    if (line.length > 0) {
+      certifications.push({
+        name: line,
+        issuer: '',
+        year: '',
+        url: ''
+      })
+    }
+  }
+
+  return certifications
+}
+
+function extractProjects(lines) {
   const projects = []
+  const projectKeywords = ['projects', 'personal projects', 'side projects', 'portfolio']
+  
+  const startIndex = lines.findIndex(line => 
+    projectKeywords.some(keyword => line.toLowerCase().includes(keyword))
+  )
+
+  if (startIndex === -1) return projects
+
   let currentProject = null
 
-  for (const line of lines) {
-    const trimmedLine = line.trim()
-    
-    if (isProjectTitleLine(trimmedLine)) {
+  for (let i = startIndex + 1; i < lines.length; i++) {
+    const line = lines[i]
+    const lowerLine = line.toLowerCase()
+
+    if (lowerLine.includes('experience') || lowerLine.includes('education') || 
+        lowerLine.includes('skills') || lowerLine.includes('certification')) {
+      break
+    }
+
+    if (line.length > 0 && !line.startsWith(' ') && !line.startsWith('\t')) {
       if (currentProject) {
         projects.push(currentProject)
       }
-      
       currentProject = {
-        name: trimmedLine.replace(/^[-•*]/, '').trim(),
-        description: [],
-        technologies: []
+        name: line,
+        description: '',
+        technologies: [],
+        url: '',
+        github: ''
       }
-    } else if (currentProject && trimmedLine.length > 0) {
-      if (trimmedLine.toLowerCase().includes('technologies') || trimmedLine.toLowerCase().includes('tech stack')) {
-        const techMatch = trimmedLine.match(/(?:technologies|tech stack):?\s*(.+)/i)
-        if (techMatch) {
-          currentProject.technologies = techMatch[1].split(/[,|]/).map(t => t.trim())
-        }
-      } else {
-        currentProject.description.push(trimmedLine.replace(/^[-•*]/, '').trim())
-      }
+    } else if (currentProject && line.length > 0) {
+      currentProject.description += (currentProject.description ? ' ' : '') + line
     }
   }
-  
+
   if (currentProject) {
     projects.push(currentProject)
   }
-  
-  return projects.map(project => ({
-    ...project,
-    description: project.description.join(' ')
-  }))
-}
 
-const parseCertificationsSection = (section) => {
-  return section.split('\n')
-    .filter(line => line.trim().length > 0)
-    .map(line => {
-      const trimmed = line.trim().replace(/^[-•*]/, '').trim()
-      const year = extractYear(trimmed)
-      return {
-        name: trimmed.replace(year, '').trim(),
-        year: year,
-        issuer: extractIssuer(trimmed)
-      }
-    })
-}
-
-const parseAwardsSection = (section) => {
-  return section.split('\n')
-    .filter(line => line.trim().length > 0)
-    .map(line => {
-      const trimmed = line.trim().replace(/^[-•*]/, '').trim()
-      const year = extractYear(trimmed)
-      return {
-        name: trimmed.replace(year, '').trim(),
-        year: year
-      }
-    })
-}
-
-const parseLanguagesSection = (section) => {
-  return section.split('\n')
-    .filter(line => line.trim().length > 0)
-    .map(line => line.trim().replace(/^[-•*]/, '').trim())
-    .filter(lang => lang.length > 0)
-}
-
-const parseInterestsSection = (section) => {
-  const interests = []
-  const lines = section.split('\n').filter(line => line.trim().length > 0)
-  
-  for (const line of lines) {
-    const trimmedLine = line.trim().replace(/^[-•*]/, '').trim()
-    const interestsInLine = trimmedLine.split(/[,•·|;\n]/)
-      .map(interest => interest.trim())
-      .filter(interest => interest.length > 0)
-    
-    interests.push(...interestsInLine)
-  }
-  
-  return interests
-}
-
-// Helper functions
-const isJobTitleLine = (line) => {
-  const jobKeywords = ['developer', 'engineer', 'manager', 'analyst', 'designer', 'consultant', 'specialist', 'coordinator', 'director', 'lead', 'senior', 'junior', 'architect', 'scientist']
-  const lineLower = line.toLowerCase()
-  
-  return jobKeywords.some(keyword => lineLower.includes(keyword)) ||
-         line.match(/\b(inc|llc|corp|ltd|company|technologies|solutions|systems)\b/i) ||
-         line.includes('-') ||
-         line.includes('|') ||
-         line.includes('@')
-}
-
-const isCompanyLine = (line) => {
-  return line.match(/\b(inc|llc|corp|ltd|company|technologies|solutions|systems|group|associates)\b/i)
-}
-
-const isDegreeOrSchoolLine = (line) => {
-  const educationKeywords = ['bachelor', 'master', 'phd', 'degree', 'university', 'college', 'school', 'institute', 'academy']
-  const lineLower = line.toLowerCase()
-  
-  return educationKeywords.some(keyword => lineLower.includes(keyword)) ||
-         line.match(/\b(bs|ba|ms|ma|phd|mba|bsc|msc|btech|mtech)\b/i)
-}
-
-const isProjectTitleLine = (line) => {
-  return line.length < 100 && 
-         !line.toLowerCase().includes('description') &&
-         !line.toLowerCase().includes('responsibilities') &&
-         (line.includes(':') || line.match(/^[-•*]/) || line.match(/^\d+\./))
-}
-
-const extractDuration = (text) => {
-  const yearRegex = /\b(19|20)\d{2}\b/g
-  const years = text.match(yearRegex)
-  
-  if (years && years.length >= 2) {
-    return `${years[0]} - ${years[years.length - 1]}`
-  } else if (years && years.length === 1) {
-    const presentRegex = /present|current|now/i
-    if (presentRegex.test(text)) {
-      return `${years[0]} - Present`
-    }
-    return years[0]
-  }
-  
-  const monthYearRegex = /(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\s+(19|20)\d{2}/gi
-  const monthYear = text.match(monthYearRegex)
-  
-  if (monthYear && monthYear.length >= 2) {
-    return `${monthYear[0]} - ${monthYear[monthYear.length - 1]}`
-  }
-  
-  return ''
-}
-
-const extractYear = (text) => {
-  const yearRegex = /\b(19|20)\d{2}\b/g
-  const years = text.match(yearRegex)
-  return years ? years[years.length - 1] : ''
-}
-
-const extractGPA = (text) => {
-  const gpaRegex = /gpa:?\s*(\d+\.?\d*)/i
-  const match = text.match(gpaRegex)
-  return match ? match[1] : ''
-}
-
-const extractLocationFromLine = (text) => {
-  const locationRegex = /([A-Z][a-z]+,?\s+[A-Z]{2}|[A-Z][a-z]+,\s+[A-Z][a-z]+)/g
-  const match = text.match(locationRegex)
-  return match ? match[0] : ''
-}
-
-const extractIssuer = (text) => {
-  const issuers = ['microsoft', 'google', 'amazon', 'aws', 'cisco', 'oracle', 'ibm', 'adobe', 'salesforce']
-  const textLower = text.toLowerCase()
-  
-  for (const issuer of issuers) {
-    if (textLower.includes(issuer)) {
-      return issuer.charAt(0).toUpperCase() + issuer.slice(1)
-    }
-  }
-  
-  return ''
+  return projects
 }

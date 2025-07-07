@@ -1,45 +1,64 @@
 import { useState } from 'react'
-import FileUploader from './components/FileUploader'
-import Portfolio from './components/Portfolio'
 import './App.css'
+import Header from './components/Header'
+import UploadSection from './components/UploadSection'
+import ResumeEditor from './components/ResumeEditor'
+import ExportSection from './components/ExportSection'
+import PortfolioWebsite from './components/PortfolioWebsite'
+import { ResumeProvider } from './context/ResumeContext'
 
 function App() {
-  const [portfolioData, setPortfolioData] = useState(null)
-  const [isLoading, setIsLoading] = useState(false)
-
-  const handleDataExtracted = (data) => {
-    setPortfolioData(data)
-  }
-
-  const handleReset = () => {
-    setPortfolioData(null)
-  }
+  const [currentStep, setCurrentStep] = useState('upload') // upload, edit, export, portfolio
 
   return (
-    <div className="app">
-      {!portfolioData ? (
-        <div className="upload-container">
-          <div className="hero-section">
-            <h1 className="hero-title">
-              Create Your Perfect Portfolio
-            </h1>
-            <p className="hero-subtitle">
-              Upload your resume in PDF or Word format and watch it transform into a beautiful portfolio website
-            </p>
+    <ResumeProvider>
+      <div className="app">
+        <Header />
+        <main className="main-content">
+          <div className="container">
+            {currentStep !== 'portfolio' && (
+              <div className="progress-bar">
+                <div className={`step ${currentStep === 'upload' ? 'active' : currentStep === 'edit' || currentStep === 'export' ? 'completed' : ''}`}>
+                  <span className="step-number">1</span>
+                  <span className="step-label">Upload Resume</span>
+                </div>
+                <div className={`step ${currentStep === 'edit' ? 'active' : currentStep === 'export' ? 'completed' : ''}`}>
+                  <span className="step-number">2</span>
+                  <span className="step-label">Edit Sections</span>
+                </div>
+                <div className={`step ${currentStep === 'export' ? 'active' : ''}`}>
+                  <span className="step-number">3</span>
+                  <span className="step-label">Export Resume</span>
+                </div>
+              </div>
+            )}
+
+            {currentStep === 'upload' && (
+              <UploadSection onNext={() => setCurrentStep('edit')} />
+            )}
+            
+            {currentStep === 'edit' && (
+              <ResumeEditor 
+                onBack={() => setCurrentStep('upload')}
+                onNext={() => setCurrentStep('export')}
+                onPortfolio={() => setCurrentStep('portfolio')}
+              />
+            )}
+            
+            {currentStep === 'export' && (
+              <ExportSection 
+                onBack={() => setCurrentStep('edit')}
+                onPortfolio={() => setCurrentStep('portfolio')}
+              />
+            )}
+
+            {currentStep === 'portfolio' && (
+              <PortfolioWebsite onBack={() => setCurrentStep('export')} />
+            )}
           </div>
-          <FileUploader 
-            onDataExtracted={handleDataExtracted}
-            isLoading={isLoading}
-            setIsLoading={setIsLoading}
-          />
-        </div>
-      ) : (
-        <Portfolio 
-          data={portfolioData} 
-          onReset={handleReset}
-        />
-      )}
-    </div>
+        </main>
+      </div>
+    </ResumeProvider>
   )
 }
 
