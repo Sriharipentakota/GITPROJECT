@@ -12,6 +12,7 @@ export function useResumeContext() {
 
 export function ResumeProvider({ children }) {
   const [resumeData, setResumeData] = useState(null)
+  const [candidateType, setCandidateType] = useState('experienced') // 'fresher' or 'experienced'
 
   const updateSection = (sectionKey, data) => {
     console.log('Context updateSection called:', sectionKey, 'with data:', data)
@@ -29,10 +30,79 @@ export function ResumeProvider({ children }) {
     })
   }
 
+  const createNewResume = (type = 'experienced') => {
+    setCandidateType(type)
+    
+    const baseData = {
+      candidateType: type,
+      personalInfo: {
+        name: '',
+        email: '',
+        phone: '',
+        location: '',
+        linkedin: '',
+        website: '',
+        github: ''
+      },
+      profilePhoto: null,
+      summary: '',
+      education: [],
+      skills: [],
+      languages: [],
+      interests: [],
+      portfolioInfo: {
+        title: '',
+        tagline: '',
+        experience: '',
+        availability: 'Available'
+      },
+      socialLinks: {
+        twitter: '',
+        instagram: '',
+        dribbble: '',
+        behance: '',
+        medium: '',
+        youtube: ''
+      },
+      testimonials: [],
+      services: [],
+      aboutMe: ''
+    }
+
+    if (type === 'fresher') {
+      // Fresher-specific sections
+      const fresherData = {
+        ...baseData,
+        academicProjects: [],
+        internships: [],
+        training: [],
+        certifications: [],
+        achievements: [],
+        extracurricular: [],
+        coursework: []
+      }
+      setResumeData(fresherData)
+    } else {
+      // Experienced candidate sections
+      const experiencedData = {
+        ...baseData,
+        experience: [],
+        projects: [],
+        certifications: [],
+        achievements: [],
+        awards: []
+      }
+      setResumeData(experiencedData)
+    }
+  }
+
   const value = {
     resumeData,
     setResumeData,
-    updateSection
+    updateSection,
+    createNewResume,
+    candidateType,
+    setCandidateType
   }
 
   return (

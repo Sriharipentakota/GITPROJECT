@@ -1,10 +1,10 @@
 import { useState } from 'react'
-import { FiEdit3, FiSave, FiX, FiPlus, FiTrash2, FiUser, FiAward, FiGlobe, FiHeart, FiMonitor, FiUsers, FiMessageSquare, FiTool } from 'react-icons/fi'
+import { FiEdit3, FiUser, FiAward, FiGlobe, FiHeart, FiMonitor, FiMessageSquare, FiTool, FiBriefcase, FiBook, FiStar } from 'react-icons/fi'
 import { useResumeContext } from '../context/ResumeContext'
 import EditableSection from './EditableSection'
 
-function ResumeEditor({ onBack, onNext }) {
-  const { resumeData, updateSection } = useResumeContext()
+function ResumeEditor({ onBack, onNext, onPortfolio }) {
+  const { resumeData, updateSection, candidateType } = useResumeContext()
   const [editingSection, setEditingSection] = useState(null)
 
   if (!resumeData) {
@@ -18,27 +18,52 @@ function ResumeEditor({ onBack, onNext }) {
     )
   }
 
-  const sections = [
-    // Core Resume Sections
-    { key: 'personalInfo', title: 'Personal Information', icon: FiEdit3, required: true, category: 'resume' },
-    { key: 'profilePhoto', title: 'Profile Photo', icon: FiUser, required: false, category: 'resume' },
-    { key: 'summary', title: 'Professional Summary', icon: FiEdit3, required: true, category: 'resume' },
-    { key: 'experience', title: 'Work Experience', icon: FiEdit3, required: true, category: 'resume' },
-    { key: 'education', title: 'Education', icon: FiEdit3, required: true, category: 'resume' },
-    { key: 'skills', title: 'Technical Skills', icon: FiEdit3, required: true, category: 'resume' },
-    { key: 'projects', title: 'Projects', icon: FiEdit3, required: false, category: 'resume' },
-    { key: 'certifications', title: 'Certifications', icon: FiAward, required: false, category: 'resume' },
-    { key: 'achievements', title: 'Achievements', icon: FiAward, required: false, category: 'resume' },
-    { key: 'languages', title: 'Languages', icon: FiGlobe, required: false, category: 'resume' },
-    { key: 'interests', title: 'Interests', icon: FiHeart, required: false, category: 'resume' },
-    
-    // Portfolio-Specific Sections
-    { key: 'portfolioInfo', title: 'Portfolio Information', icon: FiMonitor, required: false, category: 'portfolio' },
-    { key: 'aboutMe', title: 'About Me (Extended)', icon: FiUser, required: false, category: 'portfolio' },
-    { key: 'socialLinks', title: 'Social Media Links', icon: FiGlobe, required: false, category: 'portfolio' },
-    { key: 'testimonials', title: 'Client Testimonials', icon: FiMessageSquare, required: false, category: 'portfolio' },
-    { key: 'services', title: 'Services Offered', icon: FiTool, required: false, category: 'portfolio' }
-  ]
+  // Define sections based on candidate type
+  const getSections = () => {
+    const baseSections = [
+      { key: 'personalInfo', title: 'Personal Information', icon: FiEdit3, required: true, category: 'resume' },
+      { key: 'profilePhoto', title: 'Profile Photo', icon: FiUser, required: false, category: 'resume' },
+      { key: 'summary', title: candidateType === 'fresher' ? 'Career Objective' : 'Professional Summary', icon: FiEdit3, required: true, category: 'resume' },
+      { key: 'education', title: 'Education', icon: FiEdit3, required: true, category: 'resume' },
+      { key: 'skills', title: 'Technical Skills', icon: FiEdit3, required: true, category: 'resume' },
+    ]
+
+    if (candidateType === 'fresher') {
+      return [
+        ...baseSections,
+        { key: 'academicProjects', title: 'Academic Projects', icon: FiBook, required: true, category: 'resume' },
+        { key: 'internships', title: 'Internships', icon: FiBriefcase, required: false, category: 'resume' },
+        { key: 'certifications', title: 'Certifications', icon: FiAward, required: false, category: 'resume' },
+        { key: 'languages', title: 'Languages', icon: FiGlobe, required: false, category: 'resume' },
+        { key: 'interests', title: 'Interests', icon: FiHeart, required: false, category: 'resume' },
+        
+        // Portfolio sections
+        { key: 'portfolioInfo', title: 'Portfolio Information', icon: FiMonitor, required: false, category: 'portfolio' },
+        { key: 'aboutMe', title: 'About Me (Extended)', icon: FiUser, required: false, category: 'portfolio' },
+        { key: 'socialLinks', title: 'Social Media Links', icon: FiGlobe, required: false, category: 'portfolio' },
+        { key: 'testimonials', title: 'Testimonials', icon: FiMessageSquare, required: false, category: 'portfolio' },
+        { key: 'services', title: 'Services Offered', icon: FiTool, required: false, category: 'portfolio' }
+      ]
+    } else {
+      return [
+        ...baseSections,
+        { key: 'experience', title: 'Work Experience', icon: FiBriefcase, required: true, category: 'resume' },
+        { key: 'projects', title: 'Professional Projects', icon: FiEdit3, required: false, category: 'resume' },
+        { key: 'certifications', title: 'Certifications', icon: FiAward, required: false, category: 'resume' },
+        { key: 'languages', title: 'Languages', icon: FiGlobe, required: false, category: 'resume' },
+        { key: 'interests', title: 'Interests', icon: FiHeart, required: false, category: 'resume' },
+        
+        // Portfolio sections
+        { key: 'portfolioInfo', title: 'Portfolio Information', icon: FiMonitor, required: false, category: 'portfolio' },
+        { key: 'aboutMe', title: 'About Me (Extended)', icon: FiUser, required: false, category: 'portfolio' },
+        { key: 'socialLinks', title: 'Social Media Links', icon: FiGlobe, required: false, category: 'portfolio' },
+        { key: 'testimonials', title: 'Client Testimonials', icon: FiMessageSquare, required: false, category: 'portfolio' },
+        { key: 'services', title: 'Services Offered', icon: FiTool, required: false, category: 'portfolio' }
+      ]
+    }
+  }
+
+  const sections = getSections()
 
   const isRequiredSectionComplete = (section) => {
     const data = resumeData[section.key]
@@ -60,6 +85,12 @@ function ResumeEditor({ onBack, onNext }) {
                               exp.company && exp.company.trim() !== '' &&
                               exp.duration && exp.duration.trim() !== '' &&
                               exp.description && exp.description.trim() !== '')
+    }
+    
+    if (section.key === 'academicProjects') {
+      return Array.isArray(data) && data.length > 0 && 
+             data.every(proj => proj.name && proj.name.trim() !== '' && 
+                               proj.description && proj.description.trim() !== '')
     }
     
     if (section.key === 'education') {
@@ -111,13 +142,11 @@ function ResumeEditor({ onBack, onNext }) {
 
   const completion = getCompletionStatus()
   const portfolioCompletion = getPortfolioCompletionStatus()
-
   const resumeSections = sections.filter(s => s.category === 'resume')
   const portfolioSections = sections.filter(s => s.category === 'portfolio')
 
   const handleCompleteRequiredSections = () => {
     if (completion.incompleteSections.length > 0) {
-      // Navigate to the first incomplete section
       setEditingSection(completion.incompleteSections[0].key)
     }
   }
@@ -125,10 +154,16 @@ function ResumeEditor({ onBack, onNext }) {
   return (
     <div className="resume-editor fade-in">
       <div className="text-center mb-4">
-        <h1 className="section-title">Build Your ATS-Optimized Resume & Portfolio</h1>
+        <h1 className="section-title">Build Your ATS-Optimized Resume</h1>
         <p className="section-subtitle">
-          Complete all sections to create a professional resume and stunning portfolio website
+          Complete all sections to create a professional {candidateType} resume and portfolio website
         </p>
+        
+        {/* Candidate Type Badge */}
+        <div className="candidate-type-badge">
+          {candidateType === 'fresher' ? <FiUser /> : <FiBriefcase />}
+          <span>{candidateType === 'fresher' ? 'Fresher Profile' : 'Experienced Profile'}</span>
+        </div>
         
         <div className="completion-status">
           <div className="completion-section">
@@ -234,13 +269,25 @@ function ResumeEditor({ onBack, onNext }) {
           </div>
           
           <div className="ats-tips">
-            <h4>ATS Optimization Tips</h4>
+            <h4>{candidateType === 'fresher' ? 'Fresher Resume Tips' : 'ATS Optimization Tips'}</h4>
             <ul>
-              <li>Use standard section headers</li>
-              <li>Include relevant keywords</li>
-              <li>Keep formatting simple</li>
-              <li>Use bullet points for achievements</li>
-              <li>Include quantifiable results</li>
+              {candidateType === 'fresher' ? (
+                <>
+                  <li>Highlight academic achievements</li>
+                  <li>Include relevant coursework</li>
+                  <li>Showcase projects and internships</li>
+                  <li>Emphasize skills and certifications</li>
+                  <li>Add extracurricular activities</li>
+                </>
+              ) : (
+                <>
+                  <li>Use standard section headers</li>
+                  <li>Include relevant keywords</li>
+                  <li>Keep formatting simple</li>
+                  <li>Use bullet points for achievements</li>
+                  <li>Include quantifiable results</li>
+                </>
+              )}
             </ul>
           </div>
         </div>
@@ -251,6 +298,7 @@ function ResumeEditor({ onBack, onNext }) {
               sectionKey={editingSection}
               sectionTitle={sections.find(s => s.key === editingSection)?.title}
               data={resumeData[editingSection]}
+              candidateType={candidateType}
               onSave={(data) => {
                 updateSection(editingSection, data)
                 setEditingSection(null)
@@ -262,17 +310,18 @@ function ResumeEditor({ onBack, onNext }) {
               <div className="placeholder-content">
                 <FiEdit3 className="placeholder-icon" />
                 <h3>Select a section to edit</h3>
-                <p>Choose a section from the sidebar to start building your resume and portfolio</p>
+                <p>Choose a section from the sidebar to start building your {candidateType} resume</p>
+                
                 <div className="quick-start">
-                  <h4>Quick Start Guide:</h4>
+                  <h4>Quick Start Guide for {candidateType === 'fresher' ? 'Freshers' : 'Experienced Professionals'}:</h4>
                   <div className="quick-start-columns">
                     <div className="quick-start-column">
-                      <h5>📄 Resume Essentials:</h5>
+                      <h5>📄 Essential Sections:</h5>
                       <ol>
                         <li>Fill in your Personal Information</li>
-                        <li>Write a compelling Professional Summary</li>
-                        <li>Add your Work Experience</li>
-                        <li>Include your Education</li>
+                        <li>Write a compelling {candidateType === 'fresher' ? 'Career Objective' : 'Professional Summary'}</li>
+                        <li>Add your Education details</li>
+                        <li>{candidateType === 'fresher' ? 'Include Academic Projects' : 'Add Work Experience'}</li>
                         <li>List your Technical Skills</li>
                       </ol>
                     </div>
@@ -282,7 +331,7 @@ function ResumeEditor({ onBack, onNext }) {
                         <li>Add Portfolio Information</li>
                         <li>Write an extended About Me</li>
                         <li>Include Social Media Links</li>
-                        <li>Add Client Testimonials</li>
+                        <li>Add Testimonials</li>
                         <li>List Services You Offer</li>
                       </ol>
                     </div>
@@ -296,7 +345,7 @@ function ResumeEditor({ onBack, onNext }) {
         <div className="editor-preview">
           <h3>Live Preview</h3>
           <div className="resume-preview">
-            <ResumePreview data={resumeData} />
+            <ResumePreview data={resumeData} candidateType={candidateType} />
           </div>
         </div>
       </div>
@@ -305,21 +354,26 @@ function ResumeEditor({ onBack, onNext }) {
         <button className="btn btn-secondary" onClick={onBack}>
           Back to Start
         </button>
-        <button 
-          className="btn btn-primary" 
-          onClick={completion.percentage < 100 ? handleCompleteRequiredSections : onNext}
-        >
-          {completion.percentage < 100 ? 
-            `Complete Required Sections (${completion.percentage}%)` : 
-            'Continue to Export'
-          }
-        </button>
+        <div className="action-buttons">
+          <button className="btn btn-outline" onClick={onPortfolio}>
+            View Portfolio
+          </button>
+          <button 
+            className="btn btn-primary" 
+            onClick={completion.percentage < 100 ? handleCompleteRequiredSections : onNext}
+          >
+            {completion.percentage < 100 ? 
+              `Complete Required Sections (${completion.percentage}%)` : 
+              'Continue to Export'
+            }
+          </button>
+        </div>
       </div>
     </div>
   )
 }
 
-function ResumePreview({ data }) {
+function ResumePreview({ data, candidateType }) {
   return (
     <div className="resume-preview-content">
       {data.profilePhoto && data.profilePhoto.url && (
@@ -336,35 +390,13 @@ function ResumePreview({ data }) {
             {data.personalInfo.phone && <span>{String(data.personalInfo.phone)}</span>}
             {data.personalInfo.location && <span>{String(data.personalInfo.location)}</span>}
           </div>
-          <div className="contact-links">
-            {data.personalInfo.linkedin && <span>{String(data.personalInfo.linkedin)}</span>}
-            {data.personalInfo.website && <span>{String(data.personalInfo.website)}</span>}
-            {data.personalInfo.github && <span>{String(data.personalInfo.github)}</span>}
-          </div>
         </div>
       )}
 
       {data.summary && (
         <div className="preview-section">
-          <h3>Professional Summary</h3>
+          <h3>{candidateType === 'fresher' ? 'Career Objective' : 'Professional Summary'}</h3>
           <p>{String(data.summary)}</p>
-        </div>
-      )}
-
-      {data.experience && data.experience.length > 0 && (
-        <div className="preview-section">
-          <h3>Professional Experience</h3>
-          {data.experience.map((exp, index) => (
-            <div key={index} className="experience-item">
-              <h4>{String(exp.position || '')}</h4>
-              <div className="company-info">
-                <span>{String(exp.company || '')}</span>
-                <span>{String(exp.duration || '')}</span>
-              </div>
-              {exp.location && <div className="location">{String(exp.location)}</div>}
-              <p>{String(exp.description || '')}</p>
-            </div>
-          ))}
         </div>
       )}
 
@@ -378,9 +410,34 @@ function ResumePreview({ data }) {
                 <span>{String(edu.school || '')}</span>
                 <span>{String(edu.year || '')}</span>
               </div>
-              {edu.location && <div className="location">{String(edu.location)}</div>}
-              {edu.gpa && <div className="gpa">GPA: {String(edu.gpa)}</div>}
-              {edu.honors && <div className="honors">{String(edu.honors)}</div>}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {candidateType === 'fresher' && data.academicProjects && data.academicProjects.length > 0 && (
+        <div className="preview-section">
+          <h3>Academic Projects</h3>
+          {data.academicProjects.map((project, index) => (
+            <div key={index} className="project-item">
+              <h4>{String(project.name || '')}</h4>
+              <p>{String(project.description || '')}</p>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {candidateType === 'experienced' && data.experience && data.experience.length > 0 && (
+        <div className="preview-section">
+          <h3>Professional Experience</h3>
+          {data.experience.map((exp, index) => (
+            <div key={index} className="experience-item">
+              <h4>{String(exp.position || '')}</h4>
+              <div className="company-info">
+                <span>{String(exp.company || '')}</span>
+                <span>{String(exp.duration || '')}</span>
+              </div>
+              <p>{String(exp.description || '')}</p>
             </div>
           ))}
         </div>
@@ -392,74 +449,6 @@ function ResumePreview({ data }) {
           <div className="skills-list">
             {data.skills.map((skill, index) => (
               <span key={index} className="skill-tag">{String(skill)}</span>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {data.projects && data.projects.length > 0 && (
-        <div className="preview-section">
-          <h3>Projects</h3>
-          {data.projects.map((project, index) => (
-            <div key={index} className="project-item">
-              <h4>{String(project.name || '')}</h4>
-              <p>{String(project.description || '')}</p>
-              {(project.url || project.github) && (
-                <div className="project-links">
-                  {project.url && <span>Demo: {String(project.url)}</span>}
-                  {project.github && <span>Code: {String(project.github)}</span>}
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-      )}
-
-      {data.certifications && data.certifications.length > 0 && (
-        <div className="preview-section">
-          <h3>Certifications</h3>
-          {data.certifications.map((cert, index) => (
-            <div key={index} className="certification-item">
-              <h4>{String(cert.name || '')}</h4>
-              <div className="cert-info">
-                <span>{String(cert.issuer || '')}</span>
-                <span>{String(cert.year || '')}</span>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {data.achievements && data.achievements.length > 0 && (
-        <div className="preview-section">
-          <h3>Key Achievements</h3>
-          <ul className="achievements-list">
-            {data.achievements.map((achievement, index) => (
-              <li key={index}>{String(achievement)}</li>
-            ))}
-          </ul>
-        </div>
-      )}
-
-      {data.languages && data.languages.length > 0 && (
-        <div className="preview-section">
-          <h3>Languages</h3>
-          <div className="languages-list">
-            {data.languages.map((lang, index) => (
-              <span key={index} className="language-item">
-                {String(lang.language || '')} - {String(lang.proficiency || '')}
-              </span>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {data.interests && data.interests.length > 0 && (
-        <div className="preview-section">
-          <h3>Interests</h3>
-          <div className="interests-list">
-            {data.interests.map((interest, index) => (
-              <span key={index} className="interest-tag">{String(interest)}</span>
             ))}
           </div>
         </div>

@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react'
 import { useDropzone } from 'react-dropzone'
-import { FiUpload, FiFile, FiCheck, FiX, FiPlus, FiFileText } from 'react-icons/fi'
+import { FiUpload, FiFile, FiCheck, FiX, FiPlus, FiFileText, FiUser, FiBriefcase } from 'react-icons/fi'
 import { useResumeContext } from '../context/ResumeContext'
 import { parseResumeFile } from '../utils/resumeParser'
 
@@ -8,7 +8,9 @@ function UploadSection({ onNext }) {
   const [uploadStatus, setUploadStatus] = useState('idle') // idle, uploading, success, error
   const [uploadedFile, setUploadedFile] = useState(null)
   const [error, setError] = useState('')
-  const { setResumeData } = useResumeContext()
+  const [candidateType, setCandidateType] = useState('experienced') // 'fresher' or 'experienced'
+  const [showTypeSelection, setShowTypeSelection] = useState(false)
+  const { setResumeData, createNewResume } = useResumeContext()
 
   const processFile = async (file) => {
     setUploadStatus('uploading')
@@ -25,32 +27,16 @@ function UploadSection({ onNext }) {
     }
   }
 
-  const createNewResume = () => {
-    const newResumeData = {
-      personalInfo: {
-        name: '',
-        email: '',
-        phone: '',
-        location: '',
-        linkedin: '',
-        website: '',
-        github: ''
-      },
-      profilePhoto: null,
-      summary: '',
-      experience: [],
-      education: [],
-      skills: [],
-      certifications: [],
-      projects: [],
-      achievements: [],
-      languages: [],
-      interests: []
-    }
-    
-    setResumeData(newResumeData)
+  const handleCreateNew = () => {
+    setShowTypeSelection(true)
+  }
+
+  const handleTypeSelection = (type) => {
+    setCandidateType(type)
+    createNewResume(type)
     setUploadStatus('success')
-    setUploadedFile({ name: 'New Resume' })
+    setUploadedFile({ name: `New ${type === 'fresher' ? 'Fresher' : 'Experienced'} Resume` })
+    setShowTypeSelection(false)
   }
 
   const onDrop = useCallback((acceptedFiles, rejectedFiles) => {
@@ -85,11 +71,94 @@ function UploadSection({ onNext }) {
   return (
     <div className="upload-section fade-in">
       <div className="text-center mb-4">
-        <h1 className="section-title">Get Started</h1>
+        <h1 className="section-title">ATS Resume Formatter</h1>
         <p className="section-subtitle">
           Upload your existing resume or create a new ATS-optimized resume from scratch
         </p>
       </div>
+
+      {/* Type Selection Modal */}
+      {showTypeSelection && (
+        <div className="modal-overlay">
+          <div className="modal type-selection-modal">
+            <div className="modal-header">
+              <h3>Select Your Profile Type</h3>
+              <p>Choose the option that best describes your career stage</p>
+            </div>
+            <div className="modal-body">
+              <div className="candidate-type-selection">
+                <div className="radio-group">
+                  <label className="radio-option">
+                    <input
+                      type="radio"
+                      name="candidateType"
+                      value="fresher"
+                      checked={candidateType === 'fresher'}
+                      onChange={(e) => setCandidateType(e.target.value)}
+                    />
+                    <div className="radio-content">
+                      <div className="radio-icon fresher-icon">
+                        <FiUser />
+                      </div>
+                      <div className="radio-info">
+                        <h4>Fresher / Entry Level</h4>
+                        <p>New graduate or candidate with 0-2 years of experience</p>
+                        <ul className="radio-features">
+                          <li>✓ Education-focused sections</li>
+                          <li>✓ Academic projects & internships</li>
+                          <li>✓ Skills & certifications</li>
+                          <li>✓ Extracurricular activities</li>
+                          <li>✓ Training & workshops</li>
+                        </ul>
+                      </div>
+                    </div>
+                  </label>
+                  
+                  <label className="radio-option">
+                    <input
+                      type="radio"
+                      name="candidateType"
+                      value="experienced"
+                      checked={candidateType === 'experienced'}
+                      onChange={(e) => setCandidateType(e.target.value)}
+                    />
+                    <div className="radio-content">
+                      <div className="radio-icon experienced-icon">
+                        <FiBriefcase />
+                      </div>
+                      <div className="radio-info">
+                        <h4>Experienced Professional</h4>
+                        <p>Professional with 2+ years of work experience</p>
+                        <ul className="radio-features">
+                          <li>✓ Work experience focused</li>
+                          <li>✓ Professional achievements</li>
+                          <li>✓ Leadership & management</li>
+                          <li>✓ Industry expertise</li>
+                          <li>✓ Career progression</li>
+                        </ul>
+                      </div>
+                    </div>
+                  </label>
+                </div>
+              </div>
+            </div>
+            <div className="modal-footer">
+              <button 
+                className="btn btn-secondary"
+                onClick={() => setShowTypeSelection(false)}
+              >
+                Cancel
+              </button>
+              <button 
+                className="btn btn-primary"
+                onClick={() => handleTypeSelection(candidateType)}
+              >
+                Continue with {candidateType === 'fresher' ? 'Fresher' : 'Experienced'} Profile
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="upload-options">
         <div className="card upload-card">
@@ -106,13 +175,13 @@ function UploadSection({ onNext }) {
               <h4>Start Fresh</h4>
               <p>Perfect for creating a professional, ATS-friendly resume that scores 90+</p>
               <ul className="create-new-features">
-                <li>✓ All essential sections included</li>
+                <li>✓ Tailored sections for your experience level</li>
                 <li>✓ ATS-optimized formatting</li>
                 <li>✓ Professional templates</li>
                 <li>✓ Keyword optimization</li>
               </ul>
             </div>
-            <button className="btn btn-primary" onClick={createNewResume}>
+            <button className="btn btn-primary" onClick={handleCreateNew}>
               <FiPlus /> Create New Resume
             </button>
           </div>
@@ -130,7 +199,7 @@ function UploadSection({ onNext }) {
           
           <div
             {...getRootProps()}
-            className={`dropzone ${isDragActive ? 'active' : ''} ${uploadStatus === 'success' && uploadedFile?.name !== 'New Resume' ? 'success' : ''}`}
+            className={`dropzone ${isDragActive ? 'active' : ''} ${uploadStatus === 'success' && uploadedFile?.name !== 'New Fresher Resume' && uploadedFile?.name !== 'New Experienced Resume' ? 'success' : ''}`}
           >
             <input {...getInputProps()} />
             
@@ -140,7 +209,7 @@ function UploadSection({ onNext }) {
                 <h4>Drag & drop your resume here</h4>
                 <p>or click to browse your files</p>
                 <div className="file-types">
-                  <span>Supported formats: PDF, DOC, DOCX</span>
+                  <span>Supported formats: Word DOCX Only</span>
                 </div>
               </>
             )}
@@ -153,7 +222,7 @@ function UploadSection({ onNext }) {
               </>
             )}
 
-            {uploadStatus === 'success' && uploadedFile?.name !== 'New Resume' && (
+            {uploadStatus === 'success' && uploadedFile?.name !== 'New Fresher Resume' && uploadedFile?.name !== 'New Experienced Resume' && (
               <>
                 <FiCheck className="upload-icon success" />
                 <h4>Resume uploaded successfully!</h4>
@@ -186,10 +255,27 @@ function UploadSection({ onNext }) {
       </div>
 
       {uploadStatus === 'success' && (
-        <div className="upload-actions">
-          <button className="btn btn-primary btn-large" onClick={handleNext}>
-            Continue to Build Resume
-          </button>
+        <div className="upload-success-info">
+          {candidateType && (
+            <div className="selected-type-info">
+              <div className="type-badge">
+                {candidateType === 'fresher' ? <FiUser /> : <FiBriefcase />}
+                <span>{candidateType === 'fresher' ? 'Fresher Profile' : 'Experienced Profile'}</span>
+              </div>
+              <p>
+                {candidateType === 'fresher' 
+                  ? 'Your resume will focus on education, projects, and skills to highlight your potential.'
+                  : 'Your resume will emphasize work experience, achievements, and professional growth.'
+                }
+              </p>
+            </div>
+          )}
+          
+          <div className="upload-actions">
+            <button className="btn btn-primary btn-large" onClick={handleNext}>
+              Continue to Build Resume
+            </button>
+          </div>
         </div>
       )}
 

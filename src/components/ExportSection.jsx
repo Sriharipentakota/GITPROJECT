@@ -1,12 +1,10 @@
 import { useState } from 'react'
 import { FiDownload, FiFileText, FiFile, FiCheck, FiMonitor, FiExternalLink } from 'react-icons/fi'
-import { useNavigate } from 'react-router-dom'
 import { useResumeContext } from '../context/ResumeContext'
 import { exportToPDF, exportToWord } from '../utils/resumeExporter'
 
-function ExportSection({ onBack }) {
+function ExportSection({ onBack, onPortfolio }) {
   const { resumeData } = useResumeContext()
-  const navigate = useNavigate()
   const [exportStatus, setExportStatus] = useState('idle') // idle, exporting, success, error
   const [exportType, setExportType] = useState('')
   const [error, setError] = useState('')
@@ -27,19 +25,6 @@ function ExportSection({ onBack }) {
       setError(err.message || 'Export failed. Please try again.')
       setExportStatus('error')
     }
-  }
-
-  const handleCreatePortfolio = () => {
-    // Navigate to portfolio website
-    navigate('/portfolio')
-  }
-
-  const hasPortfolioData = () => {
-    return resumeData.portfolioInfo || 
-           resumeData.aboutMe || 
-           resumeData.socialLinks || 
-           (resumeData.testimonials && resumeData.testimonials.length > 0) ||
-           (resumeData.services && resumeData.services.length > 0)
   }
 
   return (
@@ -143,20 +128,12 @@ function ExportSection({ onBack }) {
                     <li>✓ Project showcase gallery</li>
                     <li>✓ Contact form integration</li>
                     <li>✓ Social media links</li>
-                    <li>✓ Client testimonials</li>
-                    <li>✓ Services section</li>
-                    <li>✓ Mobile-optimized</li>
                     <li>✓ Professional animations</li>
                   </ul>
-                  {hasPortfolioData() && (
-                    <div className="portfolio-enhancement">
-                      <p><strong>✨ Enhanced with your portfolio data!</strong></p>
-                    </div>
-                  )}
                 </div>
                 <button 
                   className="btn btn-success btn-large"
-                  onClick={handleCreatePortfolio}
+                  onClick={onPortfolio}
                 >
                   <FiExternalLink />
                   Create Portfolio Website
@@ -191,40 +168,6 @@ function ExportSection({ onBack }) {
           </div>
         </div>
       )}
-
-      <div className="ats-info">
-        <h3>ATS Optimization Features</h3>
-        <div className="ats-features">
-          <div className="ats-feature">
-            <FiCheck className="feature-icon" />
-            <div>
-              <h4>Clean Formatting</h4>
-              <p>Simple, readable layout without complex graphics or tables</p>
-            </div>
-          </div>
-          <div className="ats-feature">
-            <FiCheck className="feature-icon" />
-            <div>
-              <h4>Standard Sections</h4>
-              <p>Organized with standard section headers that ATS systems recognize</p>
-            </div>
-          </div>
-          <div className="ats-feature">
-            <FiCheck className="feature-icon" />
-            <div>
-              <h4>Keyword Optimization</h4>
-              <p>Structure optimized for keyword scanning and parsing</p>
-            </div>
-          </div>
-          <div className="ats-feature">
-            <FiCheck className="feature-icon" />
-            <div>
-              <h4>Compatible Fonts</h4>
-              <p>Uses ATS-friendly fonts that are easily readable by systems</p>
-            </div>
-          </div>
-        </div>
-      </div>
 
       <div className="export-actions">
         <button className="btn btn-secondary" onClick={onBack}>

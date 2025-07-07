@@ -1,4 +1,4 @@
-import { FiUser, FiFileText } from 'react-icons/fi'
+import { FiFileText } from 'react-icons/fi'
 
 function Header() {
   return (
@@ -7,12 +7,11 @@ function Header() {
         <div className="header-content">
           <div className="logo">
             <FiFileText className="logo-icon" />
-            <span className="logo-text">ResumeBuilder Pro</span>
+            <span className="logo-text">ATS Resume Formatter</span>
           </div>
           <nav className="nav">
             <div className="nav-item">
-              <FiUser className="nav-icon" />
-              <span>Portfolio Builder</span>
+              <span>Professional Resume Builder</span>
             </div>
           </nav>
         </div>
