@@ -1758,7 +1758,6 @@ function EditableSection({ sectionKey, sectionTitle, data, candidateType, onSave
           type="button"
           className="btn btn-primary"
           onClick={handleSave}
-          style={{ marginLeft: '10px' }}
         >
           <FiSave /> Save Changes
         </button>
