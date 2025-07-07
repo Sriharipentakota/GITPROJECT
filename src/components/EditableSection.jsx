@@ -95,7 +95,7 @@ function EditableSection({ sectionKey, sectionTitle, data, candidateType, onSave
       setFormData(prev => {
         const newData = { ...prev, [field]: value }
         console.log('PersonalInfo new data:', newData)
-        return newData  
+        return newData
       })
     } else if (typeof formData === 'string') {
       console.log('Setting string data to:', value)
@@ -1758,6 +1758,7 @@ function EditableSection({ sectionKey, sectionTitle, data, candidateType, onSave
           type="button"
           className="btn btn-primary"
           onClick={handleSave}
+          style={{ marginLeft: '10px' }}
         >
           <FiSave /> Save Changes
         </button>
