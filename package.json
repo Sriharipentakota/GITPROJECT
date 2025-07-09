@@ -1,5 +1,5 @@
 {
-  "name": "ats-resume-formatter",
+  "name": "vite-react-starter",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -10,17 +10,11 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "docx": "^8.5.0",
-    "file-saver": "^2.0.5",
     "html2canvas": "^1.4.1",
-    "jspdf": "^2.5.1",
-    "mammoth": "^1.6.0",
-    "pdfjs-dist": "^4.10.38",
+    "jspdf": "^3.0.1",
+    "lucide-react": "^0.525.0",
     "react": "^18.3.1",
-    "react-dom": "^18.3.1",
-    "react-dropzone": "^14.2.3",
-    "react-icons": "^4.12.0",
-    "react-router-dom": "^6.8.1"
+    "react-dom": "^18.3.1"
   },
   "devDependencies": {
     "@eslint/js": "^9.9.1",
