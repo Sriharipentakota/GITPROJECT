@@ -418,11 +418,11 @@ const Template20 = ({ data, isPreview = false }) => {
 
       {/* Projects */}
       {projects.length > 0 && (
-        <div>
+        <div style={{ marginBottom: '0' }}>
           <h2 style={{ 
             fontSize: '18px', 
             color: '#8b4513', 
-            marginBottom: '15px',
+            marginBottom: '10px',
             fontWeight: 'normal',
             textAlign: 'center',
             position: 'relative'
@@ -447,7 +447,7 @@ const Template20 = ({ data, isPreview = false }) => {
           </h2>
           {projects.map(project => (
             <div key={project.id} style={{ 
-              marginBottom: '15px',
+              marginBottom: '10px',
               backgroundColor: '#faf8f3',
               padding: '20px',
               borderRadius: '8px',
@@ -484,20 +484,6 @@ const Template20 = ({ data, isPreview = false }) => {
         </div>
       )}
 
-      {/* Footer Decoration */}
-      <div style={{
-        textAlign: 'center',
-        marginTop: '20px',
-        paddingTop: '15px',
-        borderTop: '1px solid #d4af37'
-      }}>
-        <div style={{
-          width: '50px',
-          height: '2px',
-          backgroundColor: '#d4af37',
-          margin: '0 auto'
-        }} />
-      </div>
     </div>
   );
 };

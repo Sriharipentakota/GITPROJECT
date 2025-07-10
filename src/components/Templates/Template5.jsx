@@ -434,11 +434,11 @@ const Template5 = ({ data, isPreview = false }) => {
 
       {/* Key Projects & Achievements */}
       {projects.length > 0 && (
-        <div style={{ marginBottom: '40px' }}>
+        <div style={{ marginBottom: '0' }}>
           <h2 style={{ 
             fontSize: '1.4rem', 
             color: '#8b5a3c', 
-            marginBottom: '25px',
+            marginBottom: '15px',
             fontWeight: 'bold',
             textAlign: 'center',
             textTransform: 'uppercase',
@@ -450,7 +450,7 @@ const Template5 = ({ data, isPreview = false }) => {
           </h2>
           {projects.map(project => (
             <div key={project.id} style={{ 
-              marginBottom: '30px',
+              marginBottom: '15px',
               padding: '20px',
               backgroundColor: '#faf9f7',
               border: '1px solid #e8e3d8',
@@ -468,14 +468,14 @@ const Template5 = ({ data, isPreview = false }) => {
                 <div style={{ 
                   fontSize: '0.95rem', 
                   color: '#8b5a3c', 
-                  marginBottom: '12px',
+                  marginBottom: '8px',
                   fontWeight: '600'
                 }}>
                   Technologies & Tools: {project.technologies}
                 </div>
               )}
               <p style={{ 
-                margin: '0 0 15px 0', 
+                margin: '0 0 10px 0', 
                 lineHeight: '1.7',
                 textAlign: 'justify',
                 fontSize: '1rem'

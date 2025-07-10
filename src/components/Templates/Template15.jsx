@@ -371,11 +371,11 @@ const Template15 = ({ data, isPreview = false }) => {
 
       {/* Projects */}
       {projects.length > 0 && (
-        <div>
+        <div style={{ marginBottom: '0' }}>
           <h2 style={{ 
             fontSize: '14px', 
             color: '#34495e', 
-            marginBottom: '8px',
+            marginBottom: '6px',
             fontWeight: 'bold',
             textTransform: 'uppercase',
             letterSpacing: '1px',
@@ -387,7 +387,7 @@ const Template15 = ({ data, isPreview = false }) => {
           </h2>
           {projects.map(project => (
             <div key={project.id} style={{ 
-              marginBottom: '12px',
+              marginBottom: '8px',
               backgroundColor: '#f8f9fa',
               padding: '12px',
               border: '1px solid #bdc3c7',

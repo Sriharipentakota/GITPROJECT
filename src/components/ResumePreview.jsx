@@ -80,7 +80,18 @@ const ResumePreview = ({ formData, template, onPrevious, onExport }) => {
       </div>
       
       <div className="resume-preview">
-        <div className="preview-content" id="resume-content">
+        <div 
+          className="preview-content" 
+          id="resume-content"
+          style={{
+            width: '210mm',
+            minHeight: '297mm',
+            margin: '0 auto',
+            backgroundColor: 'white',
+            boxShadow: '0 0 10px rgba(0,0,0,0.1)',
+            overflow: 'hidden'
+          }}
+        >
           {renderTemplate()}
         </div>
       </div>

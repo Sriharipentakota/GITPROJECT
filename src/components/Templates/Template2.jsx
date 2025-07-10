@@ -198,11 +198,11 @@ const Template2 = ({ data, isPreview = false }) => {
 
           {/* Projects */}
           {projects.length > 0 && (
-            <div style={{ marginBottom: '35px' }}>
+            <div style={{ marginBottom: '0' }}>
               <h2 style={{ 
                 fontSize: '1.3rem', 
                 color: '#1a1a1a', 
-                marginBottom: '20px',
+                marginBottom: '12px',
                 borderBottom: '2px solid #ddd',
                 paddingBottom: '8px',
                 fontWeight: 'bold',
@@ -212,7 +212,7 @@ const Template2 = ({ data, isPreview = false }) => {
                 Notable Projects
               </h2>
               {projects.map(project => (
-                <div key={project.id} style={{ marginBottom: '25px' }}>
+                <div key={project.id} style={{ marginBottom: '12px' }}>
                   <h3 style={{ 
                     fontSize: '1.1rem', 
                     margin: '0 0 5px 0', 
@@ -225,14 +225,14 @@ const Template2 = ({ data, isPreview = false }) => {
                     <div style={{ 
                       fontSize: '0.9rem', 
                       color: '#666', 
-                      marginBottom: '8px',
+                      marginBottom: '5px',
                       fontStyle: 'italic'
                     }}>
                       {project.technologies}
                     </div>
                   )}
                   <p style={{ 
-                    margin: '8px 0', 
+                    margin: '5px 0', 
                     lineHeight: '1.6',
                     textAlign: 'justify'
                   }}>
@@ -242,7 +242,7 @@ const Template2 = ({ data, isPreview = false }) => {
                     <div style={{ 
                       fontSize: '0.9rem', 
                       color: '#666',
-                      marginTop: '8px'
+                      marginTop: '5px'
                     }}>
                       {project.link && <span>Portfolio: {project.link}</span>}
                       {project.github && (

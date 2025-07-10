@@ -382,11 +382,11 @@ const Template4 = ({ data, isPreview = false }) => {
 
           {/* Projects */}
           {projects.length > 0 && (
-            <div style={{ marginBottom: '40px' }}>
+            <div style={{ marginBottom: '0' }}>
               <h2 style={{ 
                 fontSize: '1.5rem', 
                 color: '#2d3748', 
-                marginBottom: '25px',
+                marginBottom: '15px',
                 fontWeight: '700',
                 borderBottom: '3px solid #2d3748',
                 paddingBottom: '8px'
@@ -394,7 +394,7 @@ const Template4 = ({ data, isPreview = false }) => {
                 Projects
               </h2>
               {projects.map(project => (
-                <div key={project.id} style={{ marginBottom: '30px' }}>
+                <div key={project.id} style={{ marginBottom: '15px' }}>
                   <h3 style={{ 
                     fontSize: '1.1rem', 
                     margin: '0 0 8px 0', 
@@ -407,14 +407,14 @@ const Template4 = ({ data, isPreview = false }) => {
                     <div style={{ 
                       fontSize: '0.9rem', 
                       color: '#718096', 
-                      marginBottom: '12px',
+                      marginBottom: '8px',
                       fontWeight: '500'
                     }}>
                       Technologies: {project.technologies}
                     </div>
                   )}
                   <p style={{ 
-                    margin: '0 0 12px 0', 
+                    margin: '0 0 8px 0', 
                     lineHeight: '1.6',
                     color: '#2d3748',
                     textAlign: 'justify'

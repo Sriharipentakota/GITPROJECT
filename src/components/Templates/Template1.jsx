@@ -70,37 +70,40 @@ const Template1 = ({ data, isPreview = false }) => {
   return (
     <div style={{ 
       fontFamily: 'Arial, sans-serif', 
-      maxWidth: '800px', 
+      maxWidth: '210mm', 
+      minHeight: '297mm',
       margin: '0 auto', 
-      padding: '40px',
+      padding: '10mm',
       backgroundColor: 'white',
       color: '#333',
-      lineHeight: '1.6'
+      lineHeight: '1.4',
+      fontSize: '11px'
     }}>
       {/* Header - Single Column Classic */}
       <div style={{ 
         textAlign: 'center', 
-        marginBottom: '30px', 
+        marginBottom: '15px', 
         borderBottom: '3px solid #2563eb', 
-        paddingBottom: '20px' 
+        paddingBottom: '10px' 
       }}>
         <h1 style={{ 
-          fontSize: '2.5rem', 
+          fontSize: '24px', 
           margin: '0', 
           color: '#2563eb',
           fontWeight: 'bold',
-          letterSpacing: '1px'
+          letterSpacing: '1px',
+          marginBottom: '8px'
         }}>
           {personalInfo.fullName}
         </h1>
         <div style={{ 
-          fontSize: '1.1rem', 
+          fontSize: '11px', 
           color: '#666', 
-          marginTop: '10px',
+          marginTop: '5px',
           display: 'flex',
           justifyContent: 'center',
           flexWrap: 'wrap',
-          gap: '15px'
+          gap: '10px'
         }}>
           <span>{personalInfo.email}</span>
           <span>•</span>
@@ -113,13 +116,13 @@ const Template1 = ({ data, isPreview = false }) => {
           )}
         </div>
         <div style={{ 
-          fontSize: '1rem', 
+          fontSize: '10px', 
           color: '#666', 
-          marginTop: '8px',
+          marginTop: '5px',
           display: 'flex',
           justifyContent: 'center',
           flexWrap: 'wrap',
-          gap: '15px'
+          gap: '10px'
         }}>
           {personalInfo.linkedin && <span>{personalInfo.linkedin}</span>}
           {personalInfo.github && (
@@ -139,11 +142,11 @@ const Template1 = ({ data, isPreview = false }) => {
 
       {/* Summary */}
       {personalInfo.summary && (
-        <div style={{ marginBottom: '30px' }}>
+        <div style={{ marginBottom: '15px' }}>
           <h2 style={{ 
-            fontSize: '1.4rem', 
+            fontSize: '14px', 
             color: '#2563eb', 
-            marginBottom: '12px',
+            marginBottom: '8px',
             fontWeight: 'bold',
             textTransform: 'uppercase',
             letterSpacing: '1px'
@@ -151,9 +154,9 @@ const Template1 = ({ data, isPreview = false }) => {
             Professional Summary
           </h2>
           <p style={{ 
-            lineHeight: '1.7', 
+            lineHeight: '1.5', 
             margin: '0',
-            fontSize: '1rem',
+            fontSize: '11px',
             textAlign: 'justify'
           }}>
             {personalInfo.summary}
@@ -163,11 +166,11 @@ const Template1 = ({ data, isPreview = false }) => {
 
       {/* Experience */}
       {experience.length > 0 && (
-        <div style={{ marginBottom: '30px' }}>
+        <div style={{ marginBottom: '15px' }}>
           <h2 style={{ 
-            fontSize: '1.4rem', 
+            fontSize: '14px', 
             color: '#2563eb', 
-            marginBottom: '20px',
+            marginBottom: '10px',
             fontWeight: 'bold',
             textTransform: 'uppercase',
             letterSpacing: '1px'
@@ -175,15 +178,15 @@ const Template1 = ({ data, isPreview = false }) => {
             Professional Experience
           </h2>
           {experience.map(exp => (
-            <div key={exp.id} style={{ marginBottom: '25px' }}>
+            <div key={exp.id} style={{ marginBottom: '12px' }}>
               <div style={{ 
                 display: 'flex', 
                 justifyContent: 'space-between', 
                 alignItems: 'flex-start',
-                marginBottom: '5px'
+                marginBottom: '3px'
               }}>
                 <h3 style={{ 
-                  fontSize: '1.2rem', 
+                  fontSize: '12px', 
                   margin: '0', 
                   fontWeight: 'bold',
                   color: '#1a1a1a'
@@ -191,27 +194,28 @@ const Template1 = ({ data, isPreview = false }) => {
                   {exp.jobTitle}
                 </h3>
                 <span style={{ 
-                  fontSize: '0.9rem', 
+                  fontSize: '10px', 
                   color: '#666',
                   fontStyle: 'italic',
                   whiteSpace: 'nowrap',
-                  marginLeft: '20px'
+                  marginLeft: '10px'
                 }}>
                   {exp.startDate} - {exp.current ? 'Present' : exp.endDate}
                 </span>
               </div>
               <div style={{ 
-                fontSize: '1rem', 
+                fontSize: '11px', 
                 color: '#666', 
-                marginBottom: '8px',
+                marginBottom: '5px',
                 fontWeight: '600'
               }}>
                 {exp.company} | {exp.location}
               </div>
               {exp.description && (
                 <p style={{ 
-                  margin: '8px 0', 
-                  lineHeight: '1.6',
+                  margin: '5px 0', 
+                  lineHeight: '1.4',
+                  fontSize: '10px',
                   textAlign: 'justify'
                 }}>
                   {exp.description}
@@ -224,11 +228,11 @@ const Template1 = ({ data, isPreview = false }) => {
 
       {/* Education */}
       {education.length > 0 && (
-        <div style={{ marginBottom: '30px' }}>
+        <div style={{ marginBottom: '15px' }}>
           <h2 style={{ 
-            fontSize: '1.4rem', 
+            fontSize: '14px', 
             color: '#2563eb', 
-            marginBottom: '20px',
+            marginBottom: '10px',
             fontWeight: 'bold',
             textTransform: 'uppercase',
             letterSpacing: '1px'
@@ -236,15 +240,15 @@ const Template1 = ({ data, isPreview = false }) => {
             Education
           </h2>
           {education.map(edu => (
-            <div key={edu.id} style={{ marginBottom: '20px' }}>
+            <div key={edu.id} style={{ marginBottom: '10px' }}>
               <div style={{ 
                 display: 'flex', 
                 justifyContent: 'space-between', 
                 alignItems: 'flex-start',
-                marginBottom: '5px'
+                marginBottom: '3px'
               }}>
                 <h3 style={{ 
-                  fontSize: '1.1rem', 
+                  fontSize: '12px', 
                   margin: '0', 
                   fontWeight: 'bold',
                   color: '#1a1a1a'
@@ -252,7 +256,7 @@ const Template1 = ({ data, isPreview = false }) => {
                   {edu.degree}
                 </h3>
                 <span style={{ 
-                  fontSize: '0.9rem', 
+                  fontSize: '10px', 
                   color: '#666',
                   fontStyle: 'italic'
                 }}>
@@ -260,19 +264,19 @@ const Template1 = ({ data, isPreview = false }) => {
                 </span>
               </div>
               <div style={{ 
-                fontSize: '1rem', 
+                fontSize: '11px', 
                 color: '#666',
                 fontWeight: '600'
               }}>
                 {edu.institution} | {edu.location}
               </div>
               {edu.gpa && (
-                <div style={{ fontSize: '0.9rem', color: '#666', marginTop: '3px' }}>
+                <div style={{ fontSize: '10px', color: '#666', marginTop: '2px' }}>
                   GPA: {edu.gpa}
                 </div>
               )}
               {edu.relevant && (
-                <div style={{ fontSize: '0.9rem', color: '#666', marginTop: '3px' }}>
+                <div style={{ fontSize: '10px', color: '#666', marginTop: '2px' }}>
                   Relevant Coursework: {edu.relevant}
                 </div>
               )}
@@ -282,11 +286,11 @@ const Template1 = ({ data, isPreview = false }) => {
       )}
 
       {/* Skills */}
-      <div style={{ marginBottom: '30px' }}>
+      <div style={{ marginBottom: '15px' }}>
         <h2 style={{ 
-          fontSize: '1.4rem', 
+          fontSize: '14px', 
           color: '#2563eb', 
-          marginBottom: '20px',
+          marginBottom: '10px',
           fontWeight: 'bold',
           textTransform: 'uppercase',
           letterSpacing: '1px'
@@ -294,32 +298,32 @@ const Template1 = ({ data, isPreview = false }) => {
           Core Competencies
         </h2>
         {skills.technical.length > 0 && (
-          <div style={{ marginBottom: '12px' }}>
+          <div style={{ marginBottom: '8px' }}>
             <strong style={{ color: '#1a1a1a' }}>Technical Skills: </strong>
-            <span>{skills.technical.join(' • ')}</span>
+            <span style={{ fontSize: '10px' }}>{skills.technical.join(' • ')}</span>
           </div>
         )}
         {skills.soft.length > 0 && (
-          <div style={{ marginBottom: '12px' }}>
+          <div style={{ marginBottom: '8px' }}>
             <strong style={{ color: '#1a1a1a' }}>Professional Skills: </strong>
-            <span>{skills.soft.join(' • ')}</span>
+            <span style={{ fontSize: '10px' }}>{skills.soft.join(' • ')}</span>
           </div>
         )}
         {skills.languages.length > 0 && (
-          <div style={{ marginBottom: '12px' }}>
+          <div style={{ marginBottom: '8px' }}>
             <strong style={{ color: '#1a1a1a' }}>Languages: </strong>
-            <span>{skills.languages.join(' • ')}</span>
+            <span style={{ fontSize: '10px' }}>{skills.languages.join(' • ')}</span>
           </div>
         )}
       </div>
 
       {/* Projects */}
       {projects.length > 0 && (
-        <div style={{ marginBottom: '30px' }}>
+        <div style={{ marginBottom: '0' }}>
           <h2 style={{ 
-            fontSize: '1.4rem', 
+            fontSize: '14px', 
             color: '#2563eb', 
-            marginBottom: '20px',
+            marginBottom: '8px',
             fontWeight: 'bold',
             textTransform: 'uppercase',
             letterSpacing: '1px'
@@ -327,10 +331,10 @@ const Template1 = ({ data, isPreview = false }) => {
             Key Projects
           </h2>
           {projects.map(project => (
-            <div key={project.id} style={{ marginBottom: '25px' }}>
+            <div key={project.id} style={{ marginBottom: '8px' }}>
               <h3 style={{ 
-                fontSize: '1.1rem', 
-                margin: '0 0 5px 0', 
+                fontSize: '12px', 
+                margin: '0 0 3px 0', 
                 fontWeight: 'bold',
                 color: '#1a1a1a'
               }}>
@@ -338,26 +342,27 @@ const Template1 = ({ data, isPreview = false }) => {
               </h3>
               {project.technologies && (
                 <div style={{ 
-                  fontSize: '0.9rem', 
+                  fontSize: '10px', 
                   color: '#666', 
-                  marginBottom: '8px',
+                  marginBottom: '3px',
                   fontStyle: 'italic'
                 }}>
                   Technologies: {project.technologies}
                 </div>
               )}
               <p style={{ 
-                margin: '8px 0', 
-                lineHeight: '1.6',
+                margin: '3px 0', 
+                lineHeight: '1.4',
+                fontSize: '10px',
                 textAlign: 'justify'
               }}>
                 {project.description}
               </p>
               {(project.link || project.github) && (
                 <div style={{ 
-                  fontSize: '0.9rem', 
+                  fontSize: '9px', 
                   color: '#2563eb',
-                  marginTop: '8px'
+                  marginTop: '3px'
                 }}>
                   {project.link && <span>Live Demo: {project.link}</span>}
                   {project.github && (
