@@ -1,228 +1,324 @@
-import React, { useState } from 'react';
-import { FileText, User, Briefcase, GraduationCap, Code, Award, Download, Menu, X } from 'lucide-react';
-import TemplateSelector from './components/TemplateSelector';
-import UserTypeSelector from './components/UserTypeSelector';
-import PersonalInfo from './components/FormSections/PersonalInfo';
-import Experience from './components/FormSections/Experience';
-import Education from './components/FormSections/Education';
-import Skills from './components/FormSections/Skills';
-import Projects from './components/FormSections/Projects';
-import ResumePreview from './components/ResumePreview';
-import { exportToPDF } from './utils/pdfExport';
-import './App.css';
+import React, { useState, useEffect } from 'react';
+import EmployeeList from './components/EmployeeList';
+import EmployeeForm from './components/EmployeeForm';
+import SearchBar from './components/SearchBar';
+import ConfirmationModal from './components/ConfirmationModal';
+import ExportButton from './components/ExportButton';
+import { validateEmployee, generateId } from './utils/dataHelpers';
+import './styles/App.css';
+
+// Initial sample data
+const initialEmployees = [
+  {
+    id: 1,
+    firstName: 'John',
+    lastName: 'Doe',
+    email: 'john.doe@company.com',
+    department: 'Engineering',
+    position: 'Senior Developer',
+    salary: 75000,
+    hireDate: '2022-01-15',
+    status: 'Active'
+  },
+  {
+    id: 2,
+    firstName: 'Jane',
+    lastName: 'Smith',
+    email: 'jane.smith@company.com',
+    department: 'Marketing',
+    position: 'Marketing Manager',
+    salary: 68000,
+    hireDate: '2021-11-08',
+    status: 'Active'
+  },
+  {
+    id: 3,
+    firstName: 'Mike',
+    lastName: 'Johnson',
+    email: 'mike.johnson@company.com',
+    department: 'HR',
+    position: 'HR Specialist',
+    salary: 55000,
+    hireDate: '2023-03-22',
+    status: 'Active'
+  },
+  {
+    id: 4,
+    firstName: 'Sarah',
+    lastName: 'Wilson',
+    email: 'sarah.wilson@company.com',
+    department: 'Finance',
+    position: 'Financial Analyst',
+    salary: 62000,
+    hireDate: '2022-07-12',
+    status: 'Inactive'
+  },
+  {
+    id: 5,
+    firstName: 'David',
+    lastName: 'Brown',
+    email: 'david.brown@company.com',
+    department: 'Engineering',
+    position: 'Junior Developer',
+    salary: 52000,
+    hireDate: '2023-09-05',
+    status: 'Active'
+  }
+];
 
 function App() {
-  const [currentStep, setCurrentStep] = useState(0);
-  const [userType, setUserType] = useState('');
-  const [selectedTemplate, setSelectedTemplate] = useState(1);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [formData, setFormData] = useState({
-    personalInfo: {
-      fullName: '',
-      email: '',
-      phone: '',
-      address: '',
-      linkedin: '',
-      github: '',
-      portfolio: '',
-      summary: ''
-    },
-    experience: [],
-    education: [],
-    skills: {
-      technical: [],
-      soft: [],
-      languages: []
-    },
-    projects: [],
-    achievements: []
+  const [employees, setEmployees] = useState(initialEmployees);
+  const [filteredEmployees, setFilteredEmployees] = useState(initialEmployees);
+  const [editingEmployee, setEditingEmployee] = useState(null);
+  const [showForm, setShowForm] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterDepartment, setFilterDepartment] = useState('');
+  const [filterStatus, setFilterStatus] = useState('');
+  const [sortField, setSortField] = useState('lastName');
+  const [sortDirection, setSortDirection] = useState('asc');
+  const [notification, setNotification] = useState({ message: '', type: '' });
+  const [confirmModal, setConfirmModal] = useState({
+    isOpen: false,
+    title: '',
+    message: '',
+    onConfirm: null
   });
 
-  const steps = [
-    { id: 'userType', title: 'User Type', icon: User },
-    { id: 'template', title: 'Template', icon: FileText },
-    { id: 'personal', title: 'Personal Info', icon: User },
-    { id: 'experience', title: 'Experience', icon: Briefcase },
-    { id: 'education', title: 'Education', icon: GraduationCap },
-    { id: 'skills', title: 'Skills', icon: Code },
-    { id: 'projects', title: 'Projects', icon: Award },
-    { id: 'preview', title: 'Preview', icon: FileText }
-  ];
+  // Get unique departments for filter dropdown
+  const departments = [...new Set(employees.map(emp => emp.department))];
 
-  const updateFormData = (section, data) => {
-    setFormData(prev => ({
-      ...prev,
-      [section]: data
-    }));
+  // Filter and sort employees
+  useEffect(() => {
+    let filtered = employees.filter(employee => {
+      const matchesSearch = searchTerm === '' || 
+        employee.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        employee.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        employee.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        employee.position.toLowerCase().includes(searchTerm.toLowerCase());
+
+      const matchesDepartment = filterDepartment === '' || employee.department === filterDepartment;
+      const matchesStatus = filterStatus === '' || employee.status === filterStatus;
+
+      return matchesSearch && matchesDepartment && matchesStatus;
+    });
+
+    // Sort filtered results
+    filtered.sort((a, b) => {
+      let aValue = a[sortField];
+      let bValue = b[sortField];
+
+      if (sortField === 'salary') {
+        aValue = parseFloat(aValue);
+        bValue = parseFloat(bValue);
+      } else if (sortField === 'hireDate') {
+        aValue = new Date(aValue);
+        bValue = new Date(bValue);
+      } else {
+        aValue = aValue.toString().toLowerCase();
+        bValue = bValue.toString().toLowerCase();
+      }
+
+      if (sortDirection === 'asc') {
+        return aValue < bValue ? -1 : aValue > bValue ? 1 : 0;
+      } else {
+        return aValue > bValue ? -1 : aValue < bValue ? 1 : 0;
+      }
+    });
+
+    setFilteredEmployees(filtered);
+  }, [employees, searchTerm, filterDepartment, filterStatus, sortField, sortDirection]);
+
+  // Show notification
+  const showNotification = (message, type) => {
+    setNotification({ message, type });
+    setTimeout(() => setNotification({ message: '', type: '' }), 3000);
   };
 
-  const handleNext = () => {
-    if (currentStep < steps.length - 1) {
-      setCurrentStep(currentStep + 1);
+  // Handle employee creation
+  const handleCreateEmployee = (employeeData) => {
+    const validation = validateEmployee(employeeData);
+    if (!validation.isValid) {
+      showNotification(validation.errors.join(', '), 'error');
+      return;
     }
-    setIsMobileMenuOpen(false);
+
+    const newEmployee = {
+      ...employeeData,
+      id: generateId(employees),
+      salary: parseFloat(employeeData.salary)
+    };
+
+    setEmployees(prev => [...prev, newEmployee]);
+    setShowForm(false);
+    showNotification('Employee created successfully!', 'success');
   };
 
-  const handlePrevious = () => {
-    if (currentStep > 0) {
-      setCurrentStep(currentStep - 1);
+  // Handle employee update
+  const handleUpdateEmployee = (employeeData) => {
+    const validation = validateEmployee(employeeData);
+    if (!validation.isValid) {
+      showNotification(validation.errors.join(', '), 'error');
+      return;
     }
-    setIsMobileMenuOpen(false);
+
+    const updatedEmployee = {
+      ...employeeData,
+      salary: parseFloat(employeeData.salary)
+    };
+
+    setEmployees(prev => prev.map(emp => 
+      emp.id === editingEmployee.id ? updatedEmployee : emp
+    ));
+    setEditingEmployee(null);
+    setShowForm(false);
+    showNotification('Employee updated successfully!', 'success');
   };
 
-  const handleExportPDF = () => {
-    exportToPDF(formData, selectedTemplate);
+  // Handle employee deletion
+  const handleDeleteEmployee = (employeeId) => {
+    const employee = employees.find(emp => emp.id === employeeId);
+    setConfirmModal({
+      isOpen: true,
+      title: 'Delete Employee',
+      message: `Are you sure you want to delete ${employee.firstName} ${employee.lastName}? This action cannot be undone.`,
+      onConfirm: () => {
+        setEmployees(prev => prev.filter(emp => emp.id !== employeeId));
+        showNotification('Employee deleted successfully!', 'success');
+        setConfirmModal({ isOpen: false, title: '', message: '', onConfirm: null });
+      }
+    });
   };
 
-  const toggleMobileMenu = () => {
-    setIsMobileMenuOpen(!isMobileMenuOpen);
+  // Close confirmation modal
+  const closeConfirmModal = () => {
+    setConfirmModal({ isOpen: false, title: '', message: '', onConfirm: null });
   };
 
-  const handleStepClick = (stepIndex) => {
-    // Only allow navigation to completed steps or current step
-    if (stepIndex <= currentStep) {
-      setCurrentStep(stepIndex);
-      setIsMobileMenuOpen(false);
+  // Handle edit employee
+  const handleEditEmployee = (employee) => {
+    setEditingEmployee(employee);
+    setShowForm(true);
+  };
+
+  // Handle sorting
+  const handleSort = (field) => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDirection('asc');
     }
   };
-  const renderStepContent = () => {
-    switch (steps[currentStep].id) {
-      case 'userType':
-        return (
-          <UserTypeSelector
-            userType={userType}
-            onSelect={setUserType}
-            onNext={handleNext}
-          />
-        );
-      case 'template':
-        return (
-          <TemplateSelector
-            selectedTemplate={selectedTemplate}
-            onSelect={setSelectedTemplate}
-            onNext={handleNext}
-            onPrevious={handlePrevious}
-          />
-        );
-      case 'personal':
-        return (
-          <PersonalInfo
-            data={formData.personalInfo}
-            onChange={(data) => updateFormData('personalInfo', data)}
-            onNext={handleNext}
-            onPrevious={handlePrevious}
-          />
-        );
-      case 'experience':
-        return (
-          <Experience
-            data={formData.experience}
-            userType={userType}
-            onChange={(data) => updateFormData('experience', data)}
-            onNext={handleNext}
-            onPrevious={handlePrevious}
-          />
-        );
-      case 'education':
-        return (
-          <Education
-            data={formData.education}
-            onChange={(data) => updateFormData('education', data)}
-            onNext={handleNext}
-            onPrevious={handlePrevious}
-          />
-        );
-      case 'skills':
-        return (
-          <Skills
-            data={formData.skills}
-            onChange={(data) => updateFormData('skills', data)}
-            onNext={handleNext}
-            onPrevious={handlePrevious}
-          />
-        );
-      case 'projects':
-        return (
-          <Projects
-            data={formData.projects}
-            userType={userType}
-            onChange={(data) => updateFormData('projects', data)}
-            onNext={handleNext}
-            onPrevious={handlePrevious}
-          />
-        );
-      case 'preview':
-        return (
-          <ResumePreview
-            formData={formData}
-            template={selectedTemplate}
-            onPrevious={handlePrevious}
-            onExport={handleExportPDF}
-          />
-        );
-      default:
-        return null;
-    }
+
+  // Handle search and filters
+  const handleSearch = (term) => {
+    setSearchTerm(term);
+  };
+
+  const handleFilterDepartment = (department) => {
+    setFilterDepartment(department);
+  };
+
+  const handleFilterStatus = (status) => {
+    setFilterStatus(status);
+  };
+
+  const handleClearFilters = () => {
+    setSearchTerm('');
+    setFilterDepartment('');
+    setFilterStatus('');
   };
 
   return (
     <div className="app">
-      {/* Mobile Menu Toggle */}
-      <button className="mobile-menu-toggle" onClick={toggleMobileMenu}>
-        {isMobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
-      </button>
+      <header className="app-header">
+        <h1>Employee Management System</h1>
+        <div className="header-actions">
+          <ExportButton 
+            employees={employees}
+            filteredEmployees={filteredEmployees}
+            searchTerm={searchTerm}
+            filterDepartment={filterDepartment}
+            filterStatus={filterStatus}
+          />
+          <button 
+            className="btn btn-primary"
+            onClick={() => {
+              setEditingEmployee(null);
+              setShowForm(true);
+            }}
+          >
+            Add New Employee
+          </button>
+        </div>
+      </header>
 
-      {/* Mobile Overlay */}
-      {isMobileMenuOpen && (
-        <div className="mobile-overlay" onClick={toggleMobileMenu} />
+      {notification.message && (
+        <div className={`notification ${notification.type}`}>
+          {notification.message}
+        </div>
       )}
 
-      <div className="sidebar">
-        <div className="sidebar-header">
-          <h1>Resume Builder</h1>
-          <p>Create your professional resume</p>
-        </div>
-        <nav className="sidebar-nav">
-          {steps.map((step, index) => {
-            const Icon = step.icon;
-            const isClickable = index <= currentStep;
-            return (
-              <div
-                key={step.id}
-                className={`nav-item ${index === currentStep ? 'active' : ''} ${
-                  index < currentStep ? 'completed' : ''
-                } ${isClickable ? 'clickable' : ''}`}
-                onClick={() => isClickable && handleStepClick(index)}
-                style={{ 
-                  cursor: isClickable ? 'pointer' : 'default',
-                  opacity: isClickable ? 1 : 0.6
-                }}
-              >
-                <div className="nav-icon">
-                  <Icon size={20} />
-                </div>
-                <span className="nav-title">{step.title}</span>
-              </div>
-            );
-          })}
-        </nav>
-      </div>
-      <div className="main-content">
-        <div className="step-indicator">
-          <div className="step-progress">
-            <div
-              className="step-progress-fill"
-              style={{ width: `${((currentStep + 1) / steps.length) * 100}%` }}
-            />
+      <main className="app-main">
+        <SearchBar
+          searchTerm={searchTerm}
+          onSearch={handleSearch}
+          departments={departments}
+          selectedDepartment={filterDepartment}
+          onFilterDepartment={handleFilterDepartment}
+          selectedStatus={filterStatus}
+          onFilterStatus={handleFilterStatus}
+          onClearFilters={handleClearFilters}
+        />
+
+        <div className="app-stats">
+          <div className="stat-card">
+            <h3>Total Employees</h3>
+            <p>{employees.length}</p>
           </div>
-          <span className="step-text">
-            Step {currentStep + 1} of {steps.length}
-          </span>
+          <div className="stat-card">
+            <h3>Active Employees</h3>
+            <p>{employees.filter(emp => emp.status === 'Active').length}</p>
+          </div>
+          <div className="stat-card">
+            <h3>Departments</h3>
+            <p>{departments.length}</p>
+          </div>
+          <div className="stat-card">
+            <h3>Filtered Results</h3>
+            <p>{filteredEmployees.length}</p>
+          </div>
         </div>
-        <div className="content-area">
-          {renderStepContent()}
-        </div>
-      </div>
+
+        {showForm && (
+          <EmployeeForm
+            employee={editingEmployee}
+            onSave={editingEmployee ? handleUpdateEmployee : handleCreateEmployee}
+            onCancel={() => {
+              setShowForm(false);
+              setEditingEmployee(null);
+            }}
+            departments={departments}
+          />
+        )}
+
+        <EmployeeList
+          employees={filteredEmployees}
+          onEdit={handleEditEmployee}
+          onDelete={handleDeleteEmployee}
+          onSort={handleSort}
+          sortField={sortField}
+          sortDirection={sortDirection}
+        />
+      </main>
+
+      <ConfirmationModal
+        isOpen={confirmModal.isOpen}
+        onClose={closeConfirmModal}
+        onConfirm={confirmModal.onConfirm}
+        title={confirmModal.title}
+        message={confirmModal.message}
+      />
     </div>
   );
 }
