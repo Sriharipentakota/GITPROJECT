@@ -28,7 +28,7 @@ function App() {
 
   // Fetch employees from API
   const fetchEmployees = () => {
-    axios.get('http://localhost:5000/api/employees')
+    axios.get('https://gitproject-2.onrender.com/api/employees')
       .then(response => {
         setEmployees(response.data);
       })
@@ -100,7 +100,7 @@ console.log(employeeData," handleCreateEmployee called");
       showNotification(validation.errors.join(', '), 'error');
       return;
     }
-    axios.post('http://localhost:5000/api/employees', employeeData)
+    axios.post('https://gitproject-2.onrender.com/api/employees', employeeData)
       .then(() => {
         fetchEmployees();
         setShowForm(false);
@@ -120,7 +120,7 @@ console.log(employeeData," handleCreateEmployee called");
       return;
     }
     const id = employeeData._id || employeeData.id;
-    axios.put(`http://localhost:5000/api/employees/${id}`, employeeData)
+    axios.put(`https://gitproject-2.onrender.com/api/employees/${id}`, employeeData)
       .then(() => {
         fetchEmployees();
         setEditingEmployee(null);
@@ -142,7 +142,7 @@ console.log(employeeId, " handleDeleteEmployee called");
       title: 'Delete Employee',
       message: `Are you sure you want to delete ${employee?.firstName} ${employee?.lastName}? This action cannot be undone.`,
       onConfirm: () => {
-        axios.delete(`http://localhost:5000/api/employees/${employeeId}`)
+        axios.delete(`https://gitproject-2.onrender.com/api/employees/${employeeId}`)
           .then(() => {
             fetchEmployees();
             showNotification('Employee deleted successfully!', 'success');
