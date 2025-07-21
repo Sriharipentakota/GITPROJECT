@@ -1,49 +1,31 @@
-import './App.css';
-import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom'
-import { Navbar } from './components/navbar';
-import { Cart } from './pages/cart/cart';
-import { Contact } from "./pages/contact";
-import { Shop } from './pages/shop/shop';
-import { ShopContextProvider } from "./context/shop-context";
-import Login from './pages/loginPage/loginForm';
-import Signup from './pages/loginPage/signUpForm';
-import SocialLogin from './pages/loginPage/socialLoginForm';
-import PaymentPage from './pages/paymentPage/paymentPage';
+import express from 'express';
+import dotenv from 'dotenv';
+import employeeRoutes from './routes/employeeRoutes.js';
+import cors from 'cors';
 
-const ConditionalWrapper = ({ children }) => {
-  const location = useLocation();
-  
-  // Check if the current route is either '/' (login) or '/signup'
-  const shouldShowNavbar = !(location.pathname === '/' || location.pathname.includes('/signup'));
+dotenv.config();
 
-  return (
-    <>
-      {shouldShowNavbar && <Navbar />}
-      {children}
-    </>
-  );
-}
+const app = express();
 
-function App() {
-  return (
-    <div className="App">
-      <ShopContextProvider>
-        <Router>
-          <ConditionalWrapper>
-            <Routes>
-              <Route path='/' element={<Login />} />
-              <Route path='/signup' element={<Signup />} />
-              <Route path='/googleForm' element={<SocialLogin />} />
-              <Route path='/shop' element={<Shop />} />
-              <Route path="/contact" element={<Contact />} />
-              <Route path='/cart' element={<Cart />} />
-              <Route path='/payment' element={<PaymentPage />} />
-            </Routes>
-          </ConditionalWrapper>
-        </Router>
-      </ShopContextProvider>
-    </div>
-  );
-}
+app.use(cors());
 
-export default App;
+// Middleware
+app.use(express.json());
+
+// Database connection
+import connectDB from './utils/db.js';
+connectDB();
+
+// Routes
+app.use('/api/employees', employeeRoutes);
+
+// Error handling
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).send('Something broke!');
+});
+
+const PORT = process.env.PORT || 5001;
+app.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
+});

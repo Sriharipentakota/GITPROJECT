@@ -1,0 +1,123 @@
+[
+  {
+    "name": "Jane Smith",
+    "position": "Data Analyst",
+    "department": "Analytics",
+    "salary": 72000
+  },
+  {
+    "name": "Michael Brown",
+    "position": "Project Manager",
+    "department": "Operations",
+    "salary": 85000
+  },
+  {
+    "name": "Emily Davis",
+    "position": "QA Engineer",
+    "department": "IT",
+    "salary": 67000
+  },
+  {
+    "name": "Chris Johnson",
+    "position": "Systems Administrator",
+    "department": "IT",
+    "salary": 78000
+  },
+  {
+    "name": "Patricia Lee",
+    "position": "UX Designer",
+    "department": "Design",
+    "salary": 73000
+  },
+  {
+    "name": "Robert Wilson",
+    "position": "Business Analyst",
+    "department": "Business Development",
+    "salary": 80000
+  },
+  {
+    "name": "Linda Martinez",
+    "position": "HR Specialist",
+    "department": "HR",
+    "salary": 69000
+  },
+  {
+    "name": "David Anderson",
+    "position": "Network Engineer",
+    "department": "IT",
+    "salary": 76000
+  },
+  {
+    "name": "Susan Clark",
+    "position": "Marketing Coordinator",
+    "department": "Marketing",
+    "salary": 65000
+  },
+  {
+    "name": "James Lewis",
+    "position": "DevOps Engineer",
+    "department": "IT",
+    "salary": 90000
+  },
+  {
+    "name": "Barbara Walker",
+    "position": "Content Writer",
+    "department": "Marketing",
+    "salary": 62000
+  },
+  {
+    "name": "Steven Hall",
+    "position": "Product Manager",
+    "department": "Product",
+    "salary": 95000
+  },
+  {
+    "name": "Jessica Allen",
+    "position": "Frontend Developer",
+    "department": "IT",
+    "salary": 71000
+  },
+  {
+    "name": "Paul Young",
+    "position": "Backend Developer",
+    "department": "IT",
+    "salary": 74000
+  },
+  {
+    "name": "Karen King",
+    "position": "Recruiter",
+    "department": "HR",
+    "salary": 68000
+  },
+  {
+    "name": "Mark Wright",
+    "position": "Database Administrator",
+    "department": "IT",
+    "salary": 83000
+  },
+  {
+    "name": "Nancy Scott",
+    "position": "Sales Executive",
+    "department": "Sales",
+    "salary": 77000
+  },
+  {
+    "name": "Kevin Green",
+    "position": "IT Support Specialist",
+    "department": "IT",
+    "salary": 61000
+  },
+  {
+    "name": "Sarah Baker",
+    "position": "Graphic Designer",
+    "department": "Design",
+    "salary": 69000
+  },
+  {
+    "name": "Brian Adams",
+    "position": "Cloud Architect",
+    "department": "IT",
+    "salary": 98000
+  }
+]
+
