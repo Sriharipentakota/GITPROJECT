@@ -87,16 +87,22 @@ const EmployeeForm = ({ employee, onSave, onCancel, departments }) => {
   // Handle form submission
   const handleSubmit = (e) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       return;
     }
 
     setIsSubmitting(true);
-    
+
+    const submitData = {
+      ...formData,
+      salary: Number(formData.salary),
+      hireDate: new Date(formData.hireDate).getTime()
+    };
+
     // Simulate API call delay
     setTimeout(() => {
-      onSave(formData);
+      onSave(submitData);
       setIsSubmitting(false);
     }, 500);
   };
@@ -106,7 +112,7 @@ const EmployeeForm = ({ employee, onSave, onCancel, departments }) => {
       <div className="employee-form">
         <div className="form-header">
           <h2>{employee ? 'Edit Employee' : 'Add New Employee'}</h2>
-          <button 
+          <button
             className="close-btn"
             onClick={onCancel}
             disabled={isSubmitting}
@@ -114,7 +120,7 @@ const EmployeeForm = ({ employee, onSave, onCancel, departments }) => {
             ×
           </button>
         </div>
-        
+
         <form onSubmit={handleSubmit}>
           <div className="form-row">
             <div className="form-group">
@@ -130,7 +136,7 @@ const EmployeeForm = ({ employee, onSave, onCancel, departments }) => {
               />
               {errors.firstName && <span className="error-message">{errors.firstName}</span>}
             </div>
-            
+
             <div className="form-group">
               <label htmlFor="lastName">Last Name *</label>
               <input
@@ -242,15 +248,15 @@ const EmployeeForm = ({ employee, onSave, onCancel, departments }) => {
           </div>
 
           <div className="form-actions">
-            <button 
-              type="button" 
+            <button
+              type="button"
               onClick={onCancel}
               className="btn btn-secondary"
               disabled={isSubmitting}
             >
               Cancel
             </button>
-            <button 
+            <button
               type="submit"
               className="btn btn-primary"
               disabled={isSubmitting}

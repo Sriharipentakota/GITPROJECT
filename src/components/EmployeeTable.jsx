@@ -9,6 +9,7 @@ const EmployeeTable = ({
   sortField, 
   sortDirection 
 }) => {
+
   const getSortIcon = (field) => {
     if (sortField !== field) return '↕️';
     return sortDirection === 'asc' ? '↑' : '↓';
@@ -49,7 +50,7 @@ const EmployeeTable = ({
         <tbody>
           {employees.map(employee => (
             <EmployeeRow
-              key={employee.id}
+              key={employee}
               employee={employee}
               onEdit={onEdit}
               onDelete={onDelete}

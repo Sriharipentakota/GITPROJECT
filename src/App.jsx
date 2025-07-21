@@ -4,71 +4,13 @@ import EmployeeForm from './components/EmployeeForm';
 import SearchBar from './components/SearchBar';
 import ConfirmationModal from './components/ConfirmationModal';
 import ExportButton from './components/ExportButton';
-import { validateEmployee, generateId } from './utils/dataHelpers';
+import { validateEmployee } from './utils/dataHelpers';
 import './styles/App.css';
-
-// Initial sample data
-const initialEmployees = [
-  {
-    id: 1,
-    firstName: 'John',
-    lastName: 'Doe',
-    email: 'john.doe@company.com',
-    department: 'Engineering',
-    position: 'Senior Developer',
-    salary: 75000,
-    hireDate: '2022-01-15',
-    status: 'Active'
-  },
-  {
-    id: 2,
-    firstName: 'Jane',
-    lastName: 'Smith',
-    email: 'jane.smith@company.com',
-    department: 'Marketing',
-    position: 'Marketing Manager',
-    salary: 68000,
-    hireDate: '2021-11-08',
-    status: 'Active'
-  },
-  {
-    id: 3,
-    firstName: 'Mike',
-    lastName: 'Johnson',
-    email: 'mike.johnson@company.com',
-    department: 'HR',
-    position: 'HR Specialist',
-    salary: 55000,
-    hireDate: '2023-03-22',
-    status: 'Active'
-  },
-  {
-    id: 4,
-    firstName: 'Sarah',
-    lastName: 'Wilson',
-    email: 'sarah.wilson@company.com',
-    department: 'Finance',
-    position: 'Financial Analyst',
-    salary: 62000,
-    hireDate: '2022-07-12',
-    status: 'Inactive'
-  },
-  {
-    id: 5,
-    firstName: 'David',
-    lastName: 'Brown',
-    email: 'david.brown@company.com',
-    department: 'Engineering',
-    position: 'Junior Developer',
-    salary: 52000,
-    hireDate: '2023-09-05',
-    status: 'Active'
-  }
-];
+import axios from 'axios';
 
 function App() {
-  const [employees, setEmployees] = useState(initialEmployees);
-  const [filteredEmployees, setFilteredEmployees] = useState(initialEmployees);
+  const [employees, setEmployees] = useState([]);
+  const [filteredEmployees, setFilteredEmployees] = useState([]);
   const [editingEmployee, setEditingEmployee] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -84,13 +26,29 @@ function App() {
     onConfirm: null
   });
 
+  // Fetch employees from API
+  const fetchEmployees = () => {
+    axios.get('http://localhost:5000/api/employees')
+      .then(response => {
+        setEmployees(response.data);
+      })
+      .catch(error => {
+        console.error('Axios error:', error);
+        showNotification('Failed to fetch employees', 'error');
+      });
+  };
+
+  useEffect(() => {
+    fetchEmployees();
+  }, []);
+
   // Get unique departments for filter dropdown
-  const departments = [...new Set(employees.map(emp => emp.department))];
+  const departments = ["IT", "HR", "Finance", "Marketing", "Sales"];
 
   // Filter and sort employees
   useEffect(() => {
     let filtered = employees.filter(employee => {
-      const matchesSearch = searchTerm === '' || 
+      const matchesSearch = searchTerm === '' ||
         employee.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
         employee.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
         employee.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -134,57 +92,66 @@ function App() {
     setTimeout(() => setNotification({ message: '', type: '' }), 3000);
   };
 
-  // Handle employee creation
+  // Create employee via API
   const handleCreateEmployee = (employeeData) => {
+console.log(employeeData," handleCreateEmployee called");
     const validation = validateEmployee(employeeData);
     if (!validation.isValid) {
       showNotification(validation.errors.join(', '), 'error');
       return;
     }
-
-    const newEmployee = {
-      ...employeeData,
-      id: generateId(employees),
-      salary: parseFloat(employeeData.salary)
-    };
-
-    setEmployees(prev => [...prev, newEmployee]);
-    setShowForm(false);
-    showNotification('Employee created successfully!', 'success');
+    axios.post('http://localhost:5000/api/employees', employeeData)
+      .then(() => {
+        fetchEmployees();
+        setShowForm(false);
+        showNotification('Employee created successfully!', 'success');
+      })
+      .catch(error => {
+        showNotification('Error creating employee', 'error');
+        console.error(error);
+      });
   };
 
-  // Handle employee update
+  // Update employee via API
   const handleUpdateEmployee = (employeeData) => {
     const validation = validateEmployee(employeeData);
     if (!validation.isValid) {
       showNotification(validation.errors.join(', '), 'error');
       return;
     }
-
-    const updatedEmployee = {
-      ...employeeData,
-      salary: parseFloat(employeeData.salary)
-    };
-
-    setEmployees(prev => prev.map(emp => 
-      emp.id === editingEmployee.id ? updatedEmployee : emp
-    ));
-    setEditingEmployee(null);
-    setShowForm(false);
-    showNotification('Employee updated successfully!', 'success');
+    const id = employeeData._id || employeeData.id;
+    axios.put(`http://localhost:5000/api/employees/${id}`, employeeData)
+      .then(() => {
+        fetchEmployees();
+        setEditingEmployee(null);
+        setShowForm(false);
+        showNotification('Employee updated successfully!', 'success');
+      })
+      .catch(error => {
+        showNotification('Error updating employee', 'error');
+        console.error(error);
+      });
   };
 
-  // Handle employee deletion
+  // Delete employee via API
   const handleDeleteEmployee = (employeeId) => {
-    const employee = employees.find(emp => emp.id === employeeId);
+console.log(employeeId, " handleDeleteEmployee called");
+    const employee = employees.find(emp => (emp._id || emp.id) === employeeId);
     setConfirmModal({
       isOpen: true,
       title: 'Delete Employee',
-      message: `Are you sure you want to delete ${employee.firstName} ${employee.lastName}? This action cannot be undone.`,
+      message: `Are you sure you want to delete ${employee?.firstName} ${employee?.lastName}? This action cannot be undone.`,
       onConfirm: () => {
-        setEmployees(prev => prev.filter(emp => emp.id !== employeeId));
-        showNotification('Employee deleted successfully!', 'success');
-        setConfirmModal({ isOpen: false, title: '', message: '', onConfirm: null });
+        axios.delete(`http://localhost:5000/api/employees/${employeeId}`)
+          .then(() => {
+            fetchEmployees();
+            showNotification('Employee deleted successfully!', 'success');
+            setConfirmModal({ isOpen: false, title: '', message: '', onConfirm: null });
+          })
+          .catch(error => {
+            showNotification('Error deleting employee', 'error');
+            console.error(error);
+          });
       }
     });
   };
@@ -234,14 +201,14 @@ function App() {
       <header className="app-header">
         <h1>Employee Management System</h1>
         <div className="header-actions">
-          <ExportButton 
+          <ExportButton
             employees={employees}
             filteredEmployees={filteredEmployees}
             searchTerm={searchTerm}
             filterDepartment={filterDepartment}
             filterStatus={filterStatus}
           />
-          <button 
+          <button
             className="btn btn-primary"
             onClick={() => {
               setEditingEmployee(null);

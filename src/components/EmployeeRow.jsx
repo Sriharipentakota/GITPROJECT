@@ -1,6 +1,7 @@
 import React from 'react';
 
-const EmployeeRow = ({ employee, onEdit, onDelete }) => {
+const EmployeeRow = ({ employee, onEdit, onDelete ,key }) => {
+console.log(employee, "EmployeeRow rendered");
   const formatSalary = (salary) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
@@ -40,7 +41,7 @@ const EmployeeRow = ({ employee, onEdit, onDelete }) => {
           </button>
           <button 
             className="btn btn-small btn-danger"
-            onClick={() => onDelete(employee.id)}
+            onClick={(e) => onDelete(employee._id || employee.id)}
           >
             Delete
           </button>
