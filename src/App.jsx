@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import Login from './components/Login';
 import Portfolio from './components/Portfolio';
 
