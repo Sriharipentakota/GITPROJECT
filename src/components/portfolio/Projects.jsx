@@ -8,57 +8,48 @@ const Projects = () => {
   const projects = [
     {
       title: 'E-Commerce React App',
-      description: 'A modern e-commerce frontend built with React, featuring product catalog, shopping cart, user authentication, and responsive design with smooth animations.',
+      description: 'A modern e-commerce frontend built with React, featuring product catalog, shopping cart, user authentication, and responsive design.',
       image: 'https://images.pexels.com/photos/230544/pexels-photo-230544.jpeg?auto=compress&cs=tinysrgb&w=600',
       technologies: ['React', 'JavaScript', 'Tailwind CSS', 'Context API', 'React Router'],
-      liveUrl: 'https://example.com',
-      githubUrl: 'https://github.com/yourusername/ecommerce-react',
+      liveUrl: 'https://hari-ecommerce.netlify.app',
+      githubUrl: 'https://github.com/Sriharipentakota/GITPROJECT/tree/ecommerce-new',
       date: 'March 2024'
     },
     {
-      title: 'Interactive Dashboard',
-      description: 'A responsive admin dashboard with data visualization, real-time updates, and modern UI components. Built with React and Chart.js for dynamic data representation.',
-      image: 'https://images.pexels.com/photos/3184306/pexels-photo-3184306.jpeg?auto=compress&cs=tinysrgb&w=600',
-      technologies: ['React', 'Chart.js', 'CSS Grid', 'Flexbox', 'Local Storage'],
-      liveUrl: 'https://example.com',
-      githubUrl: 'https://github.com/yourusername/dashboard',
+      title: 'Employee Management System(Full Stack)',
+      description: 'A full-stack employee management system with a React frontend and Node.js backend. Features include employee CRUD operations, role-based access control, and responsive design.',
+      image: '',
+      technologies: ['React', 'CSS Grid', 'Flexbox', 'Local Storage'],
+      liveUrl: 'https://employee-management-data.netlify.app',
+      githubUrl: 'https://github.com/Sriharipentakota/GITPROJECT/tree/employee-managment-backend',
       date: 'February 2024'
     },
     {
-      title: 'Weather App PWA',
-      description: 'A Progressive Web App for weather forecasting with geolocation, offline functionality, and beautiful animations. Responsive design for all devices.',
+      title: 'ATS Resume Builder',
+      description: 'A resume builder that generates ATS-friendly resumes with customizable templates, real-time previews, and downloadable PDFs. Built with React and modern CSS techniques.',
       image: 'https://images.pexels.com/photos/1118873/pexels-photo-1118873.jpeg?auto=compress&cs=tinysrgb&w=600',
-      technologies: ['Vanilla JS', 'PWA', 'Service Workers', 'CSS Animations', 'Weather API'],
-      liveUrl: 'https://example.com',
-      githubUrl: 'https://github.com/yourusername/weather-pwa',
+      technologies: ['React', 'JavaScript', 'CSS Modules', 'PDF Generation', 'Local Storage'],
+      liveUrl: 'https://hari-resume-formatter.netlify.app',
+      githubUrl: 'https://github.com/Sriharipentakota/GITPROJECT/tree/resume-formatter',
       date: 'January 2024'
     },
     {
-      title: 'Task Management UI',
-      description: 'A beautiful task management interface with drag-and-drop functionality, priority levels, and smooth transitions. Focus on user experience and accessibility.',
+      title: 'FrontEnd Concepts Showcase',
+      description: 'A showcase of various frontend concepts including animations, transitions, and responsive design. Built with React and Tailwind CSS.',
       image: 'https://images.pexels.com/photos/3184465/pexels-photo-3184465.jpeg?auto=compress&cs=tinysrgb&w=600',
-      technologies: ['Vue.js', 'Vuex', 'SCSS', 'Drag & Drop API', 'CSS Transitions'],
-      liveUrl: 'https://example.com',
-      githubUrl: 'https://github.com/yourusername/task-manager',
+      technologies: ["React", "JavaScript", "Tailwind CSS",'HTml5', 'CSS3'],
+      liveUrl: 'https://react-keyconcepts.netlify.app/',
+      githubUrl: 'https://github.com/Sriharipentakota/GITPROJECT/tree/React-Concepts',
       date: 'December 2023'
     },
     {
       title: 'Portfolio Website',
       description: 'A responsive portfolio website with smooth scrolling, animations, and modern design. Built with performance and SEO optimization in mind.',
       image: 'https://images.pexels.com/photos/196644/pexels-photo-196644.jpeg?auto=compress&cs=tinysrgb&w=600',
-      technologies: ['HTML5', 'CSS3', 'JavaScript', 'GSAP', 'Intersection Observer'],
-      liveUrl: 'https://example.com',
-      githubUrl: 'https://github.com/yourusername/portfolio',
+      technologies: ['HTML5', 'CSS3', 'JavaScript', 'React', 'Tailwind CSS'],
+      liveUrl: 'https://hari-portfoliowebsite.netlify.app',
+      githubUrl: 'https://github.com/Sriharipentakota/GITPROJECT/tree/my-portfolio',
       date: 'November 2023'
-    },
-    {
-      title: 'CSS Component Library',
-      description: 'A comprehensive CSS component library with reusable UI components, documentation, and examples. Built with modern CSS techniques and best practices.',
-      image: 'https://images.pexels.com/photos/1181244/pexels-photo-1181244.jpeg?auto=compress&cs=tinysrgb&w=600',
-      technologies: ['CSS3', 'SCSS', 'CSS Grid', 'Flexbox', 'CSS Variables'],
-      liveUrl: 'https://example.com',
-      githubUrl: 'https://github.com/yourusername/css-library',
-      date: 'October 2023'
     }
   ];
   // ============================================================
@@ -84,7 +75,7 @@ const Projects = () => {
                 />
                 <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-opacity duration-300"></div>
               </div>
-              
+
               <div className="p-4 sm:p-6">
                 <div className="flex items-start justify-between mb-2 sm:mb-3">
                   <h3 className="text-lg sm:text-xl font-bold text-gray-900 flex-1 pr-2">{project.title}</h3>
@@ -94,9 +85,9 @@ const Projects = () => {
                     <span className="sm:hidden">{project.date.split(' ')[1]}</span>
                   </div>
                 </div>
-                
+
                 <p className="text-gray-600 mb-3 sm:mb-4 text-xs sm:text-sm leading-relaxed">{project.description}</p>
-                
+
                 <div className="flex flex-wrap gap-1 sm:gap-2 mb-3 sm:mb-4">
                   {project.technologies.map((tech, techIndex) => (
                     <span
@@ -107,7 +98,7 @@ const Projects = () => {
                     </span>
                   ))}
                 </div>
-                
+
                 <div className="flex space-x-3 sm:space-x-4">
                   <a
                     href={project.liveUrl}
