@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Mail, Phone, MapPin, Send, Github, Linkedin, Twitter, Code } from 'lucide-react';
+import { Mail, Phone, MapPin, Send, Github, Twitter, Code } from 'lucide-react';
+import naukri from '../../assests/naukri.png'
 
 const Contact = () => {
   const [formData, setFormData] = useState({
@@ -21,14 +22,14 @@ const Contact = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
-    
+
     // Simulate form submission
     await new Promise(resolve => setTimeout(resolve, 1000));
-    
+
     setSubmitStatus('success');
     setIsSubmitting(false);
     setFormData({ name: '', email: '', subject: '', message: '' });
-    
+
     // Reset status after 3 seconds
     setTimeout(() => setSubmitStatus('idle'), 3000);
   };
@@ -49,7 +50,7 @@ const Contact = () => {
             <div>
               <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6">Let's Connect</h3>
               <p className="text-gray-600 mb-6 sm:mb-8 text-sm sm:text-base">
-                I'm always excited to work on new frontend projects, discuss the latest web technologies, 
+                I'm always excited to work on new frontend projects, discuss the latest web technologies,
                 or explore collaboration opportunities. Feel free to reach out!
               </p>
             </div>
@@ -105,28 +106,19 @@ const Contact = () => {
                   <Github className="w-4 h-4 sm:w-5 sm:h-5 text-gray-700" />
                 </a>
                 <a
-                  href="https://linkedin.com/in/yourusername"
+                  href="https://www.naukri.com/mnjuser/profile"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="w-8 h-8 sm:w-10 sm:h-10 bg-blue-200 rounded-full flex items-center justify-center hover:bg-blue-300 transition-colors duration-200"
                 >
-                  <Linkedin className="w-4 h-4 sm:w-5 sm:h-5 text-blue-700" />
+                  <img src={naukri} alt='no-image' className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" />
+
                 </a>
                 <a
-                  href="https://twitter.com/yourusername"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-8 h-8 sm:w-10 sm:h-10 bg-sky-200 rounded-full flex items-center justify-center hover:bg-sky-300 transition-colors duration-200"
+                  href="mailto:sriharipentakota07@gmail.com"
+                  className="w-8 h-8 sm:w-10 sm:h-10 bg-blue-200 rounded-full flex items-center justify-center hover:bg-blue-300 transition-colors duration-200"
                 >
-                  <Twitter className="w-4 h-4 sm:w-5 sm:h-5 text-sky-700" />
-                </a>
-                <a
-                  href="https://codepen.io/yourusername"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-8 h-8 sm:w-10 sm:h-10 bg-green-200 rounded-full flex items-center justify-center hover:bg-green-300 transition-colors duration-200"
-                >
-                  <Code className="w-4 h-4 sm:w-5 sm:h-5 text-green-700" />
+                  <Mail className="w-4 h-4 sm:w-5 sm:h-5 text-red-500" />
                 </a>
                 {/* ============================================================ */}
               </div>
@@ -163,7 +155,7 @@ const Contact = () => {
           {/* Contact Form */}
           <div className="bg-gray-50 p-6 sm:p-8 rounded-xl">
             <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6">Send a Message</h3>
-            
+
             <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                 <div>
