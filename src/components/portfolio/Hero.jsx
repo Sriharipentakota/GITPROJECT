@@ -2,6 +2,8 @@ import React from 'react';
 import { ChevronDown, Github, Linkedin, Mail, Code, Download } from 'lucide-react';
 import { Button, Dropdown } from '../common';
 import { generatePDFResume, generateWordResume } from '../../utils';
+import naukri from '../../assests/naukri.png'
+import srihari from '../../assests/srihari.jpg'
 
 const Hero = () => {
   /**
@@ -55,7 +57,7 @@ const Hero = () => {
       <div className="max-w-7xl mx-auto text-center">
         <div className="mb-6 sm:mb-8">
           <img
-            src="https://images.pexels.com/photos/3184465/pexels-photo-3184465.jpeg?auto=compress&cs=tinysrgb&w=400"
+            src={srihari}
             alt="Profile"
             className="w-32 h-32 sm:w-40 sm:h-40 md:w-48 md:h-48 rounded-full mx-auto mb-4 sm:mb-6 shadow-2xl object-cover border-4 border-white"
           />
@@ -124,26 +126,19 @@ const Hero = () => {
             <Github className="w-5 h-5 sm:w-6 sm:h-6 text-gray-700" />
           </a>
           <a
-            href="https://linkedin.com/in/yourusername"
+            href="https://www.naukri.com/mnjuser/profile"
             target="_blank"
             rel="noopener noreferrer"
             className="p-2.5 sm:p-3 bg-white rounded-full shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-110"
           >
-            <Linkedin className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" />
+            {/* <Linkedin className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" /> */}
+            <img src={naukri} alt='no-image' className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" />
           </a>
           <a
             href="mailto:sriharipentakota07@gmail.com"
             className="p-2.5 sm:p-3 bg-white rounded-full shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-110"
           >
             <Mail className="w-5 h-5 sm:w-6 sm:h-6 text-red-500" />
-          </a>
-          <a
-            href="https://codepen.io/yourusername"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="p-2.5 sm:p-3 bg-white rounded-full shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-110"
-          >
-            <Code className="w-5 h-5 sm:w-6 sm:h-6 text-green-600" />
           </a>
           {/* ============================================================ */}
         </div>

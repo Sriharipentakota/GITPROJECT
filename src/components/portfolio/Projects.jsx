@@ -1,5 +1,7 @@
 import React from 'react';
 import { ExternalLink, Github, Calendar } from 'lucide-react';
+import employeeManagement from '../../assests/employeeManagement.png'
+import ATSResumeFormatter from '../../assests/ATSResumeFormatter.png'
 
 const Projects = () => {
   // ============================================================
@@ -18,7 +20,7 @@ const Projects = () => {
     {
       title: 'Employee Management System(Full Stack)',
       description: 'A full-stack employee management system with a React frontend and Node.js backend. Features include employee CRUD operations, role-based access control, and responsive design.',
-      image: '',
+      image: employeeManagement,
       technologies: ['React', 'CSS Grid', 'Flexbox', 'Local Storage'],
       liveUrl: 'https://employee-management-data.netlify.app',
       githubUrl: 'https://github.com/Sriharipentakota/GITPROJECT/tree/employee-managment-backend',
@@ -27,7 +29,7 @@ const Projects = () => {
     {
       title: 'ATS Resume Builder',
       description: 'A resume builder that generates ATS-friendly resumes with customizable templates, real-time previews, and downloadable PDFs. Built with React and modern CSS techniques.',
-      image: 'https://images.pexels.com/photos/1118873/pexels-photo-1118873.jpeg?auto=compress&cs=tinysrgb&w=600',
+      image: ATSResumeFormatter,
       technologies: ['React', 'JavaScript', 'CSS Modules', 'PDF Generation', 'Local Storage'],
       liveUrl: 'https://hari-resume-formatter.netlify.app',
       githubUrl: 'https://github.com/Sriharipentakota/GITPROJECT/tree/resume-formatter',

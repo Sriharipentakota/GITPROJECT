@@ -25,23 +25,23 @@ import { saveAs } from 'file-saver';
 export const resumeData = {
   // Personal Information Section
   personalInfo: {
-    name: 'Srihari Pentakota', // ⚠️ CHANGE THIS: Replace with your actual name
-    title: 'Frontend Developer & UI/UX Enthusiast', // ⚠️ CHANGE THIS: Replace with your professional title
-    email: 'sriharipentakota07@gmail.com', // ⚠️ CHANGE THIS: Replace with your actual email
-    phone: '+91 6281997025', // ⚠️ CHANGE THIS: Replace with your actual phone number
-    location: 'Anakapalle, Andhra Pradesh', // ⚠️ CHANGE THIS: Replace with your actual location
-    linkedin: 'linkedin.com/in/yourusername', // ⚠️ CHANGE THIS: Replace with your LinkedIn profile
-    github: 'https://github.com/Sriharipentakota', // ⚠️ CHANGE THIS: Replace with your GitHub profile
-    portfolio: 'alexdeveloper.com', // ⚠️ CHANGE THIS: Replace with your portfolio website
-    portfolioUrl: 'https://HariDeveloper.com' // ⚠️ CHANGE THIS: Replace with your full portfolio URL
+    name: 'Srihari Pentakota',
+    title: 'Frontend Developer',
+    email: 'sriharipentakota07@gmail.com',
+    phone: '+91 6281997025',
+    location: 'Anakapalle, Andhra Pradesh',
+    naukari: 'https://www.naukri.com/mnjuser/profile',
+    github: 'https://github.com/Sriharipentakota', 
+    portfolio: 'Harideveloper.com',
+    portfolioUrl: 'https://HariDeveloper.com'
   },
 
   // Professional Summary Section
-  summary: 'Passionate Frontend Developer with 2.5 years of experience creating responsive, interactive web applications. Specialized in React, JavaScript, and modern CSS frameworks. Proven track record of improving website performance by 40% and delivering pixel-perfect UI implementations. Strong collaboration skills with designers and backend developers.', // ⚠️ CHANGE THIS: Replace with your professional summary
+  summary: 'Passionate Frontend Developer with over 2.5 years of experience specializing in React.js and modern JavaScript technologies. Skilled in building responsive, interactive web applications and delivering pixel-perfect user interfaces. Demonstrated ability to optimize website performance and collaborate effectively with designers and backend teams to achieve project goals', // ⚠️ CHANGE THIS: Replace with your professional summary
 
   // Technical Skills Section (organized by categories for ATS optimization)
   skills: {
-    'Frontend Technologies': ['HTML5', 'CSS3', 'JavaScript (ES6+)', 'TypeScript', 'React.js', 'Vue.js'],
+    'Frontend Technologies': ['HTML5', 'CSS3', 'JavaScript (ES6+)', 'React.js'],
     'Styling & Frameworks': ['Tailwind CSS', 'SASS/SCSS', 'Bootstrap', 'CSS Grid', 'Flexbox'],
     'Tools & Technologies': ['Git', 'Webpack', 'Vite', 'npm/yarn', 'REST APIs', 'Responsive Design'],
     'Design & UX': ['UI/UX Implementation', 'Cross-browser Compatibility', 'Performance Optimization', 'Accessibility (A11y)']
@@ -260,7 +260,7 @@ export const generatePDFResume = async (data = resumeData) => {
 
     // Contact Information in a single line for space efficiency
     doc.setFontSize(9);
-    const contactInfo = `${data.personalInfo.email} | ${data.personalInfo.phone} | ${data.personalInfo.location} | ${data.personalInfo.linkedin}`;
+    const contactInfo = `${data.personalInfo.email} | ${data.personalInfo.phone} | ${data.personalInfo.location} | ${data.personalInfo.naukari}`;
     doc.text(contactInfo, leftMargin, yPosition);
     yPosition += 12;
 
@@ -294,7 +294,7 @@ export const generatePDFResume = async (data = resumeData) => {
 
       doc.setFont('helvetica', 'normal');
       const skillsText = skillList.join(', ');
-      yPosition = addText(skillsText, leftMargin + 35, yPosition, { fontSize: 10 });
+      yPosition = addText(skillsText, leftMargin + 45, yPosition, { fontSize: 10 });
       yPosition += 3;
     });
     yPosition += 5;
@@ -593,7 +593,7 @@ export const generateWordResume = async (data = resumeData) => {
               alignment: AlignmentType.CENTER,
               children: [
                 new TextRun({
-                  text: `LinkedIn: ${data.personalInfo.linkedin} | GitHub: ${data.personalInfo.github}`,
+                  text: `LinkedIn: ${data.personalInfo.naukari} | GitHub: ${data.personalInfo.github}`,
                   size: 20,
                 }),
               ],
