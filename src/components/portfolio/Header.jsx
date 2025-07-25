@@ -65,14 +65,6 @@ const Header = ({ onLogout }) => {
           </nav>
 
           <div className="flex items-center space-x-2 sm:space-x-4">
-            <button
-              onClick={onLogout}
-              className="hidden md:flex items-center space-x-2 text-gray-700 hover:text-red-600 transition-colors duration-200"
-            >
-              <LogOut className="w-3 h-3 sm:w-4 sm:h-4" />
-              <span className="text-sm lg:text-base">Logout</span>
-            </button>
-
             {/* Mobile menu button */}
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}

@@ -3,23 +3,23 @@ import Login from './components/Login';
 import Portfolio from './components/Portfolio';
 
 function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  // const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-  const handleLogin = () => {
-    setIsAuthenticated(true);
-  };
+  // const handleLogin = () => {
+  //   setIsAuthenticated(true);
+  // };
 
-  const handleLogout = () => {
-    setIsAuthenticated(false);
-  };
+  // const handleLogout = () => {
+  //   setIsAuthenticated(false);
+  // };
 
   return (
     <div className="App">
-      {isAuthenticated ? (
-        <Portfolio onLogout={handleLogout} />
+        <Portfolio  />
+      {/* {isAuthenticated ? (
       ) : (
         <Login onLogin={handleLogin} />
-      )}
+      )} */}
     </div>
   );
 }
