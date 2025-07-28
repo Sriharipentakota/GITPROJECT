@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react'
 import { FiPlus, FiTrash2, FiSave, FiX, FiUpload, FiEye, FiEyeOff } from 'react-icons/fi'
+import ReactQuill from 'react-quill'
+import 'react-quill/dist/quill.snow.css'
 
 function EditableSection({ sectionKey, sectionTitle, data, candidateType, onSave, onCancel }) {
   const [formData, setFormData] = useState(data || getDefaultData(sectionKey, candidateType))
@@ -297,24 +299,37 @@ function EditableSection({ sectionKey, sectionTitle, data, candidateType, onSave
     </div>
   )
   console.log(formData, 'formData in EditableSection');
+
   const renderSummaryForm = () => (
     <div className="form-section">
       <div className="form-group">
         <label className="form-label">
           {candidateType === 'fresher' ? 'Career Objective' : 'Professional Summary'} *
         </label>
-        <textarea
-          className="form-input form-textarea"
+        <ReactQuill
+          theme="snow"
           value={typeof formData === 'string' ? formData : (formData?.summary || '')}
-          onChange={(e) => setFormData(e.target.value)}
+          onChange={(value) => setFormData(value)}
+          modules={{
+            toolbar: [
+              ['bold', 'italic', 'underline'],
+              [{ 'list': 'ordered' }, { 'list': 'bullet' }]
+            ]
+          }}
+          formats={[
+            'font', 'size',
+            'bold', 'italic', 'underline', 'strike',
+            'list', 'bullet',
+            'align'
+          ]}
           placeholder={candidateType === 'fresher'
             ? "Write a compelling career objective that highlights your goals, skills, and what you can bring to potential employers. Focus on your enthusiasm, relevant coursework, and career aspirations."
             : "Write a compelling professional summary that highlights your key achievements, skills, and experience. Focus on quantifiable results and what makes you unique in your field."
           }
-          rows="6"
+          className='form-input react-quill-summary'
         />
         <div className="character-count">
-          {(formData || '').length} characters (minimum 50 recommended)
+          {(typeof formData === 'string' ? formData.replace(/<[^>]+>/g, '') : (formData?.summary || '')).length} characters (minimum 50 recommended)
         </div>
         {errors.summary && <span className="error-message">{errors.summary}</span>}
       </div>

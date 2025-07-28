@@ -9,6 +9,8 @@ function ExportSection({ onBack, onPortfolio }) {
   const [exportType, setExportType] = useState('')
   const [error, setError] = useState('')
 
+
+
   const handleExport = async (type) => {
     setExportStatus('exporting')
     setExportType(type)
@@ -55,7 +57,7 @@ function ExportSection({ onBack, onPortfolio }) {
                     <li>✓ Optimized for 90%+ ATS score</li>
                   </ul>
                 </div>
-                <button 
+                <button
                   className="btn btn-primary"
                   onClick={() => handleExport('pdf')}
                   disabled={exportStatus === 'exporting'}
@@ -90,7 +92,7 @@ function ExportSection({ onBack, onPortfolio }) {
                     <li>✓ Compatible with all systems</li>
                   </ul>
                 </div>
-                <button 
+                <button
                   className="btn btn-outline"
                   onClick={() => handleExport('word')}
                   disabled={exportStatus === 'exporting'}
@@ -131,7 +133,7 @@ function ExportSection({ onBack, onPortfolio }) {
                     <li>✓ Professional animations</li>
                   </ul>
                 </div>
-                <button 
+                <button
                   className="btn btn-success btn-large"
                   onClick={onPortfolio}
                 >
@@ -159,7 +161,7 @@ function ExportSection({ onBack, onPortfolio }) {
           <div className="error-message">
             <h3>Export Failed</h3>
             <p>{error}</p>
-            <button 
+            <button
               className="btn btn-secondary mt-2"
               onClick={() => setExportStatus('idle')}
             >

@@ -15,25 +15,27 @@ export async function exportToPDF(resumeData) {
     doc.setFontSize(fontSize)
     doc.setFont('helvetica', fontStyle)
     doc.setTextColor(color[0], color[1], color[2])
-    
+
     const maxWidth = pageWidth - 2 * margin - indent
     const lines = doc.splitTextToSize(text, maxWidth)
-    
+
     // Check if we need a new page
     if (yPosition + lines.length * lineHeight > pageHeight - margin) {
       doc.addPage()
       yPosition = margin
     }
-    
+
     doc.text(lines, margin + indent, yPosition)
     yPosition += lines.length * lineHeight + 2
   }
+
+
 
   const addSection = (title) => {
     if (yPosition > margin + 20) {
       yPosition += 8 // Add space before section
     }
-    
+
     // Add a horizontal line above section (except for first section)
     if (yPosition > margin + 20) {
       doc.setDrawColor(0, 0, 0)
@@ -41,7 +43,7 @@ export async function exportToPDF(resumeData) {
       doc.line(margin, yPosition - 4, pageWidth - margin, yPosition - 4)
       yPosition += 4
     }
-    
+
     addText(title.toUpperCase(), 11, 'bold', [0, 0, 0])
     yPosition += 2
   }
@@ -53,7 +55,7 @@ export async function exportToPDF(resumeData) {
   // Personal Information Header - Centered Layout
   if (resumeData.personalInfo) {
     const { name, email, phone, location, linkedin, website, github } = resumeData.personalInfo
-    
+
     if (name) {
       // Center the name
       doc.setFontSize(16)
@@ -63,13 +65,13 @@ export async function exportToPDF(resumeData) {
       doc.text(name, nameX, yPosition)
       yPosition += 8
     }
-    
+
     // Contact information in centered format
     const contactInfo = []
     if (email) contactInfo.push(email)
     if (phone) contactInfo.push(phone)
     if (location) contactInfo.push(location)
-    
+
     if (contactInfo.length > 0) {
       doc.setFontSize(9)
       doc.setFont('helvetica', 'normal')
@@ -79,13 +81,13 @@ export async function exportToPDF(resumeData) {
       doc.text(contactText, contactX, yPosition)
       yPosition += 5
     }
-    
+
     // Links in centered format
     const links = []
     if (linkedin) links.push(linkedin)
     if (website) links.push(website)
     if (github) links.push(github)
-    
+
     if (links.length > 0) {
       doc.setFontSize(8)
       doc.setFont('helvetica', 'normal')
@@ -98,17 +100,70 @@ export async function exportToPDF(resumeData) {
       doc.setTextColor(0, 0, 0) // Reset color
     }
   }
+  // function stripHtml(html) {
+  //   // Replace <li> with bullet points and newlines
+  //   let text = html.replace(/<li>(.*?)<\/li>/gi, '• $1\n')
+  //     .replace(/<[^>]+>/g, '')
+  //   return text.trim();
+  // }
+
+
+  function stripHtml(html) {
+    // Handle ordered lists (<ol>)
+    html = html.replace(/<ol>([\s\S]*?)<\/ol>/gi, (match, listContent) => {
+      let i = 1;
+      return listContent.replace(/<li>(.*?)<\/li>/gi, (_, item) => `${i++}. ${item}\n`);
+    });
+
+    // Handle unordered lists (<ul>)
+    html = html.replace(/<ul>([\s\S]*?)<\/ul>/gi, (match, listContent) => {
+      return listContent.replace(/<li>(.*?)<\/li>/gi, (_, item) => `• ${item}\n`);
+    });
+
+    // Remove any remaining <li> (not inside ul/ol)
+    html = html.replace(/<li>(.*?)<\/li>/gi, '• $1\n');
+
+    // Replace <br> and </div> with newlines
+    html = html.replace(/<br\s*\/?>/gi, '\n').replace(/<\/div>/gi, '\n');
+
+    // Remove all other HTML tags
+    html = html.replace(/<[^>]+>/g, '');
+
+    // Replace multiple newlines with a single newline
+    html = html.replace(/\n\s*\n/g, '\n');
+
+    return html.trim();
+  }
 
   // Professional Summary
+  // if (resumeData.summary) {
+  //   addSection('PROFESSIONAL SUMMARY')
+  //   addText(resumeData.summary, 10, 'normal')
+  // }
   if (resumeData.summary) {
     addSection('PROFESSIONAL SUMMARY')
-    addText(resumeData.summary, 10, 'normal')
+    // addText(resumeData.summary, 10, 'normal')
+    addText(stripHtml(resumeData.summary), 10, 'normal')
+    // Use jsPDF's html method to render HTML content
+    // await doc.html(
+    //  resumeData.summary
+    //   // {
+    //   //   x: margin,
+    //   //   y: yPosition,
+    //   //   width: pageWidth - 2 * margin,
+    //   //   windowWidth: pageWidth,
+    //   //   callback: function (doc) {
+    //   //     // Update yPosition after rendering HTML
+    //   //     yPosition = doc.lastAutoTable ? doc.lastAutoTable.finalY + 5 : yPosition + 20
+    //   //   }
+    //   // }
+    // )
   }
 
   // Technical Skills - Format as categories
   if (resumeData.skills && resumeData.skills.length > 0) {
     addSection('TECHNICAL SKILLS')
-    
+
     // Group skills by categories (if possible) or display as comma-separated list
     const skillsText = resumeData.skills.join(', ')
     addText(skillsText, 10, 'normal')
@@ -117,23 +172,23 @@ export async function exportToPDF(resumeData) {
   // Professional Experience
   if (resumeData.experience && resumeData.experience.length > 0) {
     addSection('PROFESSIONAL EXPERIENCE')
-    
+
     resumeData.experience.forEach((exp, index) => {
       // Job title and company on same line
       if (exp.position && exp.company) {
         const jobLine = `${exp.position} | ${exp.company}`
         addText(jobLine, 11, 'bold', [0, 0, 0])
       }
-      
+
       // Duration and location on next line
       const detailsLine = []
       if (exp.duration) detailsLine.push(exp.duration)
       if (exp.location) detailsLine.push(exp.location)
-      
+
       if (detailsLine.length > 0) {
         addText(detailsLine.join(' | '), 9, 'italic', [60, 60, 60])
       }
-      
+
       if (exp.description) {
         // Split description into bullet points if it contains bullet characters
         const descriptions = exp.description.split(/[•·\n]/).filter(desc => desc.trim())
@@ -143,7 +198,7 @@ export async function exportToPDF(resumeData) {
           }
         })
       }
-      
+
       if (index < resumeData.experience.length - 1) {
         yPosition += 4
       }
@@ -153,28 +208,28 @@ export async function exportToPDF(resumeData) {
   // Projects
   if (resumeData.projects && resumeData.projects.length > 0) {
     addSection('PROJECTS')
-    
+
     resumeData.projects.forEach((project, index) => {
       if (project.name) {
         addText(project.name, 10, 'bold', [0, 0, 0])
       }
-      
+
       if (project.technologies) {
         addText(`Technologies: ${project.technologies}`, 9, 'italic', [60, 60, 60])
       }
-      
+
       if (project.description) {
         addText(project.description, 9, 'normal')
       }
-      
+
       const projectLinks = []
       if (project.url) projectLinks.push(`Demo: ${project.url}`)
       if (project.github) projectLinks.push(`Code: ${project.github}`)
-      
+
       if (projectLinks.length > 0) {
         addText(projectLinks.join(' | '), 8, 'normal', [0, 0, 200])
       }
-      
+
       if (index < resumeData.projects.length - 1) {
         yPosition += 3
       }
@@ -184,21 +239,21 @@ export async function exportToPDF(resumeData) {
   // Education
   if (resumeData.education && resumeData.education.length > 0) {
     addSection('EDUCATION')
-    
+
     resumeData.education.forEach((edu, index) => {
       if (edu.degree && edu.school) {
         const eduLine = `${edu.degree} | ${edu.school}`
         addText(eduLine, 10, 'bold', [0, 0, 0])
       }
-      
+
       const eduDetails = []
       if (edu.year) eduDetails.push(edu.year)
       if (edu.gpa) eduDetails.push(`GPA: ${edu.gpa}`)
-      
+
       if (eduDetails.length > 0) {
         addText(eduDetails.join(' | '), 9, 'normal', [60, 60, 60])
       }
-      
+
       if (index < resumeData.education.length - 1) {
         yPosition += 3
       }
@@ -208,13 +263,13 @@ export async function exportToPDF(resumeData) {
   // Certifications
   if (resumeData.certifications && resumeData.certifications.length > 0) {
     addSection('CERTIFICATIONS')
-    
+
     resumeData.certifications.forEach((cert, index) => {
       const certLine = []
       if (cert.name) certLine.push(cert.name)
       if (cert.issuer) certLine.push(cert.issuer)
       if (cert.year) certLine.push(cert.year)
-      
+
       if (certLine.length > 0) {
         addText(certLine.join(' | '), 9, 'normal')
       }
@@ -224,7 +279,7 @@ export async function exportToPDF(resumeData) {
   // Key Achievements
   if (resumeData.achievements && resumeData.achievements.length > 0) {
     addSection('KEY ACHIEVEMENTS')
-    
+
     resumeData.achievements.forEach(achievement => {
       addBulletPoint(achievement)
     })
@@ -233,7 +288,7 @@ export async function exportToPDF(resumeData) {
   // Languages
   if (resumeData.languages && resumeData.languages.length > 0) {
     addSection('LANGUAGES')
-    
+
     const languagesList = resumeData.languages.map(lang => `${lang.language} (${lang.proficiency})`).join(', ')
     addText(languagesList, 9, 'normal')
   }
@@ -277,7 +332,7 @@ function createWordContent(resumeData) {
   // Personal Information Header - Centered
   if (resumeData.personalInfo) {
     const { name, email, phone, location, linkedin, website, github } = resumeData.personalInfo
-    
+
     if (name) {
       content.push(
         new Paragraph({
@@ -294,13 +349,13 @@ function createWordContent(resumeData) {
         })
       )
     }
-    
+
     // Contact information
     const contactInfo = []
     if (email) contactInfo.push(email)
     if (phone) contactInfo.push(phone)
     if (location) contactInfo.push(location)
-    
+
     if (contactInfo.length > 0) {
       content.push(
         new Paragraph({
@@ -316,13 +371,13 @@ function createWordContent(resumeData) {
         })
       )
     }
-    
+
     // Links
     const links = []
     if (linkedin) links.push(linkedin)
     if (website) links.push(website)
     if (github) links.push(github)
-    
+
     if (links.length > 0) {
       content.push(
         new Paragraph({
@@ -365,15 +420,35 @@ function createWordContent(resumeData) {
     )
   }
 
+  function htmlToPlainText(html) {
+    // Ordered lists
+    html = html.replace(/<ol>([\s\S]*?)<\/ol>/gi, (match, listContent) => {
+      let i = 1;
+      return listContent.replace(/<li>(.*?)<\/li>/gi, (_, item) => `${i++}. ${item}\n`);
+    });
+    // Unordered lists
+    html = html.replace(/<ul>([\s\S]*?)<\/ul>/gi, (match, listContent) => {
+      return listContent.replace(/<li>(.*?)<\/li>/gi, (_, item) => `• ${item}\n`);
+    });
+    // Any remaining <li>
+    html = html.replace(/<li>(.*?)<\/li>/gi, '• $1\n');
+    // Line breaks
+    html = html.replace(/<br\s*\/?>/gi, '\n').replace(/<\/div>/gi, '\n');
+    // Remove all other tags
+    html = html.replace(/<[^>]+>/g, '');
+    // Collapse multiple newlines
+    html = html.replace(/\n\s*\n/g, '\n');
+    return html.trim();
+  }
   // Professional Summary
   if (resumeData.summary) {
     addSectionHeader('PROFESSIONAL SUMMARY')
-    
+
     content.push(
       new Paragraph({
         children: [
           new TextRun({
-            text: resumeData.summary,
+            text: htmlToPlainText(resumeData.summary),
             size: 20
           })
         ],
@@ -385,7 +460,7 @@ function createWordContent(resumeData) {
   // Technical Skills
   if (resumeData.skills && resumeData.skills.length > 0) {
     addSectionHeader('TECHNICAL SKILLS')
-    
+
     content.push(
       new Paragraph({
         children: [
@@ -402,7 +477,7 @@ function createWordContent(resumeData) {
   // Professional Experience
   if (resumeData.experience && resumeData.experience.length > 0) {
     addSectionHeader('PROFESSIONAL EXPERIENCE')
-    
+
     resumeData.experience.forEach((exp, index) => {
       // Job title and company
       if (exp.position && exp.company) {
@@ -420,12 +495,12 @@ function createWordContent(resumeData) {
           })
         )
       }
-      
+
       // Duration and location
       const detailsLine = []
       if (exp.duration) detailsLine.push(exp.duration)
       if (exp.location) detailsLine.push(exp.location)
-      
+
       if (detailsLine.length > 0) {
         content.push(
           new Paragraph({
@@ -441,7 +516,7 @@ function createWordContent(resumeData) {
           })
         )
       }
-      
+
       if (exp.description) {
         // Split description into bullet points
         const descriptions = exp.description.split(/[•·\n]/).filter(desc => desc.trim())
@@ -461,7 +536,7 @@ function createWordContent(resumeData) {
           }
         })
       }
-      
+
       if (index < resumeData.experience.length - 1) {
         content.push(
           new Paragraph({
@@ -476,7 +551,7 @@ function createWordContent(resumeData) {
   // Projects
   if (resumeData.projects && resumeData.projects.length > 0) {
     addSectionHeader('PROJECTS')
-    
+
     resumeData.projects.forEach((project, index) => {
       if (project.name) {
         content.push(
@@ -493,7 +568,7 @@ function createWordContent(resumeData) {
           })
         )
       }
-      
+
       if (project.technologies) {
         content.push(
           new Paragraph({
@@ -509,7 +584,7 @@ function createWordContent(resumeData) {
           })
         )
       }
-      
+
       if (project.description) {
         content.push(
           new Paragraph({
@@ -523,11 +598,11 @@ function createWordContent(resumeData) {
           })
         )
       }
-      
+
       const projectLinks = []
       if (project.url) projectLinks.push(`Demo: ${project.url}`)
       if (project.github) projectLinks.push(`Code: ${project.github}`)
-      
+
       if (projectLinks.length > 0) {
         content.push(
           new Paragraph({
@@ -548,7 +623,7 @@ function createWordContent(resumeData) {
   // Education
   if (resumeData.education && resumeData.education.length > 0) {
     addSectionHeader('EDUCATION')
-    
+
     resumeData.education.forEach((edu, index) => {
       if (edu.degree && edu.school) {
         content.push(
@@ -565,11 +640,11 @@ function createWordContent(resumeData) {
           })
         )
       }
-      
+
       const eduDetails = []
       if (edu.year) eduDetails.push(edu.year)
       if (edu.gpa) eduDetails.push(`GPA: ${edu.gpa}`)
-      
+
       if (eduDetails.length > 0) {
         content.push(
           new Paragraph({
@@ -590,13 +665,13 @@ function createWordContent(resumeData) {
   // Certifications
   if (resumeData.certifications && resumeData.certifications.length > 0) {
     addSectionHeader('CERTIFICATIONS')
-    
+
     resumeData.certifications.forEach((cert, index) => {
       const certLine = []
       if (cert.name) certLine.push(cert.name)
       if (cert.issuer) certLine.push(cert.issuer)
       if (cert.year) certLine.push(cert.year)
-      
+
       if (certLine.length > 0) {
         content.push(
           new Paragraph({
@@ -616,7 +691,7 @@ function createWordContent(resumeData) {
   // Key Achievements
   if (resumeData.achievements && resumeData.achievements.length > 0) {
     addSectionHeader('KEY ACHIEVEMENTS')
-    
+
     resumeData.achievements.forEach(achievement => {
       content.push(
         new Paragraph({
@@ -635,7 +710,7 @@ function createWordContent(resumeData) {
   // Languages
   if (resumeData.languages && resumeData.languages.length > 0) {
     addSectionHeader('LANGUAGES')
-    
+
     const languagesList = resumeData.languages.map(lang => `${lang.language} (${lang.proficiency})`).join(', ')
     content.push(
       new Paragraph({
@@ -653,7 +728,7 @@ function createWordContent(resumeData) {
   // Interests
   if (resumeData.interests && resumeData.interests.length > 0) {
     addSectionHeader('INTERESTS')
-    
+
     content.push(
       new Paragraph({
         children: [
