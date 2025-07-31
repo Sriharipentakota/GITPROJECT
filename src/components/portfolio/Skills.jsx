@@ -1,42 +1,6 @@
-import React from 'react';
+import { categories, skills } from '../../utils/utils';
 
 const Skills = () => {
-  // ============================================================
-  // CUSTOMIZE YOUR FRONTEND SKILLS HERE
-  // ============================================================
-  const skills = [
-    { name: 'HTML5', level: 95, color: 'bg-orange-500' },
-    { name: 'CSS3', level: 90, color: 'bg-blue-500' },
-    { name: 'JavaScript', level: 90, color: 'bg-yellow-500' },
-    { name: 'React', level: 85, color: 'bg-cyan-500' },
-    { name: 'TypeScript', level: 75, color: 'bg-blue-600' },
-    { name: 'Tailwind CSS', level: 90, color: 'bg-teal-500' },
-    { name: 'SASS/SCSS', level: 85, color: 'bg-pink-500' },
-    { name: 'Bootstrap', level: 80, color: 'bg-purple-500' },
-    { name: 'jQuery', level: 75, color: 'bg-blue-400' },
-    { name: 'Webpack', level: 70, color: 'bg-blue-700' },
-    { name: 'Git', level: 85, color: 'bg-red-500' },
-  ];
-
-  const categories = [
-    {
-      title: 'Core Technologies',
-      skills: ['HTML5', 'CSS3', 'JavaScript', 'TypeScript'],
-      icon: '💻'
-    },
-    {
-      title: 'Frameworks & Libraries',
-      skills: ['React', 'jQuery', 'Bootstrap'],
-      icon: '⚛️'
-    },
-    {
-      title: 'Styling & Tools',
-      skills: ['Tailwind CSS', 'SASS/SCSS', 'Webpack', 'Git'],
-      icon: '🎨'
-    }
-  ];
-  // ============================================================
-
   return (
     <section id="skills" className="py-12 sm:py-16 lg:py-20 bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

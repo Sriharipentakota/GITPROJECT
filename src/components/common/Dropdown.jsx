@@ -25,6 +25,7 @@
  */
 
 import React, { useState, useRef, useEffect } from 'react';
+import { positionClasses } from '../../utils/utils';
 
 /**
  * Dropdown Component
@@ -47,11 +48,11 @@ const Dropdown = ({
 }) => {
   // State to track if dropdown is open
   const [isOpen, setIsOpen] = useState(false);
-  
+
   // Refs for dropdown container and menu
   const dropdownRef = useRef(null);
   const menuRef = useRef(null);
-  
+
   /**
    * Toggle dropdown open/close state
    * Calls appropriate callbacks when state changes
@@ -59,14 +60,14 @@ const Dropdown = ({
   const toggleDropdown = () => {
     const newState = !isOpen;
     setIsOpen(newState);
-    
+
     if (newState && onOpen) {
       onOpen();
     } else if (!newState && onClose) {
       onClose();
     }
   };
-  
+
   /**
    * Close dropdown
    * Used by various event handlers
@@ -77,7 +78,7 @@ const Dropdown = ({
       onClose();
     }
   };
-  
+
   /**
    * Handle item click
    * Executes item's onClick handler and closes dropdown
@@ -91,7 +92,7 @@ const Dropdown = ({
     }
     closeDropdown();
   };
-  
+
   /**
    * Effect to handle click outside dropdown
    * Closes dropdown when user clicks outside of it
@@ -103,20 +104,20 @@ const Dropdown = ({
         closeDropdown();
       }
     };
-    
+
     // Add event listener when dropdown is open
     if (isOpen) {
       document.addEventListener('mousedown', handleClickOutside);
       document.addEventListener('touchstart', handleClickOutside);
     }
-    
+
     // Cleanup event listeners
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
       document.removeEventListener('touchstart', handleClickOutside);
     };
   }, [isOpen]);
-  
+
   /**
    * Effect to handle keyboard events
    * Closes dropdown when Escape key is pressed
@@ -127,32 +128,25 @@ const Dropdown = ({
         closeDropdown();
       }
     };
-    
+
     // Add event listener when dropdown is open
     if (isOpen) {
       document.addEventListener('keydown', handleKeyDown);
     }
-    
+
     // Cleanup event listener
     return () => {
       document.removeEventListener('keydown', handleKeyDown);
     };
   }, [isOpen]);
-  
-  // Position classes for dropdown menu alignment
-  const positionClasses = {
-    left: 'left-0',
-    right: 'right-0',
-    center: 'left-1/2 transform -translate-x-1/2',
-  };
-  
+
   return (
     <div className={`relative inline-block ${className}`} ref={dropdownRef}>
       {/* Trigger Element */}
       <div onClick={toggleDropdown} className="cursor-pointer">
         {trigger}
       </div>
-      
+
       {/* Dropdown Menu */}
       {isOpen && (
         <div
@@ -166,9 +160,8 @@ const Dropdown = ({
               {/* Regular Menu Item */}
               {!item.divider && (
                 <button
-                  className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 transition-colors duration-150 flex items-center space-x-3 ${
-                    item.disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
-                  } ${item.className || ''}`}
+                  className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 transition-colors duration-150 flex items-center space-x-3 ${item.disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
+                    } ${item.className || ''}`}
                   onClick={(e) => !item.disabled && handleItemClick(item, e)}
                   disabled={item.disabled}
                   role="menuitem"
@@ -179,7 +172,7 @@ const Dropdown = ({
                       {item.icon}
                     </span>
                   )}
-                  
+
                   {/* Item Content */}
                   <div className="flex-1">
                     <div className="font-medium text-gray-900">
@@ -191,7 +184,7 @@ const Dropdown = ({
                       </div>
                     )}
                   </div>
-                  
+
                   {/* Item Badge/Status */}
                   {item.badge && (
                     <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-full">
@@ -200,14 +193,14 @@ const Dropdown = ({
                   )}
                 </button>
               )}
-              
+
               {/* Divider */}
               {item.divider && (
                 <div className="border-t border-gray-100 my-1" role="separator" />
               )}
             </div>
           ))}
-          
+
           {/* Empty State */}
           {items.length === 0 && (
             <div className="px-4 py-2 text-sm text-gray-500 text-center">

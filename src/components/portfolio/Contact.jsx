@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Mail, Phone, MapPin, Send, Github, Twitter, Code } from 'lucide-react';
+import { useState } from 'react';
+import { Mail, Phone, MapPin, Send, Github } from 'lucide-react';
 import naukri from '../../assests/naukri.png'
 
 const Contact = () => {

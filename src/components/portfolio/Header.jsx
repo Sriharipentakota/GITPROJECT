@@ -1,15 +1,12 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Menu, X, LogOut } from 'lucide-react';
+import { scrollToSection } from '../../utils/utils';
 
 const Header = ({ onLogout }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-  const scrollToSection = (sectionId) => {
-    const element = document.getElementById(sectionId);
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth' });
-    }
-    setIsMenuOpen(false);
+  const handleNavClick = (sectionId) => {
+    scrollToSection(sectionId, () => setIsMenuOpen(false));
   };
 
   return (
@@ -33,31 +30,31 @@ const Header = ({ onLogout }) => {
               Home
             </button>
             <button
-              onClick={() => scrollToSection('about')}
+              onClick={() => handleNavClick('about')}
               className="text-gray-700 hover:text-blue-600 transition-colors duration-200 text-sm lg:text-base"
             >
               About
             </button>
             <button
-              onClick={() => scrollToSection('skills')}
+              onClick={() => handleNavClick('skills')}
               className="text-gray-700 hover:text-blue-600 transition-colors duration-200 text-sm lg:text-base"
             >
               Skills
             </button>
             <button
-              onClick={() => scrollToSection('projects')}
+              onClick={() => handleNavClick('projects')}
               className="text-gray-700 hover:text-blue-600 transition-colors duration-200 text-sm lg:text-base"
             >
               Projects
             </button>
             <button
-              onClick={() => scrollToSection('experience')}
+              onClick={() => handleNavClick('experience')}
               className="text-gray-700 hover:text-blue-600 transition-colors duration-200 text-sm lg:text-base"
             >
               Experience
             </button>
             <button
-              onClick={() => scrollToSection('contact')}
+              onClick={() => handleNavClick('contact')}
               className="text-gray-700 hover:text-blue-600 transition-colors duration-200 text-sm lg:text-base"
             >
               Contact
@@ -80,37 +77,37 @@ const Header = ({ onLogout }) => {
           <div className="md:hidden py-4 border-t border-gray-200">
             <nav className="flex flex-col space-y-3 sm:space-y-4">
               <button
-                onClick={() => scrollToSection('hero')}
+                onClick={() => handleNavClick('hero')}
                 className="text-left text-gray-700 hover:text-blue-600 transition-colors duration-200 py-1"
               >
                 Home
               </button>
               <button
-                onClick={() => scrollToSection('about')}
+                onClick={() => handleNavClick('about')}
                 className="text-left text-gray-700 hover:text-blue-600 transition-colors duration-200 py-1"
               >
                 About
               </button>
               <button
-                onClick={() => scrollToSection('skills')}
+                onClick={() => handleNavClick('skills')}
                 className="text-left text-gray-700 hover:text-blue-600 transition-colors duration-200 py-1"
               >
                 Skills
               </button>
               <button
-                onClick={() => scrollToSection('projects')}
+                onClick={() => handleNavClick('projects')}
                 className="text-left text-gray-700 hover:text-blue-600 transition-colors duration-200 py-1"
               >
                 Projects
               </button>
               <button
-                onClick={() => scrollToSection('experience')}
+                onClick={() => handleNavClick('experience')}
                 className="text-left text-gray-700 hover:text-blue-600 transition-colors duration-200 py-1"
               >
                 Experience
               </button>
               <button
-                onClick={() => scrollToSection('contact')}
+                onClick={() => handleNavClick('contact')}
                 className="text-left text-gray-700 hover:text-blue-600 transition-colors duration-200 py-1"
               >
                 Contact

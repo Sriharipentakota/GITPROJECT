@@ -1,57 +1,20 @@
 import React from 'react';
-import { ChevronDown, Github, Linkedin, Mail, Code, Download } from 'lucide-react';
+import { ChevronDown, Github, Mail } from 'lucide-react';
 import { Button, Dropdown } from '../common';
-import { generatePDFResume, generateWordResume } from '../../utils';
 import naukri from '../../assests/naukri.png'
 import srihari from '../../assests/srihari.jpg'
+import { resumeDownloadItems, scrollToSection } from '../../utils/utils';
 
 const Hero = () => {
   /**
    * Handle resume download based on format selection
    * This function is called when user selects a format from the dropdown
    * 
-   * @param {string} format - The selected format ('pdf' or 'word')
    */
-  const handleResumeDownload = async (format) => {
-    try {
-      if (format === 'pdf') {
-        await generatePDFResume();
-      } else if (format === 'word') {
-        await generateWordResume();
-      }
-    } catch (error) {
-      console.error('Error downloading resume:', error);
-      // You could add a toast notification here for better UX
-      alert('Error downloading resume. Please try again.');
-    }
-  };
-
   /**
    * Resume download dropdown items
    * Each item represents a different format option with icon and description
    */
-  const resumeDownloadItems = [
-    {
-      label: 'Download as PDF',
-      description: 'Professional PDF format',
-      icon: <Download className="w-4 h-4" />,
-      onClick: () => handleResumeDownload('pdf'),
-    },
-    {
-      label: 'Download as Word',
-      description: 'Editable Word document',
-      icon: <Download className="w-4 h-4" />,
-      onClick: () => handleResumeDownload('word'),
-    },
-  ];
-
-  const scrollToSection = (sectionId) => {
-    const element = document.getElementById(sectionId);
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth' });
-    }
-  };
-
   return (
     <section id="hero" className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 pt-16 sm:pt-20 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto text-center">
@@ -85,7 +48,7 @@ const Hero = () => {
           >
             Get In Touch
           </Button>
-          
+
           <Button
             variant="outline"
             size="lg"
@@ -94,7 +57,7 @@ const Hero = () => {
           >
             View My Work
           </Button>
-          
+
           {/* Resume Download Dropdown Button */}
           <Dropdown
             trigger={

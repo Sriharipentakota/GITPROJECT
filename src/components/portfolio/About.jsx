@@ -1,4 +1,3 @@
-import React from 'react';
 import { Code, Palette, Zap, Heart } from 'lucide-react';
 
 const About = () => {

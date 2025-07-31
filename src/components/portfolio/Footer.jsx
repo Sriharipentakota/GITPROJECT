@@ -1,11 +1,7 @@
-import React from 'react';
 import { Heart, ArrowUp } from 'lucide-react';
+import { scrollToTop } from '../../utils/utils';
 
 const Footer = () => {
-  const scrollToTop = () => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
   return (
     <footer className="bg-gray-900 text-white py-8 sm:py-12 relative">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

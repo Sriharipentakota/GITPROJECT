@@ -1,61 +1,10 @@
 import React from 'react';
 import { ExternalLink, Github, Calendar } from 'lucide-react';
-import employeeManagement from '../../assests/employeeManagement.png'
-import ATSResumeFormatter from '../../assests/ATSResumeFormatter.png'
+import { projects } from '../../utils/utils';
+
 
 const Projects = () => {
-  // ============================================================
-  // CUSTOMIZE YOUR FRONTEND PROJECTS HERE
-  // ============================================================
-  const projects = [
-    {
-      title: 'E-Commerce React App',
-      description: 'A modern e-commerce frontend built with React, featuring product catalog, shopping cart, user authentication, and responsive design.',
-      image: 'https://images.pexels.com/photos/230544/pexels-photo-230544.jpeg?auto=compress&cs=tinysrgb&w=600',
-      technologies: ['React', 'JavaScript', 'Tailwind CSS', 'Context API', 'React Router'],
-      liveUrl: 'https://hari-ecommerce.netlify.app',
-      githubUrl: 'https://github.com/Sriharipentakota/GITPROJECT/tree/ecommerce-new',
-      date: 'March 2024'
-    },
-    {
-      title: 'Employee Management System(Full Stack)',
-      description: 'A full-stack employee management system with a React frontend and Node.js backend. Features include employee CRUD operations, role-based access control, and responsive design.',
-      image: employeeManagement,
-      technologies: ['React', 'CSS Grid', 'Flexbox', 'Local Storage'],
-      liveUrl: 'https://employee-management-data.netlify.app',
-      githubUrl: 'https://github.com/Sriharipentakota/GITPROJECT/tree/employee-managment-backend',
-      date: 'February 2024'
-    },
-    {
-      title: 'ATS Resume Builder',
-      description: 'A resume builder that generates ATS-friendly resumes with customizable templates, real-time previews, and downloadable PDFs. Built with React and modern CSS techniques.',
-      image: ATSResumeFormatter,
-      technologies: ['React', 'JavaScript', 'CSS Modules', 'PDF Generation', 'Local Storage'],
-      liveUrl: 'https://hari-resume-formatter.netlify.app',
-      githubUrl: 'https://github.com/Sriharipentakota/GITPROJECT/tree/resume-formatter',
-      date: 'January 2024'
-    },
-    {
-      title: 'FrontEnd Concepts Showcase',
-      description: 'A showcase of various frontend concepts including animations, transitions, and responsive design. Built with React and Tailwind CSS.',
-      image: 'https://images.pexels.com/photos/3184465/pexels-photo-3184465.jpeg?auto=compress&cs=tinysrgb&w=600',
-      technologies: ["React", "JavaScript", "Tailwind CSS",'HTml5', 'CSS3'],
-      liveUrl: 'https://react-keyconcepts.netlify.app/',
-      githubUrl: 'https://github.com/Sriharipentakota/GITPROJECT/tree/React-Concepts',
-      date: 'December 2023'
-    },
-    {
-      title: 'Portfolio Website',
-      description: 'A responsive portfolio website with smooth scrolling, animations, and modern design. Built with performance and SEO optimization in mind.',
-      image: 'https://images.pexels.com/photos/196644/pexels-photo-196644.jpeg?auto=compress&cs=tinysrgb&w=600',
-      technologies: ['HTML5', 'CSS3', 'JavaScript', 'React', 'Tailwind CSS'],
-      liveUrl: 'https://hari-portfoliowebsite.netlify.app',
-      githubUrl: 'https://github.com/Sriharipentakota/GITPROJECT/tree/my-portfolio',
-      date: 'November 2023'
-    }
-  ];
-  // ============================================================
-
+ 
   return (
     <section id="projects" className="py-12 sm:py-16 lg:py-20 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

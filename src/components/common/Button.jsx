@@ -21,6 +21,7 @@
  */
 
 import React from 'react';
+import { baseStyles, iconSizes, sizeStyles, variantStyles } from '../../utils/utils';
 
 /**
  * Button Component
@@ -51,30 +52,7 @@ const Button = ({
   onClick,
   ...rest
 }) => {
-  // Base styles that apply to all button variants
-  const baseStyles = 'inline-flex items-center justify-center font-medium rounded-lg transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-105 active:scale-95';
-  
-  // Variant-specific styles for different button appearances
-  const variantStyles = {
-    primary: 'bg-gradient-to-r from-blue-500 to-purple-600 text-white hover:from-blue-600 hover:to-purple-700 focus:ring-blue-500 shadow-lg hover:shadow-xl',
-    secondary: 'bg-gray-600 text-white hover:bg-gray-700 focus:ring-gray-500 shadow-lg hover:shadow-xl',
-    outline: 'border-2 border-gray-700 text-gray-700 hover:bg-gray-700 hover:text-white focus:ring-gray-500',
-    ghost: 'text-gray-700 hover:bg-gray-100 focus:ring-gray-500',
-  };
-  
-  // Size-specific styles for different button sizes
-  const sizeStyles = {
-    sm: 'px-3 py-1.5 text-sm',
-    md: 'px-4 py-2 text-sm sm:px-6 sm:py-2.5 sm:text-base',
-    lg: 'px-6 py-3 text-base sm:px-8 sm:py-3 sm:text-lg',
-  };
-  
-  // Icon size mapping based on button size
-  const iconSizes = {
-    sm: 'w-3 h-3 sm:w-4 sm:h-4',
-    md: 'w-4 h-4 sm:w-5 sm:h-5',
-    lg: 'w-5 h-5 sm:w-6 sm:h-6',
-  };
+ 
   
   // Combine all styles into final className
   const buttonClasses = `${baseStyles} ${variantStyles[variant]} ${sizeStyles[size]} ${className}`;
