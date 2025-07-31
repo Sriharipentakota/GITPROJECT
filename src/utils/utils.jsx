@@ -125,7 +125,7 @@ export const handleResumeFormatter = (params) => {
         return;
     }
     const link = document.createElement('a');
-    link.href = `/${file}.${formatter}`;
+    link.href = `../../${file}.${formatter}`;
     link.download = `${file}.${formatter}`;
     document.body.appendChild(link);
     link.click();
