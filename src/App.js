@@ -1,6 +1,7 @@
 import express from 'express';
 import dotenv from 'dotenv';
 import employeeRoutes from './routes/employeeRoutes.js';
+import authRoutes from './routes/auth.js';
 import cors from 'cors';
 
 dotenv.config();
@@ -18,6 +19,7 @@ connectDB();
 
 // Routes
 app.use('/api/employees', employeeRoutes);
+app.use('/api/auth', authRoutes);
 
 // Error handling
 app.use((err, req, res, next) => {
