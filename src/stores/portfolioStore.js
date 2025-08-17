@@ -31,10 +31,10 @@ const defaultSections = [
     title: 'About Me',
     isVisible: true,
     data: {
-      name: 'John Doe',
-      title: 'Full Stack Developer',
-      bio: 'Passionate developer with 5+ years of experience building modern web applications.',
-      skills: ['React', 'TypeScript', 'Node.js', 'Python']
+      name: 'Srihari Pentakota',
+      title: 'Front-End Developer',
+      bio: 'Passionate developer with 2.5+ years of experience building modern web applications.',
+      skills: ['React', 'TypeScript', 'Node.js', 'Javascript','Html','CSS']
     }
   },
   {
@@ -44,24 +44,24 @@ const defaultSections = [
     isVisible: true,
     data: [
       {
-        company: 'Tech Corp',
-        position: 'Senior Developer',
-        duration: '2021 - Present',
-        description: 'Lead development of customer-facing applications using React and Node.js.'
+        company: 'Deloitte',
+        position: 'Junior Developer',
+        duration: '2023 - Present',
+        description: 'Lead development of customer-facing applications using React and JS.'
       }
     ]
   },
   {
     id: 'projects-1',
     type: 'projects',
-    title: 'Projects',
+    title: 'Employee Management System',
     isVisible: true,
     data: [
       {
-        title: 'E-commerce Platform',
-        description: 'Full-stack e-commerce solution with React and Express',
+        title: 'Employee Management System',
+        description: 'Full-stack application for managing employee records',
         technologies: ['React', 'Express', 'MongoDB'],
-        link: 'https://github.com/johndoe/ecommerce'
+        link: 'https://employee-management-data.netlify.app'
       }
     ]
   },
@@ -71,9 +71,9 @@ const defaultSections = [
     title: 'Contact',
     isVisible: true,
     data: {
-      email: 'john@example.com',
-      linkedin: 'https://linkedin.com/in/johndoe',
-      github: 'https://github.com/johndoe'
+      email: 'sriharipentakota07@gmail.com',
+      linkedin: 'https://linkedin.com/in/srihari-pentakota',
+      github: 'https://github.com/SrihariPentakota'
     }
   }
 ];

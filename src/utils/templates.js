@@ -1,16 +1,16 @@
 // src/utils/templates.js
-import { generateHTMLExport as generateClassicHTMLExport } from './classicTemplate';
-import { generateModernCardHTMLExport } from './modernCardTemplate';
-import { generateMinimalistHTMLExport } from './minimalistTemplate';
-import { generateCreativeHTMLExport } from './creativeTemplate';
-import { generateProfessionalHTMLExport } from './professionalTemplate';
-import { generateDarkModeHTMLExport } from './darkModeTemplate';
-import { generateCompactHTMLExport } from './compactTemplate';
-import { generateTimelineHTMLExport } from './timelineTemplate';
-import { generatePortfolioHTMLExport } from './portfolioTemplate';
-import { generateExecutiveHTMLExport } from './executiveTemplate';
-import { generateDeveloperHTMLExport } from './developerTemplate';
-import { generateDesignerHTMLExport } from './designerTemplate';
+import { generateHTMLExport as generateClassicHTMLExport } from './templates/classicTemplate';
+import { generateModernCardHTMLExport } from './templates/modernCardTemplate';
+import { generateMinimalistHTMLExport } from './templates/minimalistTemplate';
+import { generateCreativeHTMLExport } from './templates/creativeTemplate';
+import { generateProfessionalHTMLExport } from './templates/professionalTemplate';
+import { generateDarkModeHTMLExport } from './templates/darkModeTemplate';
+import { generateCompactHTMLExport } from './templates/compactTemplate';
+import { generateTimelineHTMLExport } from './templates/timelineTemplate';
+import { generatePortfolioHTMLExport } from './templates/portfolioTemplate';
+import { generateExecutiveHTMLExport } from './templates/executiveTemplate';
+import { generateDeveloperHTMLExport } from './templates/developerTemplate';
+import { generateDesignerHTMLExport } from './templates/designerTemplate';
 
 export const portfolioTemplates = {
   classic: generateClassicHTMLExport,
