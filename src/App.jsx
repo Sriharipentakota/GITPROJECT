@@ -38,18 +38,12 @@ function App() {
     }
   };
 
-
   const handleExportPDF = async () => {
     try {
       message.loading('Generating PDF...', 0);
       
-      const html = portfolioTemplates[selectedTemplate]({
-        sections,
-        theme,
-        title: 'My Portfolio'
-      });
-
-      await exportToPDF(html, 'portfolio.pdf');
+      // Pass sections and theme instead of HTML
+      await exportToPDF(sections, theme, 'portfolio.pdf');
       message.destroy();
       message.success('PDF exported successfully!');
     } catch (error) {
@@ -63,13 +57,8 @@ function App() {
     try {
       message.loading('Generating Word document...', 0);
       
-      const html = portfolioTemplates[selectedTemplate]({
-        sections,
-        theme,
-        title: 'My Portfolio'
-      });
-
-      await exportToWord(html, 'portfolio.docx');
+      // Pass sections and theme instead of HTML
+      await exportToWord(sections, theme, 'portfolio.docx');
       message.destroy();
       message.success('Word document exported successfully!');
     } catch (error) {
