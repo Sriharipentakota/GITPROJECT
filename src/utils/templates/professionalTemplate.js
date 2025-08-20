@@ -533,12 +533,12 @@ const ensureRequiredSections = (sections) => {
   // Guarantee all required sections
   const types = sections.map(s => s.type);
   const defaults = [
-    {type: 'about', title: 'About Me', isVisible: true, data: {name: '', title: '', bio: '', avatar: '', skills: [], resume: ''}},
-    {type: 'experience', title: 'Experience', isVisible: true, data: []},
-    {type: 'projects', title: 'Projects', isVisible: true, data: []},
-    {type: 'contact', title: 'Contact', isVisible: true, data: {}},
-    {type: 'certifications', title: 'Certifications', isVisible: true, data: []},
-    {type: 'education', title: 'Education', isVisible: true, data: []},
+    { type: 'about', title: 'About Me', isVisible: true, data: { name: '', title: '', bio: '', avatar: '', skills: [], resume: '' } },
+    { type: 'experience', title: 'Experience', isVisible: true, data: [] },
+    { type: 'projects', title: 'Projects', isVisible: true, data: [] },
+    { type: 'contact', title: 'Contact', isVisible: true, data: {} },
+    { type: 'certifications', title: 'Certifications', isVisible: true, data: [] },
+    { type: 'education', title: 'Education', isVisible: true, data: [] },
   ];
   const result = [...sections];
   for (const def of defaults) {

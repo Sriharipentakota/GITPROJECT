@@ -261,9 +261,9 @@ export const generatePortfolioCSS = (theme) => `
 const ensurePortfolioSections = (sections) => {
   const types = sections.map(s => s.type);
   const defaults = [
-    {type: 'about', title: 'About Me', isVisible: true, data: {name: '', title: '', bio: '', avatar: '', skills: [], resume: ''}},
-    {type: 'projects', title: 'Projects', isVisible: true, data: []},
-    {type: 'contact', title: 'Contact', isVisible: true, data: {}},
+    { type: 'about', title: 'About Me', isVisible: true, data: { name: '', title: '', bio: '', avatar: '', skills: [], resume: '' } },
+    { type: 'projects', title: 'Projects', isVisible: true, data: [] },
+    { type: 'contact', title: 'Contact', isVisible: true, data: {} },
   ];
   const result = [...sections];
   for (const def of defaults) {
@@ -286,7 +286,7 @@ const generatePortfolioHTML = (sections, theme) => {
     </section>
   `;
   // Projects - Masonry, Filters, Modal
-  const projects = sec.find(s => s.type === 'projects') || {data: []};
+  const projects = sec.find(s => s.type === 'projects') || { data: [] };
   const categories = [...new Set(projects.data?.flatMap(p => p.categories || []))].filter(Boolean);
   html += `
     <section class="section" id="projects">
@@ -311,7 +311,7 @@ const generatePortfolioHTML = (sections, theme) => {
     </section>
   `;
   // Contact
-  const contact = sec.find(s => s.type === 'contact') || {data: {}};
+  const contact = sec.find(s => s.type === 'contact') || { data: {} };
   html += `
     <section class="section contact-section" id="contact">
       <h2 class="section-title">${contact.title || "Contact"}</h2>

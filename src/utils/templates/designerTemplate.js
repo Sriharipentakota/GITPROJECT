@@ -342,11 +342,11 @@ export const generateDesignerCSS = (theme) => `
 const ensureDesignerSections = (sections) => {
   const types = sections.map(s => s.type);
   const defaults = [
-    {type: 'about', title: 'About Me', isVisible: true, data: {name: '', title: '', bio: '', avatar: '', socials: []}},
-    {type: 'projects', title: 'Projects', isVisible: true, data: []},
-    {type: 'skills', title: 'Skills', isVisible: true, data: []},
-    {type: 'testimonials', title: 'Testimonials', isVisible: true, data: []},
-    {type: 'contact', title: 'Contact', isVisible: true, data: {}},
+    { type: 'about', title: 'About Me', isVisible: true, data: { name: '', title: '', bio: '', avatar: '', socials: [] } },
+    { type: 'projects', title: 'Projects', isVisible: true, data: [] },
+    { type: 'skills', title: 'Skills', isVisible: true, data: [] },
+    { type: 'testimonials', title: 'Testimonials', isVisible: true, data: [] },
+    { type: 'contact', title: 'Contact', isVisible: true, data: {} },
   ];
   const result = [...sections];
   for (const def of defaults) {
@@ -418,16 +418,16 @@ const generateDesignerHTML = (sections, theme) => {
       <h2 class="section-title">${testimonials.title || "Testimonials"}</h2>
       <div class="designer-testimonials-grid">
         ${(testimonials.data || []).map(t =>
-          `<div class="designer-testimonial-card" tabindex="0">
+    `<div class="designer-testimonial-card" tabindex="0">
             <div class="designer-testimonial-quote">"${t.quote || ''}"</div>
             <span class="designer-testimonial-source">- ${t.source || ''}</span>
           </div>`
-        ).join('')}
+  ).join('')}
       </div>
     </section>
   `;
   // Contact
-  const contact = sec.find(s => s.type === 'contact') || {data: {}};
+  const contact = sec.find(s => s.type === 'contact') || { data: {} };
   html += `
     <section class="section designer-contact-section" id="contact">
       <div class="designer-contact-title">${contact.title || "Contact"}</div>

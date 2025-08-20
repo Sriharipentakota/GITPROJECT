@@ -281,10 +281,10 @@ export const generateDeveloperCSS = (theme) => `
 const ensureDeveloperSections = (sections) => {
   const types = sections.map(s => s.type);
   const defaults = [
-    {type: 'about', title: 'About Me', isVisible: true, data: {name: '', title: '', bio: '', avatar: '', skills: [], resume: ''}},
-    {type: 'projects', title: 'Projects', isVisible: true, data: []},
-    {type: 'skills', title: 'Skills', isVisible: true, data: []},
-    {type: 'contact', title: 'Contact', isVisible: true, data: {}},
+    { type: 'about', title: 'About Me', isVisible: true, data: { name: '', title: '', bio: '', avatar: '', skills: [], resume: '' } },
+    { type: 'projects', title: 'Projects', isVisible: true, data: [] },
+    { type: 'skills', title: 'Skills', isVisible: true, data: [] },
+    { type: 'contact', title: 'Contact', isVisible: true, data: {} },
   ];
   const result = [...sections];
   for (const def of defaults) {
@@ -336,7 +336,7 @@ const generateDeveloperHTML = (sections, theme) => {
     </section>
   `;
   // Contact
-  const contact = sec.find(s => s.type === 'contact') || {data: {}};
+  const contact = sec.find(s => s.type === 'contact') || { data: {} };
   html += `
     <section class="section dev-contact-section" id="contact">
       <div class="dev-contact-title">${contact.title || "Contact"}</div>

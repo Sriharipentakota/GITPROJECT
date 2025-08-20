@@ -380,7 +380,7 @@ const generateCreativeSectionHTML = (section) => {
 
 const generateCreativeAboutHTML = (section) => {
   const data = section.data;
-  const skillsHTML = data.skills?.map(skill => 
+  const skillsHTML = data.skills?.map(skill =>
     `<span class="skill">${skill}</span>`
   ).join('') || '';
 
@@ -397,10 +397,10 @@ const generateCreativeAboutHTML = (section) => {
 const generateCreativeProjectsHTML = (section) => {
   const projects = section.data || [];
   const projectsHTML = projects.map(project => {
-    const techHTML = project.technologies?.map(tech => 
+    const techHTML = project.technologies?.map(tech =>
       `<span class="tech-tag">${tech}</span>`
     ).join('') || '';
-    
+
     return `
       <div class="project-card">
           <h3 class="project-title">${project.title || ''}</h3>
@@ -462,7 +462,7 @@ const generateCreativeEducationHTML = (section) => {
     const detailsHTML = [];
     if (edu.gpa) detailsHTML.push(`GPA: ${edu.gpa}`);
     if (edu.location) detailsHTML.push(`${edu.location}`);
-    
+
     return `
       <div class="experience-item">
           <h3 class="company">${edu.institution || ''}</h3>
@@ -487,7 +487,7 @@ const generateCreativeCertificationsHTML = (section) => {
     const detailsHTML = [];
     if (cert.date) detailsHTML.push(`Issued: ${cert.date}`);
     if (cert.credentialId) detailsHTML.push(`ID: ${cert.credentialId}`);
-    
+
     return `
       <div class="experience-item">
           <h3 class="company">${cert.name || ''}</h3>

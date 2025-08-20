@@ -10,7 +10,7 @@ export const generateHTMLExport = ({ sections, theme, title = 'My Portfolio' }) 
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>${title}</title>
-    <meta name="description" content="Professional portfolio of ${sections.find(s=>s.type==='about')?.data.name || 'User'}: skills, experience, projects, and contact.">
+    <meta name="description" content="Professional portfolio of ${sections.find(s => s.type === 'about')?.data.name || 'User'}: skills, experience, projects, and contact.">
     <link rel="icon" type="image/png" href="${theme.logo || ''}">
     <style>
         ${css}
@@ -27,8 +27,8 @@ export const generateHTMLExport = ({ sections, theme, title = 'My Portfolio' }) 
         <a href="#portfolio">Portfolio</a>
         <a href="#skills">Skills</a>
         <a href="#contact">Contact</a>
-        ${sections.some(s=>s.type==='blog') ? `<a href="#blog">Blog</a>` : ''}
-        ${sections.some(s=>s.type==='resources') ? `<a href="#resources">Resources</a>` : ''}
+        ${sections.some(s => s.type === 'blog') ? `<a href="#blog">Blog</a>` : ''}
+        ${sections.some(s => s.type === 'resources') ? `<a href="#resources">Resources</a>` : ''}
       </nav>
     </header>
     ${html}
@@ -41,7 +41,7 @@ export const generateHTMLExport = ({ sections, theme, title = 'My Portfolio' }) 
         ${theme.socials?.map(social => `<a href="${social.link}" target="_blank" rel="noopener">${social.icon}</a>`).join('') || ''}
       </div>
       <div class="footer-copyright">
-        &copy; ${new Date().getFullYear()} ${sections.find(s=>s.type==='about')?.data.name || ''}. All rights reserved.
+        &copy; ${new Date().getFullYear()} ${sections.find(s => s.type === 'about')?.data.name || ''}. All rights reserved.
       </div>
     </footer>
     ${generateLegalPolicyHTML()}
@@ -206,10 +206,10 @@ export const generateSectionHTML = (section, theme) => {
 
 export const generateAboutHTML = (section) => {
   const data = section.data;
-const skillsHTML = data.skills?.map(skill =>
+  const skillsHTML = data.skills?.map(skill =>
     `<span class="skill">${skill}</span>`
   ).join('') || '';
-console.log(data,"data");
+  console.log(data, "data");
   return `
     <section class="section about-section" id="about">
       <img src="${data.photo || 'https://via.placeholder.com/180'}" alt="Profile photo" class="about-photo">
@@ -225,7 +225,7 @@ console.log(data,"data");
 };
 
 export const generateSkillsHTML = (section) => {
-console.log(skills,"skill");
+  console.log(skills, "skill");
   const data = section.data || {};
   const skillsHTML = data.skills?.map(skill => `<span class="skill">${skill}</span>`).join('') || '';
   return `

@@ -1,6 +1,6 @@
 import React from 'react';
-import { Card, ColorPicker, Select, Slider, Typography, Space } from 'antd';
 import styled from '@emotion/styled';
+import { Card, ColorPicker, Select, Slider, Typography, Space } from 'antd';
 import { usePortfolioStore } from '../../stores/portfolioStore';
 
 const { Title, Text } = Typography;
@@ -44,7 +44,7 @@ export const ThemeEditor = () => {
   return (
     <div>
       <Title level={5}>Theme Customization</Title>
-      
+
       <EditorCard title="Colors" size="small">
         <ColorSection>
           <ColorControl>

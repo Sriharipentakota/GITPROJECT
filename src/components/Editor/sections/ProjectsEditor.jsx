@@ -1,4 +1,4 @@
-import React ,{useState}from 'react';
+import React, { useState } from 'react';
 import { Form, Input, Button, Space, Card, Tag } from 'antd';
 import { PlusOutlined, DeleteOutlined } from '@ant-design/icons';
 import { usePortfolioStore } from '../../../stores/portfolioStore';
@@ -7,7 +7,7 @@ const { TextArea } = Input;
 
 export const ProjectsEditor = ({ section }) => {
   const { updateSection } = usePortfolioStore();
- const [skillInput, setSkillInput] = useState('');
+  const [skillInput, setSkillInput] = useState('');
   const projects = section.data || [];
 
   const addProject = () => {
@@ -35,13 +35,6 @@ export const ProjectsEditor = ({ section }) => {
   const handleTechChange = (index, technologies) => {
     updateProject(index, { technologies });
   };
-// const handleAddSkill = () => {
-//   const value = skillInput.trim();
-//   if (value && !data.skills?.includes(value)) {
-//     handleSkillsChange([...(data.skills || []), value]);
-//     setSkillInput('');
-//   }
-// };
   return (
     <div>
       {projects.map((project, index) => (
@@ -68,7 +61,7 @@ export const ProjectsEditor = ({ section }) => {
                 placeholder="Project title"
               />
             </Form.Item>
-            
+
             <Form.Item label="Description">
               <TextArea
                 rows={2}
@@ -77,7 +70,7 @@ export const ProjectsEditor = ({ section }) => {
                 placeholder="Project description"
               />
             </Form.Item>
-            
+
             <Form.Item label="Link">
               <Input
                 value={project.link}
@@ -85,7 +78,7 @@ export const ProjectsEditor = ({ section }) => {
                 placeholder="https://github.com/..."
               />
             </Form.Item>
-            
+
             <Form.Item label="Technologies">
               <div>
                 {project.technologies.map((tech, techIndex) => (
@@ -103,13 +96,13 @@ export const ProjectsEditor = ({ section }) => {
                 ))}
                 <Input
                   placeholder="Add technology and press Enter"
- value={skillInput}
-            onChange={(e) => setSkillInput(e.target.value)}
+                  value={skillInput}
+                  onChange={(e) => setSkillInput(e.target.value)}
                   onPressEnter={(e) => {
                     const value = e.currentTarget.value.trim();
                     if (value && !project.technologies.includes(value)) {
                       handleTechChange(index, [...project.technologies, value]);
-                       setSkillInput('');
+                      setSkillInput('');
                     }
                   }}
                   style={{ width: 150, marginTop: 4 }}
@@ -120,7 +113,7 @@ export const ProjectsEditor = ({ section }) => {
           </Form>
         </Card>
       ))}
-      
+
       <Button
         type="dashed"
         icon={<PlusOutlined />}

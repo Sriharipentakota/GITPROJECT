@@ -33,12 +33,12 @@ function ensureSections(sections) {
   // Guarantee all required sections
   const types = sections.map(s => s.type);
   const defaults = [
-    {type: 'about', title: 'About Me', isVisible: true, data: {name: '', title: '', bio: '', avatar: '', skills: [], resume: ''}},
-    {type: 'experience', title: 'Experience', isVisible: true, data: []},
-    {type: 'projects', title: 'Projects', isVisible: true, data: []},
-    {type: 'contact', title: 'Contact', isVisible: true, data: {}},
-    {type: 'certifications', title: 'Certifications', isVisible: true, data: []},
-    {type: 'education', title: 'Education', isVisible: true, data: []},
+    { type: 'about', title: 'About Me', isVisible: true, data: { name: '', title: '', bio: '', avatar: '', skills: [], resume: '' } },
+    { type: 'experience', title: 'Experience', isVisible: true, data: [] },
+    { type: 'projects', title: 'Projects', isVisible: true, data: [] },
+    { type: 'contact', title: 'Contact', isVisible: true, data: {} },
+    { type: 'certifications', title: 'Certifications', isVisible: true, data: [] },
+    { type: 'education', title: 'Education', isVisible: true, data: [] },
   ];
   const result = [...sections];
   for (const def of defaults) {
@@ -50,12 +50,12 @@ function ensureSections(sections) {
 function generateMinimalistNav(sections) {
   // Sticky nav with section links and theme toggle
   const navLinks = [
-    {type: 'about', label: 'About'},
-    {type: 'experience', label: 'Experience'},
-    {type: 'projects', label: 'Projects'},
-    {type: 'education', label: 'Education'},
-    {type: 'certifications', label: 'Certs'},
-    {type: 'contact', label: 'Contact'},
+    { type: 'about', label: 'About' },
+    { type: 'experience', label: 'Experience' },
+    { type: 'projects', label: 'Projects' },
+    { type: 'education', label: 'Education' },
+    { type: 'certifications', label: 'Certs' },
+    { type: 'contact', label: 'Contact' },
   ];
   return `
   <nav class="sticky-nav">
@@ -341,7 +341,7 @@ const generateMinimalistAboutHTML = (section) => {
     typeof skill === 'string'
       ? `<span class="skill-label">${skill}</span>`
       : `<span class="skill-item"><span class="skill-label">${skill.skill}</span>
-         <span class="skill-bar"><span class="skill-bar-fill" data-skill="${skill.level||70}"></span></span></span>`
+         <span class="skill-bar"><span class="skill-bar-fill" data-skill="${skill.level || 70}"></span></span></span>`
   ).join('');
   return `
     <section class="section about-section" id="about">

@@ -55,41 +55,41 @@ export const ExperienceEditor = ({ section }) => {
                 value={experience.company}
                 onChange={(e) => updateExperience(index, { company: e.target.value })}
                 placeholder="Company name"
-className="form-input"
+                className="form-input"
               />
             </Form.Item>
-            
+
             <Form.Item label="Position">
               <Input
                 value={experience.position}
                 onChange={(e) => updateExperience(index, { position: e.target.value })}
                 placeholder="Job title"
-className="form-input"
+                className="form-input"
               />
             </Form.Item>
-            
+
             <Form.Item label="Duration">
               <Input
                 value={experience.duration}
                 onChange={(e) => updateExperience(index, { duration: e.target.value })}
                 placeholder="2020 - 2023"
-className="form-input"
+                className="form-input"
               />
             </Form.Item>
-            
+
             <Form.Item label="Description">
               <TextArea
                 rows={3}
                 value={experience.description}
                 onChange={(e) => updateExperience(index, { description: e.target.value })}
                 placeholder="Job responsibilities and achievements"
-className="form-input"
+                className="form-input"
               />
             </Form.Item>
           </Form>
         </Card>
       ))}
-      
+
       <Button
         type="dashed"
         icon={<PlusOutlined />}

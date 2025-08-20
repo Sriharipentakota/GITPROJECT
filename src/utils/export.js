@@ -264,7 +264,7 @@ export const generateCertificationsHTML = (section) => {
     if (cert.date) detailsHTML.push(`<span>Issued: ${cert.date}</span>`);
     if (cert.credentialId) detailsHTML.push(`<span>ID: ${cert.credentialId}</span>`);
     if (cert.link) detailsHTML.push(`<a href="${cert.link}" class="certification-link" target="_blank" rel="noopener noreferrer">Verify Certificate →</a>`);
-    
+
     return `
       <div class="certification-card">
           <h3 class="certification-name">${cert.name || ''}</h3>
@@ -293,7 +293,7 @@ export const generateEducationHTML = (section) => {
     const detailsHTML = [];
     if (edu.gpa) detailsHTML.push(`<span class="detail-item">GPA: ${edu.gpa}</span>`);
     if (edu.location) detailsHTML.push(`<span class="detail-item">${edu.location}</span>`);
-    
+
     return `
       <div class="education-item">
           <h3 class="institution">${edu.institution || ''}</h3>
@@ -337,7 +337,7 @@ export const generateSectionHTML = (section, theme) => {
       return generateExperienceHTML(section);
     case 'contact':
       return generateContactHTML(section);
- case 'education':
+    case 'education':
       return generateEducationHTML(section);
     case 'certifications':
       return generateCertificationsHTML(section);
@@ -348,7 +348,7 @@ export const generateSectionHTML = (section, theme) => {
 
 export const generateAboutHTML = (section) => {
   const data = section.data;
-  const skillsHTML = data.skills?.map(skill => 
+  const skillsHTML = data.skills?.map(skill =>
     `<span class="skill">${skill}</span>`
   ).join('') || '';
 
@@ -365,10 +365,10 @@ export const generateAboutHTML = (section) => {
 export const generateProjectsHTML = (section) => {
   const projects = section.data || [];
   const projectsHTML = projects.map(project => {
-    const techHTML = project.technologies?.map(tech => 
+    const techHTML = project.technologies?.map(tech =>
       `<span class="tech-tag">${tech}</span>`
     ).join('') || '';
-    
+
     return `
       <div class="project-card">
           <h3 class="project-title">${project.title || ''}</h3>
@@ -441,6 +441,3 @@ export const downloadHTML = (html, filename = 'portfolio.html') => {
   document.body.removeChild(link);
   URL.revokeObjectURL(url);
 };
-
-// If you want to use as a module, you can export functions like this:
-// module.exports = { generateHTMLExport, downloadHTML };

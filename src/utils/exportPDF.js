@@ -106,7 +106,7 @@ export const exportToPDF = async (sections, theme, filename = 'portfolio.pdf') =
               pdf.setFont('helvetica', 'bold');
               pdf.setTextColor(40, 40, 40);
               pdf.text(exp.company || '', margin, yPosition);
-              
+
               pdf.setFont('helvetica', 'normal');
               pdf.text(exp.position || '', margin + 80, yPosition);
               yPosition += 7;
@@ -128,7 +128,7 @@ export const exportToPDF = async (sections, theme, filename = 'portfolio.pdf') =
                   yPosition += 5;
                 });
               }
-              
+
               if (index < section.data.length - 1) {
                 yPosition += 8;
               }

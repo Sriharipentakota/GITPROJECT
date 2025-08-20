@@ -22,7 +22,7 @@ export const exportToWord = async (sections, theme, filename = 'portfolio.docx')
           children.push(...generateContactSection(section.data, section.title));
           break;
       }
-      
+
       // Add spacing between sections
       children.push(new Paragraph({ text: '' }));
     });
@@ -45,7 +45,7 @@ export const exportToWord = async (sections, theme, filename = 'portfolio.docx')
 
 const generateAboutSection = (data) => {
   const paragraphs = [];
-  
+
   if (data.name) {
     paragraphs.push(new Paragraph({
       children: [new TextRun({ text: data.name, bold: true, size: 32 })],
@@ -80,7 +80,7 @@ const generateAboutSection = (data) => {
 
 const generateProjectsSection = (projects, title) => {
   const paragraphs = [];
-  
+
   paragraphs.push(new Paragraph({
     children: [new TextRun({ text: title, bold: true, size: 28 })],
     heading: HeadingLevel.HEADING_2
@@ -120,7 +120,7 @@ const generateProjectsSection = (projects, title) => {
 
 const generateExperienceSection = (experiences, title) => {
   const paragraphs = [];
-  
+
   paragraphs.push(new Paragraph({
     children: [new TextRun({ text: title, bold: true, size: 28 })],
     heading: HeadingLevel.HEADING_2
@@ -160,7 +160,7 @@ const generateExperienceSection = (experiences, title) => {
 
 const generateContactSection = (data, title) => {
   const paragraphs = [];
-  
+
   paragraphs.push(new Paragraph({
     children: [new TextRun({ text: title, bold: true, size: 28 })],
     heading: HeadingLevel.HEADING_2

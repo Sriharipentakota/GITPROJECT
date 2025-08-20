@@ -20,7 +20,6 @@ function App() {
         title: 'My Portfolio'
       });
 
-      // Create and download the HTML file
       const blob = new Blob([html], { type: 'text/html' });
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');

@@ -1,7 +1,7 @@
 import React from 'react';
+import styled from '@emotion/styled';
 import { Layout, Button, Space, Tooltip, Dropdown } from 'antd';
 import { EyeOutlined, EyeInvisibleOutlined, DownloadOutlined, ReloadOutlined, EditOutlined } from '@ant-design/icons';
-import styled from '@emotion/styled';
 import { usePortfolioStore } from '../../stores/portfolioStore';
 import { templateOptions } from '../../utils/templates';
 
@@ -13,7 +13,7 @@ const StyledHeader = styled(Header)`
   padding: 0 24px;
   display: flex;
   align-items: center;
-justify-content: space-between;
+  justify-content: space-between;
   box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
 
   @media (max-width: 768px) {

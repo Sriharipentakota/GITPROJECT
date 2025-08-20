@@ -276,10 +276,10 @@ export const generateExecutiveCSS = (theme) => `
 const ensureExecutiveSections = (sections) => {
   const types = sections.map(s => s.type);
   const defaults = [
-    {type: 'about', title: 'About Me', isVisible: true, data: {name: '', title: '', bio: '', avatar: '', summary: ''}},
-    {type: 'achievements', title: 'Achievements', isVisible: true, data: []},
-    {type: 'projects', title: 'Projects', isVisible: true, data: []},
-    {type: 'contact', title: 'Contact', isVisible: true, data: {}},
+    { type: 'about', title: 'About Me', isVisible: true, data: { name: '', title: '', bio: '', avatar: '', summary: '' } },
+    { type: 'achievements', title: 'Achievements', isVisible: true, data: [] },
+    { type: 'projects', title: 'Projects', isVisible: true, data: [] },
+    { type: 'contact', title: 'Contact', isVisible: true, data: {} },
   ];
   const result = [...sections];
   for (const def of defaults) {
@@ -308,11 +308,11 @@ const generateExecutiveHTML = (sections, theme) => {
           <div class="exec-achievement-title">${achievements.title || 'Achievements'}</div>
           <div class="exec-achievement-grid">
             ${(achievements.data || []).map(a =>
-              `<div class="achievement-item" tabindex="0">
+    `<div class="achievement-item" tabindex="0">
                 <div style="font-weight:700;color:var(--accent);margin-bottom:0.4rem;">${a.title || ''}</div>
                 <div>${a.description || ''}</div>
               </div>`
-            ).join('')}
+  ).join('')}
           </div>
         </div>
       </div>
