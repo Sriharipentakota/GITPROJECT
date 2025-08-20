@@ -114,9 +114,9 @@ export const projects = [
     },
     {
         title: 'Resume Builder and Portfolio website Builder',
-        description: 'A resume builder that generates ATS-friendly resumes with customizable templates, real-time previews, and downloadable PDFs. Built with React and modern CSS techniques.',
+        description: 'An app to build resumes (PDF/Word) and portfolio websites. Export your resume or portfolio as PDF, Word, or HTML formats.',
         image: Builder,
-        technologies: ['React', 'JavaScript', 'CSS Modules', 'PDF Generation', 'Local Storage'],
+        technologies: ['React', 'JavaScript', 'CSS Modules', 'PDF Generation'],
         liveUrl: 'https://resumeandportfoliobuilder.netlify.app',
         githubUrl: 'https://github.com/Sriharipentakota/GITPROJECT/tree/portfolio-editor',
         date: 'January 2024'
