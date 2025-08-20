@@ -1,6 +1,6 @@
 import React from 'react';
 import { Layout, Button, Space, Tooltip, Dropdown } from 'antd';
-import { EyeOutlined, EyeInvisibleOutlined, DownloadOutlined, ReloadOutlined } from '@ant-design/icons';
+import { EyeOutlined, EyeInvisibleOutlined, DownloadOutlined, ReloadOutlined, EditOutlined } from '@ant-design/icons';
 import styled from '@emotion/styled';
 import { usePortfolioStore } from '../../stores/portfolioStore';
 import { templateOptions } from '../../utils/templates';
@@ -13,8 +13,16 @@ const StyledHeader = styled(Header)`
   padding: 0 24px;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+justify-content: space-between;
   box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
+
+  @media (max-width: 768px) {
+      height: 100%;
+     flex-direction: column;
+    align-items: flex-start;
+    padding: 16px 16px 8px 16px;
+    gap: 8px;
+  }
 `;
 
 const StyledLayout = styled(Layout)`
@@ -29,9 +37,19 @@ const StyledSider = styled(Sider)`
     position: fixed;
     z-index: 1000;
     height: 100vh;
+    width: 100vw !important;
+    left: 0;
+    top: 64px;
   }
 `;
 
+const MobileControls = styled.div`
+  width: 100%;
+  display: flex;
+justify-content: space-around;
+gap:10px
+
+`;
 const StyledContent = styled(Content)`
   background: ${props => props.theme.background};
   overflow: auto;
@@ -43,7 +61,18 @@ const Logo = styled.div`
   color: ${props => props.theme.primary};
 `;
 
-export const AppLayout = ({ children, sidebar, onExport, onExportPDF, onExportWord ,selectedTemplate,onTemplateChange}) => {
+export const AppLayout = ({
+  children,
+  sidebar,
+  onExport,
+  onExportPDF,
+  onExportWord,
+  selectedTemplate,
+  onTemplateChange,
+  mobileView,
+  setMobileView,
+  isMobile
+}) => {
   const { theme, previewMode, togglePreview, resetToDefault } = usePortfolioStore();
   const [siderCollapsed, setSiderCollapsed] = React.useState(false);
 
@@ -92,44 +121,96 @@ export const AppLayout = ({ children, sidebar, onExport, onExportPDF, onExportWo
     <StyledLayout>
       <StyledHeader theme={theme}>
         <Logo theme={theme}>Portfolio Builder</Logo>
-        <Space>
-          <Tooltip title={previewMode ? "Show Editor" : "Preview Mode"}>
+        {isMobile ? (
+          <MobileControls>
+
             <Button
-              type="text"
-              icon={previewMode ? <EyeInvisibleOutlined /> : <EyeOutlined />}
-              onClick={togglePreview}
-            />
-          </Tooltip>
-          <Dropdown
-            menu={{ items: templateMenuItems }}
-            placement="bottomRight"
-          >
-            <Button type="default">
-              Template: {templateOptions.find(opt => opt.key === selectedTemplate)?.label}
-            </Button>
-          </Dropdown>
-          <Dropdown
-            menu={{ items: exportMenuItems }}
-            placement="bottomRight"
-          >
-            <Button
-              type="primary"
-              icon={<DownloadOutlined />}
+              type={mobileView === 'editor' ? 'primary' : 'default'}
+              icon={<EditOutlined />}
+              onClick={() => setMobileView('editor')}
+              block
             >
-              Export
+              {isMobile ? "" : "Show Editor"}
             </Button>
-          </Dropdown>
-          <Tooltip title="Reset to Default">
             <Button
-              type="text"
+              type={mobileView === 'preview' ? 'primary' : 'default'}
+              icon={<EyeOutlined />}
+              onClick={() => setMobileView('preview')}
+              block
+            >
+              {isMobile ? "" : "Show Preview"}
+            </Button>
+            <Dropdown
+              menu={{ items: exportMenuItems }}
+              placement="bottomRight"
+            >
+              <Button
+                type="primary"
+                icon={<DownloadOutlined />}
+                block
+              >
+                {isMobile ? "" : "export"}
+              </Button>
+            </Dropdown>
+            <Dropdown
+              menu={{ items: templateMenuItems }}
+              placement="bottomRight"
+              className="template-dropdown"
+            >
+              <Button type="default" >
+                Template: {templateOptions.find(opt => opt.key === selectedTemplate)?.label}
+              </Button>
+            </Dropdown>
+            <Button
+              type="default"
               icon={<ReloadOutlined />}
               onClick={resetToDefault}
-            />
-          </Tooltip>
-        </Space>
+              block
+            >
+              {isMobile ? "" : "Reset to Default"}
+            </Button>
+
+          </MobileControls>
+        ) : (
+          <Space>
+            <Tooltip title={previewMode ? "Show Editor" : "Preview Mode"}>
+              <Button
+                type="text"
+                icon={previewMode ? <EyeInvisibleOutlined /> : <EyeOutlined />}
+                onClick={togglePreview}
+              />
+            </Tooltip>
+            <Dropdown
+              menu={{ items: templateMenuItems }}
+              placement="bottomRight"
+            >
+              <Button type="default">
+                Template: {templateOptions.find(opt => opt.key === selectedTemplate)?.label}
+              </Button>
+            </Dropdown>
+            <Dropdown
+              menu={{ items: exportMenuItems }}
+              placement="bottomRight"
+            >
+              <Button
+                type="primary"
+                icon={<DownloadOutlined />}
+              >
+                Export
+              </Button>
+            </Dropdown>
+            <Tooltip title="Reset to Default">
+              <Button
+                type="text"
+                icon={<ReloadOutlined />}
+                onClick={resetToDefault}
+              />
+            </Tooltip>
+          </Space>
+        )}
       </StyledHeader>
       <Layout>
-        {!previewMode && sidebar && (
+        {!isMobile && !previewMode && sidebar && (
           <StyledSider
             theme={theme}
             width={350}
@@ -143,9 +224,13 @@ export const AppLayout = ({ children, sidebar, onExport, onExportPDF, onExportWo
           </StyledSider>
         )}
         <StyledContent theme={theme}>
-          {children}
+          {isMobile
+            ? mobileView === 'editor'
+              ? sidebar
+              : children
+            : children}
         </StyledContent>
       </Layout>
     </StyledLayout>
-  );
-};
+  )
+}

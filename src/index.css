@@ -56,3 +56,7 @@
 .portfolio-parent{
   height: 100vh !important;
 }
+.template-dropdown > div  {
+  min-width: 100% !important;
+background-color:red !important;
+}

@@ -9,8 +9,9 @@ import { exportToWord } from './utils/exportWord';
 import { portfolioTemplates } from './utils/templates';
 
 function App() {
-  const { sections, theme,selectedTemplate, setSelectedTemplate } = usePortfolioStore();
-
+  const { sections, theme, selectedTemplate, setSelectedTemplate, previewMode } = usePortfolioStore();
+  const [mobileView, setMobileView] = useState('preview');
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const handleExport = () => {
     try {
       const html = portfolioTemplates[selectedTemplate]({
@@ -29,18 +30,23 @@ function App() {
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
-      
+
       message.success('Portfolio exported successfully!');
     } catch (error) {
       console.error('Export failed:', error);
       message.error('Failed to export portfolio. Please try again.');
     }
   };
+  React.useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const handleExportPDF = async () => {
     try {
       message.loading('Generating PDF...', 0);
-      
+
       // Pass sections and theme instead of HTML
       await exportToPDF(sections, theme, 'portfolio.pdf');
       message.destroy();
@@ -55,7 +61,7 @@ function App() {
   const handleExportWord = async () => {
     try {
       message.loading('Generating Word document...', 0);
-      
+
       // Pass sections and theme instead of HTML
       await exportToWord(sections, theme, 'portfolio.docx');
       message.destroy();
@@ -88,8 +94,13 @@ function App() {
         onExportWord={handleExportWord}
         selectedTemplate={selectedTemplate}
         onTemplateChange={handleTemplateChange}
+        mobileView={mobileView}
+        setMobileView={setMobileView}
+        isMobile={isMobile}
       >
-        <PortfolioPreview selectedTemplate={selectedTemplate} />
+        {!isMobile || mobileView === 'preview' ? (
+          <PortfolioPreview selectedTemplate={selectedTemplate} />
+        ) : null}
       </AppLayout>
     </ConfigProvider>
   );
