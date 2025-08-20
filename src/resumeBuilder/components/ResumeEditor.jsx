@@ -307,9 +307,6 @@ function ResumeEditor({ onBack, onNext, onPortfolio }) {
           Back to Start
         </button>
         <div className="action-buttons">
-          <button className="btn btn-outline" onClick={onPortfolio}>
-            View Portfolio
-          </button>
           <button
             className="btn btn-primary"
             onClick={completion.percentage < 100 ? handleCompleteRequiredSections : onNext}

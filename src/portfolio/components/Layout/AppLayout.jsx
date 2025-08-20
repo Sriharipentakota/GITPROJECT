@@ -1,7 +1,8 @@
 import React from 'react';
 import styled from '@emotion/styled';
 import { Layout, Button, Space, Tooltip, Dropdown } from 'antd';
-import { EyeOutlined, EyeInvisibleOutlined, DownloadOutlined, ReloadOutlined, EditOutlined } from '@ant-design/icons';
+import { EyeOutlined, EyeInvisibleOutlined, DownloadOutlined, ReloadOutlined, EditOutlined, ArrowLeftOutlined } from '@ant-design/icons';
+import { useNavigate } from 'react-router-dom';
 import { usePortfolioStore } from '../../stores/portfolioStore';
 import { templateOptions } from '../../utils/templates';
 
@@ -75,6 +76,7 @@ export const AppLayout = ({
 }) => {
   const { theme, previewMode, togglePreview, resetToDefault } = usePortfolioStore();
   const [siderCollapsed, setSiderCollapsed] = React.useState(false);
+  const navigate = useNavigate();
 
   React.useEffect(() => {
     const handleResize = () => {
@@ -120,10 +122,18 @@ export const AppLayout = ({
   return (
     <StyledLayout>
       <StyledHeader theme={theme}>
-        <Logo theme={theme}>Portfolio Builder</Logo>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <Button
+            type="text"
+            icon={<ArrowLeftOutlined />}
+            onClick={() => navigate('/')}
+            style={{ marginRight: 4 , color: '#022f77ff' , border: '1px solid #5d8ad4ff'}}
+            aria-label="Back to Home"
+          />
+          <Logo theme={theme}>Portfolio Builder</Logo>
+        </div>
         {isMobile ? (
           <MobileControls>
-
             <Button
               type={mobileView === 'editor' ? 'primary' : 'default'}
               icon={<EditOutlined />}
@@ -169,7 +179,6 @@ export const AppLayout = ({
             >
               {isMobile ? "" : "Reset to Default"}
             </Button>
-
           </MobileControls>
         ) : (
           <Space>

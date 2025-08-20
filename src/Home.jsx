@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Radio, Button, Card } from 'antd';
+import { FiUser, FiBriefcase } from 'react-icons/fi';
 import styled from '@emotion/styled';
 
 const HomeContainer = styled.div`
@@ -29,18 +30,24 @@ export default function Home({ onSelect }) {
           onChange={e => setSelected(e.target.value)}
           style={{ marginBottom: 32 }}
         >
-          <Radio value="portfolio" style={{ fontSize: 18, marginRight: 24 }}>Portfolio Builder</Radio>
-          <Radio value="resume" style={{ fontSize: 18 }}>Resume Builder</Radio>
+          <Radio value="portfolio" style={{ fontSize: 18, marginRight: 24 }}>
+            <FiBriefcase style={{ marginRight: 8 }} />
+            <span>Portfolio Builder</span>
+          </Radio>
+          <Radio value="resume" style={{ fontSize: 18 }}>
+            <FiUser style={{ marginRight: 8 }} />
+            <span>Resume Builder</span>
+          </Radio>
         </Radio.Group>
-        <Button
-          type="primary"
-          size="large"
-          onClick={() => onSelect(selected)}
-          style={{ marginTop: 16, width: '100%' }}
-        >
-          Continue
-        </Button>
-      </SelectionCard>
-    </HomeContainer>
+      <Button
+        type="primary"
+        size="large"
+        onClick={() => onSelect(selected)}
+        style={{ marginTop: 16, width: '100%' }}
+      >
+        Continue
+      </Button>
+    </SelectionCard>
+    </HomeContainer >
   );
 }

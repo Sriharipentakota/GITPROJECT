@@ -23,12 +23,6 @@ function Dashboard() {
     loadResume(resumeId)
     navigate('/builder')
   }
-
-  const handleViewPortfolio = (resumeId) => {
-    loadResume(resumeId)
-    navigate('/portfolio')
-  }
-
   const handleDeleteResume = async (resumeId) => {
     await deleteResume(resumeId)
     setShowDeleteModal(null)
@@ -136,13 +130,6 @@ function Dashboard() {
                           <FiEdit3 />
                         </button>
                         <button
-                          className="btn-icon"
-                          onClick={() => handleViewPortfolio(resume._id)}
-                          title="View Portfolio"
-                        >
-                          <FiEye />
-                        </button>
-                        <button
                           className="btn-icon btn-danger"
                           onClick={() => setShowDeleteModal(resume._id)}
                           title="Delete Resume"
@@ -151,7 +138,7 @@ function Dashboard() {
                         </button>
                       </div>
                     </div>
-                    
+
                     <div className="resume-info">
                       {resume.personalInfo?.name && (
                         <p className="resume-name">{resume.personalInfo.name}</p>
@@ -185,13 +172,6 @@ function Dashboard() {
                       >
                         <FiEdit3 />
                         Edit
-                      </button>
-                      <button
-                        className="btn btn-primary btn-sm"
-                        onClick={() => handleViewPortfolio(resume._id)}
-                      >
-                        <FiEye />
-                        View Portfolio
                       </button>
                     </div>
                   </div>
