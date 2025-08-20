@@ -1,6 +1,7 @@
 import { Download } from "lucide-react";
 import employeeManagement from '../assests/employeeManagement.png'
 import ATSResumeFormatter from '../assests/ATSResumeFormatter.png'
+import Builder from '../assests/builder.png'
 
 
 // Base styles that apply to all button variants
@@ -110,7 +111,16 @@ export const projects = [
         liveUrl: 'https://hari-portfoliowebsite.netlify.app',
         githubUrl: 'https://github.com/Sriharipentakota/GITPROJECT/tree/my-portfolio',
         date: 'November 2023'
-    }
+    },
+    {
+        title: 'Resume Builder and Portfolio website Builder',
+        description: 'A resume builder that generates ATS-friendly resumes with customizable templates, real-time previews, and downloadable PDFs. Built with React and modern CSS techniques.',
+        image: Builder,
+        technologies: ['React', 'JavaScript', 'CSS Modules', 'PDF Generation', 'Local Storage'],
+        liveUrl: 'https://resumeandportfoliobuilder.netlify.app',
+        githubUrl: 'https://github.com/Sriharipentakota/GITPROJECT/tree/portfolio-editor',
+        date: 'January 2024'
+    },
 ];
 
 export const handleResumeFormatter = (params) => {
