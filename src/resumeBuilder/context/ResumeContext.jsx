@@ -1,4 +1,4 @@
-import { createContext, useContext, useState } from 'react'
+import { createContext, useContext, useState, useEffect } from 'react'
 
 const ResumeContext = createContext()
 
@@ -11,28 +11,8 @@ export function useResumeContext() {
 }
 
 export function ResumeProvider({ children }) {
-  const [resumeData, setResumeData] = useState(null)
-  const [candidateType, setCandidateType] = useState('experienced') // 'fresher' or 'experienced'
-
-  const updateSection = (sectionKey, data) => {
-    console.log('Context updateSection called:', sectionKey, 'with data:', data)
-    
-    setResumeData(prev => {
-      const newData = {
-        ...prev,
-        [sectionKey]: data
-      }
-      console.log('Context - Previous data:', prev)
-      console.log('Context - New data after update:', newData)
-      
-      // Force a re-render by creating a completely new object
-      return JSON.parse(JSON.stringify(newData))
-    })
-  }
-
-  const createNewResume = (type = 'experienced') => {
-    setCandidateType(type)
-    
+  // Helper to get initial resume data structure
+  const getInitialResumeData = (type) => {
     const baseData = {
       candidateType: type,
       personalInfo: {
@@ -67,11 +47,9 @@ export function ResumeProvider({ children }) {
       testimonials: [],
       services: [],
       aboutMe: ''
-    }
-
+    };
     if (type === 'fresher') {
-      // Fresher-specific sections
-      const fresherData = {
+      return {
         ...baseData,
         academicProjects: [],
         internships: [],
@@ -80,20 +58,78 @@ export function ResumeProvider({ children }) {
         achievements: [],
         extracurricular: [],
         coursework: []
-      }
-      setResumeData(fresherData)
+      };
     } else {
-      // Experienced candidate sections
-      const experiencedData = {
+      return {
         ...baseData,
         experience: [],
         projects: [],
         certifications: [],
         achievements: [],
         awards: []
-      }
-      setResumeData(experiencedData)
+      };
     }
+  };
+  // Load resumeData and candidateType from localStorage if available
+  const [candidateType, setCandidateType] = useState(() => {
+    return localStorage.getItem('candidateType') || 'experienced';
+  });
+  const [resumeData, setResumeData] = useState(() => {
+    const saved = localStorage.getItem('resumeData');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        // If candidateType is missing, fallback to state
+        if (!parsed.candidateType) {
+          return getInitialResumeData(candidateType);
+        }
+        return parsed;
+      } catch {
+        return getInitialResumeData(candidateType);
+      }
+    }
+    return getInitialResumeData(candidateType);
+  });
+
+  // On mount, if resumeData is missing candidateType, initialize it
+  useEffect(() => {
+    if (!resumeData || !resumeData.candidateType) {
+      setResumeData(getInitialResumeData(candidateType));
+    }
+    // eslint-disable-next-line
+  }, []);
+  // Persist resumeData to localStorage whenever it changes
+  useEffect(() => {
+    if (resumeData) {
+      localStorage.setItem('resumeData', JSON.stringify(resumeData));
+    }
+  }, [resumeData]);
+
+  // Persist candidateType to localStorage whenever it changes
+  useEffect(() => {
+    if (candidateType) {
+      localStorage.setItem('candidateType', candidateType);
+    }
+  }, [candidateType]);
+  const updateSection = (sectionKey, data) => {
+    console.log('Context updateSection called:', sectionKey, 'with data:', data)
+    
+    setResumeData(prev => {
+      const newData = {
+        ...prev,
+        [sectionKey]: data
+      }
+      console.log('Context - Previous data:', prev)
+      console.log('Context - New data after update:', newData)
+      
+      // Force a re-render by creating a completely new object
+      return JSON.parse(JSON.stringify(newData))
+    })
+  }
+
+  const createNewResume = (type = 'experienced') => {
+  setCandidateType(type);
+  setResumeData(getInitialResumeData(type));
   }
 
   const value = {

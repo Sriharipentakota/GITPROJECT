@@ -7,7 +7,16 @@ import PortfolioWebsite from './resumeBuilder/components/PortfolioWebsite'
 import { ResumeProvider } from './resumeBuilder/context/ResumeContext'
 
 function ResumeBuilder() {
-  const [currentStep, setCurrentStep] = useState('upload')
+  // Restore last step from localStorage if available
+  const [currentStep, setCurrentStep] = useState(() => {
+    return localStorage.getItem('resumeCurrentStep') || 'upload';
+  });
+
+  // Persist step changes to localStorage
+  const setStepAndPersist = (step) => {
+    setCurrentStep(step);
+    localStorage.setItem('resumeCurrentStep', step);
+  };
 
   return (
     <ResumeProvider>
@@ -33,26 +42,26 @@ function ResumeBuilder() {
             )}
 
             {currentStep === 'upload' && (
-              <UploadSection onNext={() => setCurrentStep('edit')} />
+              <UploadSection onNext={() => setStepAndPersist('edit')} />
             )}
             
             {currentStep === 'edit' && (
               <ResumeEditor 
-                onBack={() => setCurrentStep('upload')}
-                onNext={() => setCurrentStep('export')}
-                onPortfolio={() => setCurrentStep('portfolio')}
+                onBack={() => setStepAndPersist('upload')}
+                onNext={() => setStepAndPersist('export')}
+                onPortfolio={() => setStepAndPersist('portfolio')}
               />
             )}
             
             {currentStep === 'export' && (
               <ExportSection 
-                onBack={() => setCurrentStep('edit')}
-                onPortfolio={() => setCurrentStep('portfolio')}
+                onBack={() => setStepAndPersist('edit')}
+                onPortfolio={() => setStepAndPersist('portfolio')}
               />
             )}
 
             {currentStep === 'portfolio' && (
-              <PortfolioWebsite onBack={() => setCurrentStep('export')} />
+              <PortfolioWebsite onBack={() => setStepAndPersist('export')} />
             )}
           </div>
         </main>
