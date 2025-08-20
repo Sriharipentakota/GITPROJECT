@@ -252,6 +252,11 @@ export const generateModernCardCSS = (theme) => `
     .portfolio-container { padding: 0.4rem; }
     .about-section, .contact-section { padding: 1rem; }
   }
+.about-photo {
+        border-radius: 50%; object-fit: cover; width: 180px; height: 180px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.10);
+        margin: 0 auto;
+    }
 `;
 
 const generateAboutHTML = (section) => {
@@ -261,7 +266,6 @@ const generateAboutHTML = (section) => {
   ).join('') || '';
   return `
     <section class="section about-section" id="about">
-      ${data.avatar ? `<img src="${data.avatar}" class="avatar" alt="${data.name || 'Avatar'}" />` : ''}
       <div class="about-details">
         <div class="name">${data.name || ''}</div>
         <div class="title">${data.title || ''}</div>
@@ -269,6 +273,7 @@ const generateAboutHTML = (section) => {
         ${skillsHTML ? `<div class="skills-container">${skillsHTML}</div>` : ''}
         ${data.resume ? `<a href="${data.resume}" class="resume-download" download>Download Resume</a>` : ''}
       </div>
+      <img src="${data.photo || 'https://via.placeholder.com/180'}" alt="Profile photo" class="about-photo">
     </section>
   `;
 };

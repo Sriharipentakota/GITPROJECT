@@ -26,7 +26,6 @@ export const generateHTMLExport = ({ sections, theme, title = 'My Portfolio' }) 
         <a href="#about">About</a>
         <a href="#portfolio">Portfolio</a>
         <a href="#skills">Skills</a>
-        <a href="#testimonials">Testimonials</a>
         <a href="#contact">Contact</a>
         ${sections.some(s=>s.type==='blog') ? `<a href="#blog">Blog</a>` : ''}
         ${sections.some(s=>s.type==='resources') ? `<a href="#resources">Resources</a>` : ''}
@@ -51,7 +50,25 @@ export const generateHTMLExport = ({ sections, theme, title = 'My Portfolio' }) 
 };
 
 // --- CSS ---
-
+export const generateEducationHTML = (section) => {
+  const educationList = section.data || [];
+  const educationHTML = educationList.map(edu => `
+    <div class="education-card">
+      <h3 class="education-degree">${edu.degree || ''}</h3>
+      <div class="education-meta">
+        <span class="education-institution">${edu.institution || ''}${edu.college ? `, ${edu.college}` : ''}</span>
+        ${edu.year ? `<span class="education-year"> | ${edu.year}</span>` : ''}
+        ${edu.gpa ? `<span class="education-gpa"> | GPA: ${edu.gpa}</span>` : ''}
+      </div>
+    </div>
+  `).join('');
+  return `
+    <section class="section education-section" id="education">
+      <h2 class="section-title">Education</h2>
+      <div class="education-list">${educationHTML}</div>
+    </section>
+  `;
+};
 export const generateCSS = (theme) => {
   return `
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -105,7 +122,7 @@ export const generateCSS = (theme) => {
       font-size: ${theme.fontSize.sm}; font-weight: 500; }
     /* Skills, Awards & Certifications */
     .skills-section, .certifications-section, .awards-section { text-align: center; }
-    .skills-container { display: flex; flex-wrap: wrap; justify-content: center; gap: ${theme.spacing.sm}; }
+    .skills-container { display: flex; flex-wrap: wrap;  gap: ${theme.spacing.sm}; }
     .skill { background: ${theme.primary}; color: white; padding: ${theme.spacing.sm} ${theme.spacing.md};
       border-radius: ${theme.borderRadius}; font-size: ${theme.fontSize.sm}; font-weight: 500; }
     .certifications-grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 1.5rem; }
@@ -189,6 +206,10 @@ export const generateSectionHTML = (section, theme) => {
 
 export const generateAboutHTML = (section) => {
   const data = section.data;
+const skillsHTML = data.skills?.map(skill =>
+    `<span class="skill">${skill}</span>`
+  ).join('') || '';
+console.log(data,"data");
   return `
     <section class="section about-section" id="about">
       <img src="${data.photo || 'https://via.placeholder.com/180'}" alt="Profile photo" class="about-photo">
@@ -196,6 +217,7 @@ export const generateAboutHTML = (section) => {
         <h1 class="name">${data.name || ''}</h1>
         <h2 class="title">${data.title || ''}</h2>
         <p class="bio">${data.bio || ''}</p>
+        ${skillsHTML ? `<div class="skills-container">${skillsHTML}</div>` : ''}
         ${data.resume ? `<a href="${data.resume}" class="resume-download" download>Download Resume</a>` : ''}
       </div>
     </section>
@@ -203,6 +225,7 @@ export const generateAboutHTML = (section) => {
 };
 
 export const generateSkillsHTML = (section) => {
+console.log(skills,"skill");
   const data = section.data || {};
   const skillsHTML = data.skills?.map(skill => `<span class="skill">${skill}</span>`).join('') || '';
   return `

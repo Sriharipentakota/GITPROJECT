@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { Form, Input, Tag,Card } from 'antd';
+import { Form, Input, Tag, Card } from 'antd';
 import { usePortfolioStore } from '../../../stores/portfolioStore';
 
 const { TextArea } = Input;
 
 export const AboutEditor = ({ section }) => {
-  const { updateSection } = usePortfolioStore();
+  const { updateSection, selectedTemplate } = usePortfolioStore();
+  console.log(selectedTemplate, "hello");
   const [skillInput, setSkillInput] = useState('');
   const [form] = Form.useForm();
   const data = section.data;
@@ -89,6 +90,56 @@ export const AboutEditor = ({ section }) => {
             />
           </div>
         </Form.Item>
+
+        {(selectedTemplate === 'classic' || selectedTemplate === 'modernCard') && (
+          <Form.Item
+            label={<span className="form-label">Profile Photo</span>}
+            className="form-item"
+            valuePropName="photo"
+          >
+            <input
+              type="file"
+              accept="image/*"
+              onChange={e => {
+                const file = e.target.files[0];
+                if (file) {
+                  const reader = new FileReader();
+                  reader.onload = (ev) => {
+                    handleChange({ photo: ev.target.result });
+                  };
+                  reader.readAsDataURL(file);
+                }
+              }}
+              style={{ display: 'block', margin: '0 auto' }}
+            />
+            {data.photo && (
+              <div
+                style={{
+                  marginTop: 12,
+                  display: 'flex',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                }}
+              >
+                <img
+                  src={data.photo}
+                  alt="Profile Preview"
+                  style={{
+                    width: 180,
+                    height: 180,
+                    objectFit: 'cover',
+                    borderRadius: '50%',
+                    boxShadow: '0 2px 10px rgba(0,0,0,0.10)',
+                    display: 'block',
+                    margin: '0 auto',
+                    background: '#fff',
+                  }}
+                />
+              </div>
+            )}
+          </Form.Item>
+        )}
+
       </Form>
     </Card>
   );

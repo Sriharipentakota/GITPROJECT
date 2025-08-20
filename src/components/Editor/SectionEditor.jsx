@@ -4,12 +4,12 @@ import { Card, Button, Typography, Space, Popconfirm } from 'antd';
 import { PlusOutlined, DeleteOutlined, DragOutlined } from '@ant-design/icons';
 import styled from '@emotion/styled';
 import { usePortfolioStore } from '../../stores/portfolioStore';
-import { AboutEditor } from './sections/AboutEditor';
-import { ProjectsEditor } from './sections/ProjectsEditor';
-import { ExperienceEditor } from './sections/ExperienceEditor';
-import { ContactEditor } from './sections/ContactEditor';
-import { EducationEditor } from './sections/EducationEditor';
-import { CertificationsEditor } from './sections/CertificationsEditor';
+import { AboutEditor } from './Sections/AboutEditor';
+import { ProjectsEditor } from './Sections/ProjectsEditor';
+import { ExperienceEditor } from './Sections/ExperienceEditor';
+import { ContactEditor } from './Sections/ContactEditor';
+import { EducationEditor } from './Sections/EducationEditor';
+import { CertificationsEditor } from './Sections/CertificationsEditor';
 
 const { Title } = Typography;
 

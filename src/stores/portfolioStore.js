@@ -34,7 +34,7 @@ const defaultSections = [
       name: 'Srihari Pentakota',
       title: 'Front-End Developer',
       bio: 'Passionate developer with 2.5+ years of experience building modern web applications.',
-      skills: ['React', 'TypeScript', 'Node.js', 'Javascript','Html','CSS']
+      skills: ['React', 'TypeScript', 'Node.js', 'Javascript', 'Html', 'CSS']
     }
   },
   {
@@ -54,7 +54,7 @@ const defaultSections = [
   {
     id: 'projects-1',
     type: 'projects',
-    title: 'Employee Management System',
+    title: 'Projects',
     isVisible: true,
     data: [
       {
@@ -82,6 +82,8 @@ export const usePortfolioStore = create((set, get) => ({
   sections: defaultSections,
   theme: defaultTheme,
   previewMode: false,
+  selectedTemplate: 'classic',
+  setSelectedTemplate: (templateKey) => set({ selectedTemplate: templateKey }),
 
   updateSection: (id, data) => {
     const sections = get().sections.map(section =>

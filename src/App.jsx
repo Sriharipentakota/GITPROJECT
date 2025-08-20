@@ -9,8 +9,7 @@ import { exportToWord } from './utils/exportWord';
 import { portfolioTemplates } from './utils/templates';
 
 function App() {
-  const { sections, theme } = usePortfolioStore();
-  const [selectedTemplate, setSelectedTemplate] = useState('modernCard');
+  const { sections, theme,selectedTemplate, setSelectedTemplate } = usePortfolioStore();
 
   const handleExport = () => {
     try {
