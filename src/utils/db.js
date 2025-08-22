@@ -2,7 +2,12 @@ import mongoose from 'mongoose';
 
 const connectDB = async () => {
   try {
-    await mongoose.connect(process.env.DB_CONNECTION_STRING, {
+    // Automatically convert old mongodb:// to mongodb+srv:// if needed
+    let connStr = process.env.DB_CONNECTION_STRING;
+    if (connStr && connStr.startsWith('mongodb://')) {
+      connStr = connStr.replace('mongodb://', 'mongodb+srv://');
+    }
+    await mongoose.connect(connStr, {
       useNewUrlParser: true,
       useUnifiedTopology: true
     });
