@@ -7,10 +7,7 @@ const connectDB = async () => {
     if (connStr && connStr.startsWith('mongodb://')) {
       connStr = connStr.replace('mongodb://', 'mongodb+srv://');
     }
-    await mongoose.connect(connStr, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true
-    });
+  await mongoose.connect(connStr);
     console.log('MongoDB connected');
   } catch (error) {
     console.error('MongoDB connection error:', error);
