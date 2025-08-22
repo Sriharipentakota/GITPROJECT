@@ -15,7 +15,7 @@
     "express": "^4.21.2",
     "jsonwebtoken": "^9.0.2",
     "mammoth": "^1.10.0",
-    "mongoose": "^5.13.23",
+    "mongoose": "^8.17.2",
     "multer": "^2.0.2"
   },
   "devDependencies": {
