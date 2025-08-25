@@ -36,40 +36,43 @@ router.delete('/:id', async (req, res) => {
 });
 
 // Bulk upload flashcards from Word doc
+// ...existing code...
+// ...existing code...
+// ...existing code...
+// ...existing code...
+// ...existing code...
+// ...existing code...
 router.post('/bulk-upload', upload.single('file'), async (req, res) => {
   try {
     const { value } = await mammoth.extractRawText({ path: req.file.path });
-    const lines = value.split('\n');
+    console.log(value, "extracted text");
+
+    // Split by double newlines or single newlines (handles both cases)
+    const blocks = value.split(/\n\s*\n|(?=What )/).filter(b => b.trim().length > 0);
+
     const cards = [];
     const skipped = [];
-    let i = 0;
 
-    while (i < lines.length) {
-      let question = lines[i].trim();
-      if (!question) { i++; continue; }
+    for (let block of blocks) {
+      // Extract fields using regex
+      const questionMatch = block.match(/^(.*?)Answer:/s);
+      const answerMatch = block.match(/Answer:\s*(.*?)Category:/s);
+      const categoryMatch = block.match(/Category:\s*(.*?)Difficulty:/s);
+      const difficultyMatch = block.match(/Difficulty:\s*(.*?)Tags:/s);
+      const tagsMatch = block.match(/Tags:\s*(.*)$/s);
 
-      // Find answer line
-      let answer = '';
-      i++;
-      while (i < lines.length && !lines[i].trim().startsWith('**Answer:**')) {
-        i++;
-      }
-      if (i < lines.length && lines[i].trim().startsWith('**Answer:**')) {
-        // Get answer text (may be multi-line)
-        answer = lines[i].replace('**Answer:**', '').trim();
-        i++;
-        while (i < lines.length && lines[i].trim() && !lines[i].trim().startsWith('**Answer:**')) {
-          answer += ' ' + lines[i].trim();
-          i++;
-        }
-      }
+      const question = questionMatch ? questionMatch[1].trim() : '';
+      const answer = answerMatch ? answerMatch[1].trim() : '';
+      const category = categoryMatch ? categoryMatch[1].trim() : '';
+      // Difficulty is optional, you can add it if your model supports it
+      const tags = tagsMatch ? tagsMatch[1].split(',').map(t => t.trim()) : [];
 
       if (question && answer) {
         const exists = await Flashcard.findOne({ question });
         if (exists) {
           skipped.push(question);
         } else {
-          cards.push({ question, answer });
+          cards.push({ question, answer, category, tags, difficulty: difficultyMatch ? difficultyMatch[1].trim() : '' });
         }
       }
     }
@@ -80,5 +83,11 @@ router.post('/bulk-upload', upload.single('file'), async (req, res) => {
     res.status(500).json({ message: 'Bulk upload failed', error: err.message });
   }
 });
+// ...existing code...
+// ...existing code...
+// ...existing code...
+// ...existing code...
+// ...existing code...
+// ...existing code...
 
 export default router;
