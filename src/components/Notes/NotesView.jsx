@@ -1,12 +1,13 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
+import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Search, Filter, Edit, Trash2, BookOpen } from 'lucide-react';
-import { useApp } from '../../contexts/AppContext';
+import { Plus, Search, BookOpen } from 'lucide-react';
 import NoteEditor from './NoteEditor';
 import NoteCard from './NoteCard';
 
 const NotesView = () => {
-  const { notes, dispatch } = useApp();
+  const API_URL = 'http://gitproject-kvcw.onrender.com/api/notes';
+  const [notes, setNotes] = useState([]);
   const [showEditor, setShowEditor] = useState(false);
   const [editingNote, setEditingNote] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -14,11 +15,25 @@ const NotesView = () => {
   const [sortBy, setSortBy] = useState('newest');
 
   const categories = ['JavaScript', 'React', 'CSS', 'Data Structures', 'Algorithms', 'Other'];
-  
+
+  // Fetch notes from backend
+  useEffect(() => {
+    fetchNotes();
+  }, []);
+
+  const fetchNotes = async () => {
+    try {
+      const res = await axios.get(API_URL);
+      setNotes(res.data);
+    } catch (error) {
+      console.error('Error fetching notes:', error);
+    }
+  };
+
   const filteredAndSortedNotes = useMemo(() => {
     let filtered = notes.filter(note => {
       const matchesSearch = note.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          note.content.toLowerCase().includes(searchTerm.toLowerCase());
+        note.content.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesCategory = selectedCategory === 'all' || note.category === selectedCategory;
       return matchesSearch && matchesCategory;
     });
@@ -49,25 +64,34 @@ const NotesView = () => {
     setShowEditor(true);
   };
 
-  const handleSaveNote = (noteData) => {
-    if (editingNote) {
-      dispatch({
-        type: 'UPDATE_NOTE',
-        payload: { id: editingNote.id, updates: noteData }
-      });
-    } else {
-      dispatch({
-        type: 'ADD_NOTE',
-        payload: noteData
-      });
+  // Save note (create or update)
+  const handleSaveNote = async (noteData) => {
+    try {
+      if (editingNote) {
+        // PATCH update
+        const res = await axios.patch(`${API_URL}/${editingNote._id || editingNote.id}`, noteData);
+        setNotes(notes.map(n => (n._id === res.data._id ? res.data : n)));
+      } else {
+        // POST create
+        const res = await axios.post(API_URL, noteData);
+        setNotes([...notes, res.data]);
+      }
+    } catch (error) {
+      console.error('Error saving note:', error);
     }
     setShowEditor(false);
     setEditingNote(null);
   };
 
-  const handleDeleteNote = (noteId) => {
+  // Delete note
+  const handleDeleteNote = async (noteId) => {
     if (window.confirm('Are you sure you want to delete this note?')) {
-      dispatch({ type: 'DELETE_NOTE', payload: noteId });
+      try {
+        await axios.delete(`${API_URL}/${noteId}`);
+        setNotes(notes.filter(n => n._id !== noteId && n.id !== noteId));
+      } catch (error) {
+        console.error('Error deleting note:', error);
+      }
     }
   };
 
@@ -77,7 +101,7 @@ const NotesView = () => {
   };
 
   return (
-  <div className="d-flex flex-column gap-4">
+    <div className="d-flex flex-column gap-4 position-relative">
       {/* Header */}
       <div className="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3 mb-2">
         <div>
@@ -130,23 +154,12 @@ const NotesView = () => {
         </div>
       </div>
 
-      {/* Editor Modal */}
-      <AnimatePresence>
-        {showEditor && (
-          <NoteEditor
-            note={editingNote}
-            onSave={handleSaveNote}
-            onCancel={handleCancelEdit}
-          />
-        )}
-      </AnimatePresence>
-
       {/* Notes Grid */}
       {filteredAndSortedNotes.length > 0 ? (
         <div className="row g-4">
           <AnimatePresence>
             {filteredAndSortedNotes.map((note, index) => (
-              <div className="col-md-6 col-lg-4" key={note.id}>
+              <div className="col-md-6 col-lg-4" key={note._id || note.id}>
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -156,7 +169,7 @@ const NotesView = () => {
                   <NoteCard
                     note={note}
                     onEdit={() => handleEditNote(note)}
-                    onDelete={() => handleDeleteNote(note.id)}
+                    onDelete={() => handleDeleteNote(note._id || note.id)}
                   />
                 </motion.div>
               </div>
@@ -174,7 +187,7 @@ const NotesView = () => {
             {notes.length === 0 ? 'No notes yet' : 'No notes match your search'}
           </h3>
           <p className="text-secondary mb-4">
-            {notes.length === 0 
+            {notes.length === 0
               ? 'Create your first study note to get started'
               : 'Try adjusting your search or filters'
             }
@@ -190,8 +203,24 @@ const NotesView = () => {
           )}
         </motion.div>
       )}
-    </div>
-  );
-};
 
-export default NotesView;
+      {/* Editor Modal - moved to end and set higher z-index */}
+      <AnimatePresence>
+        {showEditor && (
+          <div
+            className="position-fixed top-0 start-0 w-100 h-100"
+            style={{ zIndex: 1050 }}
+          >
+            <NoteEditor
+              note={editingNote}
+              onSave={handleSaveNote}
+              onCancel={handleCancelEdit}
+            />
+          </div>
+        )}
+      </AnimatePresence>
+    </div>
+    );
+  }
+  
+  export default NotesView;
