@@ -44,7 +44,7 @@ const ProfessionalSummarySection = ({ data, onUpdate }) => {
         >
           <div className="bg-white rounded-2xl shadow-lg p-8 lg:p-12">
             <motion.p
-              className="text-lg leading-relaxed text-gray-700 text-center lg:text-left"
+              className="list-disc pl-6 text-lg leading-relaxed text-gray-700 text-center lg:text-left"
               initial={{ opacity: 0 }}
               whileInView={{ opacity: 1 }}
               transition={{ duration: 0.8, delay: 0.4 }}

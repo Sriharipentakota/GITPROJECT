@@ -8,21 +8,21 @@
 
 // Static data for the portfolio
 export const personalInfo = {
-  name: "Alex Johnson",
-  title: "Full Stack Developer & UI/UX Designer",
-  description: "Passionate developer with 5+ years of experience creating beautiful, functional web applications. I specialize in React, Node.js, and modern web technologies, with a keen eye for design and user experience.",
+  name: "Srihari Pentakota",
+  title: "Front-end Developer & UI/UX Designer",
+  description: "Passionate developer with 2.7+ years of experience creating beautiful, functional web applications. I specialize in React, Node.js, and modern web technologies, with a keen eye for design and user experience.",
   image: "https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg?auto=compress&cs=tinysrgb&w=400",
-  location: "San Francisco, CA",
-  email: "alex.johnson@email.com",
-  phone: "+1 (555) 123-4567",
-  linkedIn: "https://linkedin.com/in/alexjohnson",
-  github: "https://github.com/alexjohnson",
-  website: "https://alexjohnson.dev"
+  location: "Hyderabad, Telangana",
+  email: "sriharipentakota07@gmail.com",
+  phone: "+91 6281997025",
+  naukri: "https://www.naukri.com/mnjuser/profile",
+  github: "https://github.com/Sriharipentakota",
+  website: "https://hari-portfoliowebsite.netlify.app"
 };
 
 export const professionalSummary = {
   title: "Professional Summary",
-  content: "Innovative Full Stack Developer with 5+ years of experience designing and developing scalable web applications. Proven track record of leading cross-functional teams, implementing modern development practices, and delivering high-quality solutions that drive business growth. Expertise in React ecosystem, Node.js backend development, and cloud infrastructure with a passion for creating exceptional user experiences."
+  content: "Innovative Front-end Developer with 2.7+ years of experience designing and developing scalable web applications. Proven track record of leading cross-functional teams, implementing modern development practices, and delivering high-quality solutions that drive business growth. Expertise in React ecosystem, Node.js backend development, and cloud infrastructure with a passion for creating exceptional user experiences."
 };
 
 export const skills = [
@@ -89,61 +89,62 @@ export const projects = [
 export const experience = [
   {
     id: '1',
-    company: 'TechCorp Solutions',
-    position: 'Senior Full Stack Developer',
+    company: 'Deloitte',
+    position: 'Frontend Developer',
     startDate: '2022-01',
     endDate: 'Present',
-    description: 'Leading development of enterprise web applications and mentoring junior developers. Responsible for architecture decisions and technical strategy.',
+    description: 'Spearheading the development of scalable frontend solutions for enterprise clients. Collaborate with cross-functional teams to deliver high-performance user interfaces.',
     achievements: [
-      'Increased application performance by 40% through optimization',
-      'Led a team of 5 developers on a major platform redesign',
-      'Implemented CI/CD pipeline reducing deployment time by 60%',
-      'Architected microservices infrastructure serving 1M+ users'
+      'Enhanced UI responsiveness, reducing load times by 35%',
+      'Led migration to React-based architecture for improved maintainability',
+      'Integrated real-time analytics dashboard for client reporting',
+      'Mentored junior developers in modern frontend practices'
     ],
     technologies: ['React', 'Node.js', 'AWS', 'Docker', 'PostgreSQL'],
-    location: 'San Francisco, CA'
+    location: 'Hyderabad, Telangana'
   },
   {
     id: '2',
-    company: 'StartupXYZ',
+    company: 'EY',
     position: 'Frontend Developer',
     startDate: '2020-06',
     endDate: '2021-12',
-    description: 'Developed responsive web applications and collaborated with designers to create exceptional user experiences.',
+    description: 'Developed and maintained web applications with a focus on mobile-first design. Worked closely with UX designers to implement intuitive interfaces.',
     achievements: [
-      'Built and launched 3 major product features',
-      'Improved mobile performance by 50%',
-      'Implemented design system used across 10+ products',
-      'Reduced bug reports by 35% through better testing'
+      'Launched 3 new product features with seamless mobile integration',
+      'Improved accessibility compliance across all web products',
+      'Established reusable component library for faster development',
+      'Reduced front-end bugs by 40% through rigorous testing'
     ],
     technologies: ['React', 'TypeScript', 'SCSS', 'Jest'],
-    location: 'Remote'
+    location: 'Hyderabad, Telangana'
   },
   {
     id: '3',
-    company: 'Digital Agency Pro',
-    position: 'Web Developer',
+    company: 'KPMG',
+    position: 'Frontend Developer',
     startDate: '2019-01',
     endDate: '2020-05',
-    description: 'Created custom websites and web applications for diverse clients across various industries.',
+    description: 'Delivered custom web solutions for diverse clients, ensuring pixel-perfect implementation and optimal performance.',
     achievements: [
-      'Delivered 20+ client projects on time and within budget',
-      'Increased client satisfaction scores by 25%',
-      'Developed reusable component library',
-      'Mentored 2 junior developers'
+      'Successfully delivered 20+ client projects with high satisfaction',
+      'Boosted site performance scores by 30%',
+      'Created a modular CSS architecture for maintainable styling',
+      'Provided onboarding and training for new team members'
     ],
     technologies: ['HTML', 'CSS', 'JavaScript', 'PHP', 'WordPress'],
-    location: 'Los Angeles, CA'
+    location: 'Hyderabad, Telangana'
   }
+
 ];
 
 export const contactInfo = {
-  email: 'alex.johnson@email.com',
-  phone: '+1 (555) 123-4567',
-  address: 'San Francisco, CA, USA',
+  email: 'sriharipentakota07@gmail.com',
+  phone: '+91 6281997025',
+  address: 'Hyderabad, Telangana, India',
   social: {
     linkedin: 'https://linkedin.com/in/alexjohnson',
-    github: 'https://github.com/alexjohnson',
+    github: 'https://github.com/sriharipentakota',
     twitter: 'https://twitter.com/alexjohnson',
     instagram: 'https://instagram.com/alexjohnson'
   }

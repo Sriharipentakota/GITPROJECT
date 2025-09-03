@@ -130,7 +130,7 @@ const ProjectsSection = ({ data, onUpdate }) => {
               {/* Project Content */}
               <div className="p-6">
                 <h3 className="text-xl font-bold text-gray-800 mb-2">{project.title}</h3>
-                <div className="text-gray-600 mb-4 line-clamp-3" dangerouslySetInnerHTML={{ __html: project.description }} />
+                <div className="list-disc pl-6 text-gray-600 mb-4 line-clamp-3" dangerouslySetInnerHTML={{ __html: project.description }} />
 
                 {/* Technologies */}
                 <div className="flex flex-wrap gap-2 mb-4">

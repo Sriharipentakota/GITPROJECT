@@ -1,3 +1,25 @@
+// Utility: Convert HTML to plain text with bullets
+// ...existing code...
+function htmlToPlainText(html) {
+  if (!html) return '';
+  // If achievements or description is an array, join with newlines
+  if (Array.isArray(html)) {
+    html = html.join('\n');
+  }
+  // Convert <li> to bullet points
+  let text = html.replace(/<li[^>]*>/gi, '\n• ').replace(/<\/li>/gi, '');
+  // Convert <br> and <p> to newlines
+  text = text.replace(/<br\s*\/?>(?!\n)/gi, '\n')
+             .replace(/<\/p>/gi, '\n')
+             .replace(/<p[^>]*>/gi, '');
+  // Remove all other HTML tags
+  text = text.replace(/<[^>]+>/g, '');
+  // Decode HTML entities
+  const temp = document.createElement('div');
+  temp.innerHTML = text;
+  return temp.textContent || temp.innerText || '';
+}
+// ...existing code...
 /**
  * Export Button Component
  * 
@@ -42,402 +64,60 @@ const ExportButton = ({ portfolioData }) => {
       })
       .join('\n');
 
+    let content = '';
+    content += portfolioData.personalInfo.name + '\n';
+    content += portfolioData.personalInfo.title + '\n\n';
+    content += portfolioData.personalInfo.description + '\n\n';
+    content += 'Contact Information:\n';
+    content += 'Email: ' + portfolioData.personalInfo.email + '\n';
+    content += 'Phone: ' + portfolioData.personalInfo.phone + '\n';
+    content += 'Location: ' + portfolioData.personalInfo.location + '\n\n';
+    content += portfolioData.professionalSummary.title + '\n';
+    content += htmlToPlainText(portfolioData.professionalSummary.content) + '\n\n';
+    content += 'Skills & Expertise:\n';
+    content += portfolioData.skills.map(skill => skill.name + ': ' + skill.level + '%').join('\n') + '\n\n';
+    content += 'Featured Projects:\n';
+    portfolioData.projects.forEach(project => {
+      content += project.title + '\n';
+      content += htmlToPlainText(project.description) + '\n';
+      content += 'Technologies: ' + project.technologies.join(', ') + '\n';
+      if (project.liveUrl) content += 'Live URL: ' + project.liveUrl + '\n';
+      if (project.githubUrl) content += 'GitHub: ' + project.githubUrl + '\n';
+      content += '\n';
+    });
+    content += 'Professional Experience:\n';
+    portfolioData.experience.forEach(exp => {
+      content += exp.position + ' at ' + exp.company + '\n';
+      content += exp.startDate + ' - ' + exp.endDate + ' | ' + exp.location + '\n';
+      content += htmlToPlainText(exp.description) + '\n';
+      content += 'Key Achievements:\n';
+      content += htmlToPlainText(exp.achievements) + '\n';
+      content += 'Technologies: ' + exp.technologies.join(', ') + '\n\n';
+    });
+    content += 'Contact Information:\n';
+    content += 'Email: ' + portfolioData.contactInfo.email + '\n';
+    content += 'Phone: ' + portfolioData.contactInfo.phone + '\n';
+    content += 'Address: ' + portfolioData.contactInfo.address + '\n';
+    content += 'LinkedIn: ' + portfolioData.contactInfo.social.linkedin + '\n';
+    content += 'GitHub: ' + portfolioData.contactInfo.social.github + '\n';
+
+    // Build HTML content for export
     const htmlContent = `
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>${portfolioData.personalInfo.name} - Portfolio</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <title>${portfolioData.personalInfo.name} Portfolio</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { 
-          font-family: 'Inter', sans-serif; 
-          line-height: 1.6; 
-          color: #374151;
-          background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
-        }
-        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
-        .section { 
-          margin-bottom: 60px; 
-          background: white; 
-          border-radius: 16px; 
-          padding: 40px; 
-          box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-        }
-        .header { 
-          text-align: center; 
-          margin-bottom: 60px; 
-          background: linear-gradient(135deg, #3b82f6, #7c3aed);
-          color: white;
-          padding: 60px 40px;
-          border-radius: 16px;
-        }
-        .header h1 { 
-          font-size: 3rem; 
-          font-weight: 800; 
-          margin-bottom: 16px;
-          background: linear-gradient(135deg, #ffffff, #e0e7ff);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-        }
-        .header h2 { 
-          font-size: 1.5rem; 
-          font-weight: 300; 
-          margin-bottom: 24px;
-          opacity: 0.9;
-        }
-        .header p { 
-          font-size: 1.1rem; 
-          opacity: 0.8; 
-          max-width: 600px; 
-          margin: 0 auto 32px;
-        }
-        .contact-info { 
-          display: flex; 
-          justify-content: center; 
-          gap: 32px; 
-          flex-wrap: wrap;
-        }
-        .contact-item { 
-          display: flex; 
-          align-items: center; 
-          gap: 8px;
-          background: rgba(255,255,255,0.1);
-          padding: 8px 16px;
-          border-radius: 8px;
-        }
-        .section-title { 
-          font-size: 2.5rem; 
-          font-weight: 700; 
-          margin-bottom: 32px;
-          background: linear-gradient(135deg, #3b82f6, #7c3aed);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          text-align: center;
-        }
-        .skills { 
-          display: grid; 
-          grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); 
-          gap: 24px; 
-        }
-        .skill { 
-          padding: 24px; 
-          border: 1px solid #e5e7eb; 
-          border-radius: 12px; 
-          background: #f9fafb;
-          transition: transform 0.2s;
-        }
-        .skill:hover { transform: translateY(-4px); }
-        .skill-header { 
-          display: flex; 
-          align-items: center; 
-          margin-bottom: 16px;
-        }
-        .skill-icon { 
-          font-size: 2rem; 
-          margin-right: 12px;
-        }
-        .skill-name { 
-          font-size: 1.25rem; 
-          font-weight: 600;
-        }
-        .skill-level { 
-          display: flex; 
-          justify-content: space-between; 
-          margin-bottom: 8px;
-        }
-        .skill-bar { 
-          width: 100%; 
-          height: 8px; 
-          background: #e5e7eb; 
-          border-radius: 4px; 
-          overflow: hidden;
-        }
-        .skill-progress { 
-          height: 100%; 
-          background: linear-gradient(135deg, #3b82f6, #7c3aed); 
-          border-radius: 4px;
-        }
-        .projects { 
-          display: grid; 
-          grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); 
-          gap: 32px; 
-        }
-        .project { 
-          border: 1px solid #e5e7eb; 
-          border-radius: 12px; 
-          overflow: hidden;
-          background: white;
-          transition: transform 0.2s, box-shadow 0.2s;
-        }
-        .project:hover { 
-          transform: translateY(-8px); 
-          box-shadow: 0 20px 40px rgba(0,0,0,0.1);
-        }
-        .project-image { 
-          width: 100%; 
-          height: 200px; 
-          object-fit: cover;
-        }
-        .project-content { 
-          padding: 24px;
-        }
-        .project-title { 
-          font-size: 1.5rem; 
-          font-weight: 700; 
-          margin-bottom: 12px;
-        }
-        .project-description { 
-          color: #6b7280; 
-          margin-bottom: 16px;
-        }
-        .tech-tags { 
-          display: flex; 
-          flex-wrap: wrap; 
-          gap: 8px; 
-          margin-bottom: 16px;
-        }
-        .tech-tag { 
-          background: #dbeafe; 
-          color: #1e40af; 
-          padding: 4px 12px; 
-          border-radius: 16px; 
-          font-size: 0.875rem;
-        }
-        .project-links { 
-          display: flex; 
-          gap: 16px;
-        }
-        .project-link { 
-          color: #3b82f6; 
-          text-decoration: none; 
-          font-weight: 500;
-        }
-        .experience-timeline { 
-          position: relative;
-        }
-        .experience { 
-          margin-bottom: 40px; 
-          padding: 32px; 
-          border-left: 4px solid #3b82f6; 
-          background: #f8fafc;
-          border-radius: 0 12px 12px 0;
-          position: relative;
-        }
-        .experience::before {
-          content: '';
-          position: absolute;
-          left: -8px;
-          top: 32px;
-          width: 12px;
-          height: 12px;
-          background: #3b82f6;
-          border-radius: 50%;
-        }
-        .experience-header { 
-          margin-bottom: 16px;
-        }
-        .experience-company { 
-          font-size: 1.5rem; 
-          font-weight: 700; 
-          color: #1f2937;
-        }
-        .experience-position { 
-          font-size: 1.25rem; 
-          font-weight: 600; 
-          color: #7c3aed; 
-          margin-bottom: 8px;
-        }
-        .experience-meta { 
-          color: #6b7280; 
-          margin-bottom: 16px;
-        }
-        .achievements { 
-          margin-top: 16px;
-        }
-        .achievements ul { 
-          padding-left: 20px;
-        }
-        .achievements li { 
-          margin-bottom: 8px; 
-          color: #374151;
-        }
-        .contact-section { 
-          display: grid; 
-          grid-template-columns: 1fr 1fr; 
-          gap: 40px;
-        }
-        .contact-info-card { 
-          background: #f9fafb; 
-          padding: 32px; 
-          border-radius: 12px;
-        }
-        .contact-item-detailed { 
-          display: flex; 
-          align-items: center; 
-          margin-bottom: 24px;
-        }
-        .contact-icon { 
-          width: 48px; 
-          height: 48px; 
-          background: #dbeafe; 
-          border-radius: 50%; 
-          display: flex; 
-          align-items: center; 
-          justify-content: center; 
-          margin-right: 16px;
-        }
-        .social-links { 
-          display: flex; 
-          gap: 16px; 
-          margin-top: 24px;
-        }
-        .social-link { 
-          width: 48px; 
-          height: 48px; 
-          background: #374151; 
-          color: white; 
-          border-radius: 50%; 
-          display: flex; 
-          align-items: center; 
-          justify-content: center; 
-          text-decoration: none;
-        }
-        @media (max-width: 768px) {
-          .container { padding: 16px; }
-          .section { padding: 24px; margin-bottom: 32px; }
-          .header { padding: 40px 24px; }
-          .header h1 { font-size: 2rem; }
-          .skills { grid-template-columns: 1fr; }
-          .projects { grid-template-columns: 1fr; }
-          .contact-section { grid-template-columns: 1fr; }
-        }
+        /* Place your CSS styles here if needed for the exported HTML */
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>${portfolioData.personalInfo.name}</h1>
-            <h2>${portfolioData.personalInfo.title}</h2>
-            <p>${portfolioData.personalInfo.description}</p>
-            <div class="contact-info">
-                <div class="contact-item">📧 ${portfolioData.personalInfo.email}</div>
-                <div class="contact-item">📱 ${portfolioData.personalInfo.phone}</div>
-                <div class="contact-item">📍 ${portfolioData.personalInfo.location}</div>
-            </div>
-        </div>
-
-        <div class="section">
-            <h2 class="section-title">${portfolioData.professionalSummary.title}</h2>
-            <p>${portfolioData.professionalSummary.content}</p>
-        </div>
-
-        <div class="section">
-            <h2 class="section-title">Skills & Expertise</h2>
-            <div class="skills">
-                ${portfolioData.skills.map(skill => `
-                    <div class="skill">
-                        <div class="skill-header">
-                            <span class="skill-icon">${skill.icon}</span>
-                            <span class="skill-name">${skill.name}</span>
-                        </div>
-                        <div class="skill-level">
-                            <span>${skill.category}</span>
-                            <span>${skill.level}%</span>
-                        </div>
-                        <div class="skill-bar">
-                            <div class="skill-progress" style="width: ${skill.level}%"></div>
-                        </div>
-                    </div>
-                `).join('')}
-            </div>
-        </div>
-
-        <div class="section">
-            <h2 class="section-title">Featured Projects</h2>
-            <div class="projects">
-                ${portfolioData.projects.map(project => `
-                    <div class="project">
-                        <img src="${project.image}" alt="${project.title}" class="project-image">
-                        <div class="project-content">
-                            <h3 class="project-title">${project.title}</h3>
-                            <p class="project-description">${project.description}</p>
-                            <div class="tech-tags">
-                                ${project.technologies.map(tech => `<span class="tech-tag">${tech}</span>`).join('')}
-                            </div>
-                            <div class="project-links">
-                                ${project.liveUrl ? `<a href="${project.liveUrl}" class="project-link">Live Demo</a>` : ''}
-                                ${project.githubUrl ? `<a href="${project.githubUrl}" class="project-link">GitHub</a>` : ''}
-                            </div>
-                        </div>
-                    </div>
-                `).join('')}
-            </div>
-        </div>
-
-        <div class="section">
-            <h2 class="section-title">Professional Experience</h2>
-            <div class="experience-timeline">
-                ${portfolioData.experience.map(exp => `
-                    <div class="experience">
-                        <div class="experience-header">
-                            <div class="experience-company">${exp.company}</div>
-                            <div class="experience-position">${exp.position}</div>
-                            <div class="experience-meta">${exp.startDate} - ${exp.endDate} | ${exp.location}</div>
-                        </div>
-                        <p>${exp.description}</p>
-                        <div class="achievements">
-                            <h4>Key Achievements:</h4>
-                            <ul>
-                                ${exp.achievements.map(achievement => `<li>${achievement}</li>`).join('')}
-                            </ul>
-                            <p><strong>Technologies:</strong> ${exp.technologies.join(', ')}</p>
-                        </div>
-                    </div>
-                `).join('')}
-            </div>
-        </div>
-
-        <div class="section">
-            <h2 class="section-title">Contact Information</h2>
-            <div class="contact-section">
-                <div class="contact-info-card">
-                    <h3>Get In Touch</h3>
-                    <div class="contact-item-detailed">
-                        <div class="contact-icon">📧</div>
-                        <div>
-                            <p><strong>Email</strong></p>
-                            <p>${portfolioData.contactInfo.email}</p>
-                        </div>
-                    </div>
-                    <div class="contact-item-detailed">
-                        <div class="contact-icon">📱</div>
-                        <div>
-                            <p><strong>Phone</strong></p>
-                            <p>${portfolioData.contactInfo.phone}</p>
-                        </div>
-                    </div>
-                    <div class="contact-item-detailed">
-                        <div class="contact-icon">📍</div>
-                        <div>
-                            <p><strong>Location</strong></p>
-                            <p>${portfolioData.contactInfo.address}</p>
-                        </div>
-                    </div>
-                    <div class="social-links">
-                        <a href="${portfolioData.contactInfo.social.linkedin}" class="social-link">💼</a>
-                        <a href="${portfolioData.contactInfo.social.github}" class="social-link">🐙</a>
-                        <a href="${portfolioData.contactInfo.social.twitter}" class="social-link">🐦</a>
-                        <a href="${portfolioData.contactInfo.social.instagram}" class="social-link">📷</a>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+    <!-- Place your HTML structure here if needed for the exported HTML -->
+    <pre>${content}</pre>
 </body>
-</html>`;
+</html>
+`;
 
     const blob = new Blob([htmlContent], { type: 'text/html' });
     saveAs(blob, `${portfolioData.personalInfo.name.replace(/\s+/g, '_')}_Portfolio.html`);
@@ -474,20 +154,18 @@ const ExportButton = ({ portfolioData }) => {
     addText(`Email: ${portfolioData.personalInfo.email} | Phone: ${portfolioData.personalInfo.phone}`, 10);
     yPosition += 10;
 
-    addText(portfolioData.professionalSummary.title, 16, true);
-    addText(portfolioData.professionalSummary.content, 12);
+  addText(portfolioData.professionalSummary.title, 16, true);
+  addText(htmlToPlainText(portfolioData.professionalSummary.content), 12);
     yPosition += 10;
 
-    addText('Skills & Expertise', 16, true);
-    portfolioData.skills.forEach(skill => {
-      addText(`${skill.name}: ${skill.level}%`, 10);
-    });
-    yPosition += 10;
+    addText('Skills', 16, true);
+  addText(portfolioData.skills.map(skill => skill.name).join(', '), 10);
+  yPosition += 10;
 
     addText('Featured Projects', 16, true);
     portfolioData.projects.forEach(project => {
       addText(project.title, 14, true);
-      addText(project.description, 10);
+      addText(htmlToPlainText(project.description), 10);
       addText(`Technologies: ${project.technologies.join(', ')}`, 10);
       if (project.liveUrl) addText(`Live URL: ${project.liveUrl}`, 10);
       yPosition += 5;
@@ -497,10 +175,8 @@ const ExportButton = ({ portfolioData }) => {
     portfolioData.experience.forEach(exp => {
       addText(`${exp.position} at ${exp.company}`, 14, true);
       addText(`${exp.startDate} - ${exp.endDate} | ${exp.location}`, 10);
-      addText(exp.description, 10);
-      exp.achievements.forEach(achievement => {
-        addText(`• ${achievement}`, 10);
-      });
+      addText(htmlToPlainText(exp.description), 10);
+      addText(htmlToPlainText(exp.achievements), 10);
       yPosition += 5;
     });
 
@@ -508,64 +184,54 @@ const ExportButton = ({ portfolioData }) => {
     setIsOpen(false);
   };
 
-  // Export as Word
-  const exportAsWord = () => {
-    const content = `
-${portfolioData.personalInfo.name}
-${portfolioData.personalInfo.title}
+// Export as Word
+const exportAsWord = () => {
+  let content = '';
+  content += `${portfolioData.personalInfo.title}\n\n`;
+  content += `${portfolioData.personalInfo.description}\n\n`;
+  content += `Email: ${portfolioData.personalInfo.email}\n`;
+  content += `Phone: ${portfolioData.personalInfo.phone}\n`;
+  content += `Location: ${portfolioData.personalInfo.location}\n\n`;
+  content += `${portfolioData.professionalSummary.title}\n`;
+  content += `${htmlToPlainText(portfolioData.professionalSummary.content)}\n\n`;
+  content += `Skills & Expertise:\n`;
+  content += portfolioData.skills.map(skill => `${skill.name}: ${skill.level}%`).join('\n') + '\n\n';
+  content += `Featured Projects:\n`;
+  portfolioData.projects.forEach(project => {
+    content += `${project.title}\n`;
+    content += `${htmlToPlainText(project.description)}\n`;
+    content += `Technologies: ${project.technologies.join(', ')}\n`;
+    if (project.liveUrl) content += `Live URL: ${project.liveUrl}\n`;
+    if (project.githubUrl) content += `GitHub: ${project.githubUrl}\n`;
+    content += '\n';
+  });
+  content += `Professional Experience:\n`;
+  portfolioData.experience.forEach(exp => {
+    content += `${exp.position} at ${exp.company}\n`;
+    content += `${exp.startDate} - ${exp.endDate} | ${exp.location}\n`;
+    content += `${htmlToPlainText(exp.description)}\n`;
+    content += `Key Achievements:\n`;
+    content += `${htmlToPlainText(exp.achievements)}\n`;
+    content += `Technologies: ${exp.technologies.join(', ')}\n\n`;
+  });
+  content += `Contact Information:\n`;
+  content += `Email: ${portfolioData.contactInfo.email}\n`;
+  content += `Phone: ${portfolioData.contactInfo.phone}\n`;
+  content += `Address: ${portfolioData.contactInfo.address}\n`;
+  content += `LinkedIn: ${portfolioData.contactInfo.social.linkedin}\n`;
+  content += `GitHub: ${portfolioData.contactInfo.social.github}\n`;
 
-${portfolioData.personalInfo.description}
+  // Create a Blob for Word (doc) format
+  const blob = new Blob([content], { type: 'application/msword' });
+  saveAs(blob, `${portfolioData.personalInfo.name.replace(/\s+/g, '_')}_Portfolio.doc`);
+  setIsOpen(false);
+};
 
-Contact Information:
-Email: ${portfolioData.personalInfo.email}
-Phone: ${portfolioData.personalInfo.phone}
-Location: ${portfolioData.personalInfo.location}
-
-${portfolioData.professionalSummary.title}
-${portfolioData.professionalSummary.content}
-
-Skills & Expertise:
-${portfolioData.skills.map(skill => `${skill.name}: ${skill.level}%`).join('\n')}
-
-Featured Projects:
-${portfolioData.projects.map(project => `
-${project.title}
-${project.description}
-Technologies: ${project.technologies.join(', ')}
-${project.liveUrl ? `Live URL: ${project.liveUrl}` : ''}
-${project.githubUrl ? `GitHub: ${project.githubUrl}` : ''}
-`).join('\n')}
-
-Professional Experience:
-${portfolioData.experience.map(exp => `
-${exp.position} at ${exp.company}
-${exp.startDate} - ${exp.endDate} | ${exp.location}
-${exp.description}
-
-Key Achievements:
-${exp.achievements.map(achievement => `• ${achievement}`).join('\n')}
-
-Technologies: ${exp.technologies.join(', ')}
-`).join('\n')}
-
-Contact Information:
-Email: ${portfolioData.contactInfo.email}
-Phone: ${portfolioData.contactInfo.phone}
-Address: ${portfolioData.contactInfo.address}
-LinkedIn: ${portfolioData.contactInfo.social.linkedin}
-GitHub: ${portfolioData.contactInfo.social.github}
-`;
-
-    const blob = new Blob([content], { type: 'application/msword' });
-    saveAs(blob, `${portfolioData.personalInfo.name.replace(/\s+/g, '_')}_Portfolio.doc`);
-    setIsOpen(false);
-  };
-
-  const exportOptions = [
-    { label: 'Export as HTML', icon: Globe, action: exportAsHTML },
-    { label: 'Export as PDF', icon: FileText, action: exportAsPDF },
-    { label: 'Export as Word', icon: File, action: exportAsWord }
-  ];
+const exportOptions = [
+  { label: 'Export as HTML', icon: Globe, action: exportAsHTML },
+  { label: 'Export as PDF', icon: FileText, action: exportAsPDF },
+  { label: 'Export as Word', icon: File, action: exportAsWord }
+];
 
   return (
     <div className="relative" ref={dropdownRef}>

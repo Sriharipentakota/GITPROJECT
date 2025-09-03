@@ -75,7 +75,7 @@ const ExperienceSection = ({ data, onUpdate }) => {
           {/* Desktop Timeline Line */}
           <div className="hidden lg:block absolute left-1/2 transform -translate-x-1/2 w-1 h-full bg-gradient-to-b from-blue-600 to-purple-600"></div>
           
-          {data.map((exp, index) => (
+          {data?.map((exp, index) => (
             <motion.div
               key={exp.id}
               className="relative mb-12 last:mb-0"
@@ -139,13 +139,11 @@ const ExperienceSection = ({ data, onUpdate }) => {
                 >
                   <div className="mt-4 pt-4 border-t border-gray-200">
                     <h5 className="font-semibold text-gray-800 mb-2">Key Achievements:</h5>
-                    // ...existing code...
-                      <div dangerouslySetInnerHTML={{ __html: exp.achievementsHtml || '' }} />
-                    
+                    <div className="list-disc pl-6 text-gray-700" dangerouslySetInnerHTML={{ __html: exp.achievements || '' }} />
                     <div className="mt-3">
                       <h5 className="font-semibold text-gray-800 mb-2">Technologies:</h5>
                       <div className="flex flex-wrap gap-2">
-                        {exp.technologies.map((tech) => (
+                        {exp.technologies?.map((tech) => (
                           <span
                             key={tech}
                             className="px-2 py-1 bg-purple-100 text-purple-800 rounded-full text-xs"
@@ -179,7 +177,7 @@ const ExperienceSection = ({ data, onUpdate }) => {
           </button>
 
           <div className="space-y-6 max-h-96 overflow-y-auto">
-            {editData.map((exp) => (
+            {editData?.map((exp) => (
               <div key={exp.id} className="border border-gray-200 rounded-lg p-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
@@ -233,11 +231,11 @@ const ExperienceSection = ({ data, onUpdate }) => {
                 </div>
 
                 <div className="mt-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Achievements (one per line)</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Achievements (rich text, use bullets)</label>
                   <RichTextEditor
-                    value={exp.achievements.join('\n')}
-                    onChange={(content) => updateAchievements(exp.id, content)}
-                    placeholder="List your key achievements..."
+                    value={exp.achievements}
+                    onChange={(content) => updateExperience(exp.id, 'achievements', content)}
+                    placeholder="List your key achievements with bullets, bold, etc."
                   />
                 </div>
 
