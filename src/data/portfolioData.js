@@ -1,3 +1,4 @@
+import srihari from '../assets/srihari.jpg';
 /**
  * Portfolio Data Structure
  * 
@@ -11,7 +12,7 @@ export const personalInfo = {
   name: "Srihari Pentakota",
   title: "Front-end Developer & UI/UX Designer",
   description: "Passionate developer with 2.7+ years of experience creating beautiful, functional web applications. I specialize in React, Node.js, and modern web technologies, with a keen eye for design and user experience.",
-  image: "https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg?auto=compress&cs=tinysrgb&w=400",
+  image: srihari,
   location: "Hyderabad, Telangana",
   email: "sriharipentakota07@gmail.com",
   phone: "+91 6281997025",

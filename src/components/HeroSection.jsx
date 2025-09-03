@@ -65,14 +65,16 @@ const HeroSection = ({ data, onUpdate }) => {
             transition={{ duration: 0.8, delay: 0.2 }}
           >
             <div className="relative">
-              <motion.img
-                src={data.image}
-                alt={data.name}
-                className="w-80 h-80 rounded-full object-cover shadow-2xl"
-                whileHover={{ scale: 1.05 }}
-                transition={{ duration: 0.3 }}
-              />
-              <div className="absolute inset-0 rounded-full bg-gradient-to-br from-blue-600/20 to-purple-600/20"></div>
+              <div className="flex items-center justify-center w-80 h-80 mx-auto relative">
+                <motion.img
+                  src={data.image}
+                  alt={data.name}
+                  className="w-80 h-80 rounded-full object-cover shadow-2xl"
+                  whileHover={{ scale: 1.05 }}
+                  transition={{ duration: 0.3 }}
+                />
+                <div className="absolute inset-0 rounded-full bg-gradient-to-br from-blue-600/20 to-purple-600/20 pointer-events-none"></div>
+              </div>
             </div>
           </motion.div>
 
