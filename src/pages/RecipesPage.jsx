@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus, Trash2, ChefHat } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useRecipes } from '../context/RecipeContext';
 import { useUI } from '../context/UIContext';
