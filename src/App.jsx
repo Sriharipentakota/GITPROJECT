@@ -1,4 +1,3 @@
-import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import { BookingProvider } from './contexts/BookingContext';
@@ -10,7 +9,6 @@ import Payment from './pages/Payment';
 import Ticket from './pages/Ticket';
 import Profile from './pages/Profile';
 import BookingHistory from './pages/BookingHistory';
-// import './App.css';
 
 function App() {
   return (
