@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, CreditCard, Smartphone, Building, Wallet, Clock, Shield, Check } from 'lucide-react';
+import { ArrowLeft, CreditCard, Shield, Check } from 'lucide-react';
 import { useBooking } from '../contexts/BookingContext';
 import { useAuth } from '../contexts/AuthContext';
 import { paymentMethods } from '../data/mockData';
@@ -51,7 +51,7 @@ const Payment = () => {
 
       setIsProcessing(false);
       setShowSuccess(true);
-      
+
       // Redirect to ticket page after success animation
       setTimeout(() => {
         navigate(`/ticket/${booking.id}`);
@@ -191,7 +191,7 @@ const Payment = () => {
             <ArrowLeft size={20} />
             Back
           </button>
-          
+
           <div className={styles.securityBadge}>
             <Shield size={20} />
             <span>Secure Payment</span>
@@ -203,14 +203,13 @@ const Payment = () => {
           <div className={styles.paymentSection}>
             <div className={styles.paymentCard}>
               <h2>Choose Payment Method</h2>
-              
+
               <div className={styles.paymentMethods}>
                 {paymentMethods.map(method => (
                   <button
                     key={method.id}
-                    className={`${styles.paymentMethodButton} ${
-                      selectedMethod === method.id ? styles.active : ''
-                    }`}
+                    className={`${styles.paymentMethodButton} ${selectedMethod === method.id ? styles.active : ''
+                      }`}
                     onClick={() => setSelectedMethod(method.id)}
                   >
                     <div className={styles.methodIcon}>{method.icon}</div>
@@ -225,7 +224,7 @@ const Payment = () => {
 
               <form onSubmit={handlePayment} className={styles.paymentFormContainer}>
                 {renderPaymentForm()}
-                
+
                 <button
                   type="submit"
                   className={`btn btn-success ${styles.payButton}`}
@@ -251,7 +250,7 @@ const Payment = () => {
           <div className={styles.orderSummary}>
             <div className={styles.summaryCard}>
               <h3>Booking Summary</h3>
-              
+
               <div className={styles.journeyDetails}>
                 <h4>{searchData.from.name} → {searchData.to.name}</h4>
                 <p>{new Date(searchData.date).toLocaleDateString('en-IN', {

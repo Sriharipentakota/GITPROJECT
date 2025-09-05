@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Calendar, MapPin, Clock, Eye, X, RefreshCw } from 'lucide-react';
+import { Clock, Eye, X, RefreshCw } from 'lucide-react';
 import { useBooking } from '../contexts/BookingContext';
 import { useAuth } from '../contexts/AuthContext';
 import styles from './BookingHistory.module.css';
@@ -54,7 +54,7 @@ const BookingHistory = () => {
             <div className={styles.emptyIcon}>🚌</div>
             <h1>No Bookings Yet</h1>
             <p>You haven't made any bus bookings. Start your journey today!</p>
-            <button 
+            <button
               className="btn btn-primary"
               onClick={() => navigate('/')}
             >
@@ -74,7 +74,7 @@ const BookingHistory = () => {
             <h1>My Bookings</h1>
             <p>Manage and track all your bus bookings</p>
           </div>
-          
+
           <div className={styles.filterTabs}>
             {[
               { value: 'all', label: 'All Bookings' },
@@ -127,7 +127,7 @@ const BookingHistory = () => {
                   <span className={styles.totalAmount}>₹{booking.payment.amount}</span>
                   <span className={styles.pnr}>PNR: {booking.pnr}</span>
                 </div>
-                
+
                 <div className={styles.actions}>
                   <button
                     className="btn btn-secondary"
@@ -136,7 +136,7 @@ const BookingHistory = () => {
                     <Eye size={16} />
                     View Ticket
                   </button>
-                  
+
                   {canCancel(booking) && (
                     <button
                       className={styles.cancelButton}
@@ -161,14 +161,14 @@ const BookingHistory = () => {
             <div className={styles.modal} onClick={e => e.stopPropagation()}>
               <div className={styles.modalHeader}>
                 <h3>Cancel Booking</h3>
-                <button 
+                <button
                   className={styles.modalClose}
                   onClick={() => setShowCancelModal(false)}
                 >
                   <X size={20} />
                 </button>
               </div>
-              
+
               <div className={styles.modalContent}>
                 <p>Are you sure you want to cancel this booking?</p>
                 {bookingToCancel && (
@@ -179,19 +179,19 @@ const BookingHistory = () => {
                   </div>
                 )}
                 <p className={styles.refundInfo}>
-                  Refund amount will be processed according to the cancellation policy. 
+                  Refund amount will be processed according to the cancellation policy.
                   You will receive the refund in 3-5 business days.
                 </p>
               </div>
-              
+
               <div className={styles.modalActions}>
-                <button 
+                <button
                   className="btn btn-secondary"
                   onClick={() => setShowCancelModal(false)}
                 >
                   Keep Booking
                 </button>
-                <button 
+                <button
                   className={styles.confirmCancelButton}
                   onClick={handleCancelBooking}
                 >

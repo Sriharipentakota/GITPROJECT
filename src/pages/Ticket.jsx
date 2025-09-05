@@ -1,6 +1,6 @@
-import React, { useState, useRef } from 'react';
+import { useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Download, ArrowLeft, MapPin, Clock, Users, CreditCard } from 'lucide-react';
+import { Download, ArrowLeft, MapPin, Clock, CreditCard } from 'lucide-react';
 import { useBooking } from '../contexts/BookingContext';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
@@ -49,7 +49,7 @@ const Ticket = () => {
 
       const imgWidth = 190;
       const imgHeight = (canvas.height * imgWidth) / canvas.width;
-      
+
       pdf.addImage(imgData, 'PNG', 10, 10, imgWidth, imgHeight);
       pdf.save(`BusGo-Ticket-${booking.id}.pdf`);
     } catch (error) {
@@ -88,7 +88,7 @@ const Ticket = () => {
             <ArrowLeft size={20} />
             Back to Bookings
           </button>
-          
+
           <button
             className={`btn btn-primary ${styles.downloadButton}`}
             onClick={handleDownloadPDF}
@@ -134,7 +134,7 @@ const Ticket = () => {
                     <p>{formatTime(booking.bus.departure)}</p>
                   </div>
                 </div>
-                
+
                 <div className={styles.journeyLine}>
                   <div className={styles.line}></div>
                   <div className={styles.duration}>
@@ -142,7 +142,7 @@ const Ticket = () => {
                     <span>{booking.bus.duration}</span>
                   </div>
                 </div>
-                
+
                 <div className={styles.location}>
                   <MapPin size={24} />
                   <div>
@@ -151,7 +151,7 @@ const Ticket = () => {
                   </div>
                 </div>
               </div>
-              
+
               <div className={styles.dateInfo}>
                 <h4>Journey Date</h4>
                 <p>{formatDate(booking.date)}</p>
@@ -165,7 +165,7 @@ const Ticket = () => {
                 <p className={styles.operatorName}>{booking.bus.operator}</p>
                 <p className={styles.busType}>{booking.bus.type}</p>
               </div>
-              
+
               <div className={styles.seatInfo}>
                 <h4>Seat Numbers</h4>
                 <div className={styles.seatNumbers}>

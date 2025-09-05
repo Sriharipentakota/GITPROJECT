@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { User, Mail, Phone, Calendar, Edit2, Save, X, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
@@ -82,7 +82,7 @@ const Profile = () => {
                 setIsEditing(!isEditing);
               }}
             >
-              {isEditing ? <X size={20}  style={{ marginRight: '0.5rem' }} /> : <Edit2 size={20}   style={{ marginRight: '0.5rem' }}/>}
+              {isEditing ? <X size={20} style={{ marginRight: '0.5rem' }} /> : <Edit2 size={20} style={{ marginRight: '0.5rem' }} />}
               {isEditing ? 'Cancel' : 'Edit Profile'}
             </button>
           </div>

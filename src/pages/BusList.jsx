@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Clock, Star, Wifi, Zap, Droplets, Shield, MapPin } from 'lucide-react';
+import { Clock, Star, Wifi, Zap, Droplets, Shield } from 'lucide-react';
 import { useBooking } from '../contexts/BookingContext';
 import { buses } from '../data/mockData';
 import styles from './BusList.module.css';
