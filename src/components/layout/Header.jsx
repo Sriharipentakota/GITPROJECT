@@ -58,7 +58,7 @@ const Header = () => {
                     className={`${styles.logoutButton} ${styles.desktopOnly}`}
                     onClick={handleLogout}
                   >
-                    Logout
+                    Logout 
                   </button>
                 </div>
               ) : (
