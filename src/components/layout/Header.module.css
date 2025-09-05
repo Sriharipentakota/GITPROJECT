@@ -1,0 +1,193 @@
+.header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  background: white;
+  box-shadow: var(--shadow-md);
+  z-index: 100;
+  border-bottom: 1px solid var(--neutral-200);
+}
+
+.headerContent {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-4) 0;
+  height: 80px;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-3);
+  text-decoration: none;
+  color: var(--primary-600);
+  font-weight: 700;
+  font-size: 1.5rem;
+  transition: color 0.2s ease-in-out;
+}
+
+.logo:hover {
+  color: var(--primary-700);
+}
+
+.desktopNav {
+  display: none;
+  gap: var(--spacing-8);
+}
+
+.navLink {
+  text-decoration: none;
+  color: var(--neutral-600);
+  font-weight: 500;
+  padding: var(--spacing-2) var(--spacing-3);
+  border-radius: var(--radius-md);
+  transition: all 0.2s ease-in-out;
+}
+
+.navLink:hover {
+  color: var(--primary-600);
+  background: var(--primary-50);
+}
+
+.userSection {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-4);
+}
+
+.userMenu {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-3);
+}
+
+.userButton {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  background: var(--neutral-100);
+  border: 1px solid var(--neutral-200);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-2) var(--spacing-4);
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+}
+
+.userButton:hover {
+  background: var(--neutral-200);
+  border-color: var(--neutral-300);
+}
+
+.userName {
+  font-weight: 500;
+  color: var(--neutral-700);
+}
+
+.logoutButton {
+  background: none;
+  border: 1px solid var(--error-500);
+  color: var(--error-500);
+  padding: var(--spacing-2) var(--spacing-4);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.2s ease-in-out;
+}
+
+.logoutButton:hover {
+  background: var(--error-500);
+  color: white;
+}
+
+.loginButton {
+  font-size: 0.875rem;
+  padding: var(--spacing-2) var(--spacing-5);
+}
+
+.mobileMenuButton {
+  display: block;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--neutral-600);
+  padding: var(--spacing-2);
+}
+
+.mobileNav {
+  display: block;
+  background: white;
+  border-top: 1px solid var(--neutral-200);
+  padding: var(--spacing-4) 0;
+}
+
+.mobileNavLink {
+  display: block;
+  text-decoration: none;
+  color: var(--neutral-600);
+  font-weight: 500;
+  padding: var(--spacing-3) 0;
+  border-bottom: 1px solid var(--neutral-100);
+  transition: color 0.2s ease-in-out;
+}
+
+.mobileNavLink:hover {
+  color: var(--primary-600);
+}
+
+.mobileLogoutButton {
+  display: block;
+  width: 100%;
+  background: var(--error-500);
+  color: white;
+  border: none;
+  padding: var(--spacing-3) 0;
+  margin-top: var(--spacing-3);
+  border-radius: var(--radius-md);
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.mobileLoginButton {
+  width: 100%;
+  margin-top: var(--spacing-3);
+}
+
+.desktopOnly {
+  display: none;
+}
+
+/* Desktop styles */
+@media (min-width: 768px) {
+  .desktopNav {
+    display: flex;
+  }
+
+  .mobileMenuButton {
+    display: none;
+  }
+
+  .mobileNav {
+    display: none;
+  }
+
+  .desktopOnly {
+    display: block;
+  }
+}
+
+@media (max-width: 480px) {
+  .logo span {
+    display: none;
+  }
+
+  .userName {
+    display: none;
+  }
+
+  .loginButton {
+    padding: var(--spacing-2) var(--spacing-3);
+    font-size: 0.75rem;
+  }
+}

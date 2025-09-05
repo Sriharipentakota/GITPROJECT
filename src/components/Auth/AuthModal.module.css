@@ -1,0 +1,178 @@
+/* Password field with eye icon */
+.passwordWrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.passwordWrapper .input {
+  padding-right: 2.5rem;
+}
+
+.eyeButton {
+  position: absolute;
+  right: 0.75rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--neutral-500);
+  padding: 0.25rem;
+  display: flex;
+  align-items: center;
+}
+.eyeButton:focus {
+  outline: none;
+}
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: var(--spacing-4);
+}
+
+.modal {
+  background: white;
+  border-radius: var(--radius-2xl);
+  box-shadow: var(--shadow-xl);
+  width: 100%;
+  max-width: 400px;
+  max-height: 90vh;
+  overflow-y: auto;
+  animation: modalSlideIn 0.3s ease-out;
+}
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-6) var(--spacing-6) var(--spacing-4);
+  border-bottom: 1px solid var(--neutral-200);
+}
+
+.header h2 {
+  color: var(--neutral-800);
+  font-size: 1.5rem;
+  font-weight: 600;
+  line-height: var(--line-height-tight);
+}
+
+.closeButton {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--neutral-500);
+  padding: var(--spacing-1);
+  border-radius: var(--radius-md);
+  transition: all 0.2s ease-in-out;
+}
+
+.closeButton:hover {
+  background: var(--neutral-100);
+  color: var(--neutral-700);
+}
+
+.form {
+  padding: var(--spacing-6);
+}
+
+.error {
+  background: #fef2f2;
+  color: var(--error-500);
+  padding: var(--spacing-3) var(--spacing-4);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--spacing-4);
+  font-size: 0.875rem;
+  border-left: 4px solid var(--error-500);
+}
+
+.inputGroup {
+  margin-bottom: var(--spacing-5);
+}
+
+.inputGroup label {
+  display: block;
+  margin-bottom: var(--spacing-2);
+  font-weight: 500;
+  color: var(--neutral-700);
+  font-size: 0.875rem;
+}
+
+.inputError {
+  border-color: var(--error-500) !important;
+}
+
+.inputError:focus {
+  box-shadow: 0 0 0 3px rgb(239 68 68 / 0.1) !important;
+}
+
+.fieldError {
+  display: block;
+  color: var(--error-500);
+  font-size: 0.75rem;
+  margin-top: var(--spacing-1);
+}
+
+.submitButton {
+  width: 100%;
+  padding: var(--spacing-4) 0;
+  font-size: 1rem;
+  margin-bottom: var(--spacing-4);
+}
+
+.footer {
+  text-align: center;
+  padding-top: var(--spacing-4);
+  border-top: 1px solid var(--neutral-200);
+}
+
+.footer span {
+  color: var(--neutral-600);
+  font-size: 0.875rem;
+}
+
+.toggleButton {
+  background: none;
+  border: none;
+  color: var(--primary-600);
+  cursor: pointer;
+  font-weight: 500;
+  text-decoration: underline;
+  font-size: 0.875rem;
+}
+
+.toggleButton:hover {
+  color: var(--primary-700);
+}
+
+@media (max-width: 480px) {
+  .modal {
+    margin: var(--spacing-4);
+    max-height: calc(100vh - 2rem);
+  }
+  
+  .form {
+    padding: var(--spacing-4);
+  }
+  
+  .header {
+    padding: var(--spacing-4) var(--spacing-4) var(--spacing-3);
+  }
+}

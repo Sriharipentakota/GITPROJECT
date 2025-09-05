@@ -1,80 +1,39 @@
-import { Suspense, lazy } from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
-import { useAuth } from './context/AuthContext';
-import Layout from './components/layout/Layout';
-import LoadingSpinner from './components/ui/LoadingSpinner';
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { AuthProvider } from './contexts/AuthContext';
+import { BookingProvider } from './contexts/BookingContext';
+import Header from './components/Layout/Header';
+import Home from './pages/Home';
+import BusList from './pages/BusList';
+import SeatSelection from './pages/SeatSelection';
+import Payment from './pages/Payment';
+import Ticket from './pages/Ticket';
+import Profile from './pages/Profile';
+import BookingHistory from './pages/BookingHistory';
+// import './App.css';
 
-// Lazy load pages for better performance
-const HomePage = lazy(() => import('./pages/HomePage'));
-const LoginPage = lazy(() => import('./pages/LoginPage'));
-const SignUpPage = lazy(() => import('./pages/SignUpPage'));
-const RecipesPage = lazy(() => import('./pages/RecipesPage'));
-const RecipeDetailPage = lazy(() => import('./pages/RecipeDetailPage'));
-const CreateRecipePage = lazy(() => import('./pages/CreateRecipePage'));
-const EditRecipePage = lazy(() => import('./pages/EditRecipePage'));
-const ProfilePage = lazy(() => import('./pages/ProfilePage'));
-const ForgotPasswordPage = lazy(() => import('./pages/ForgotPasswordPage'));
-
-/**
- * Main App component with routing and authentication protection
- */
 function App() {
-  const { user, loading } = useAuth();
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <LoadingSpinner size="lg" />
-      </div>
-    );
-  }
-
   return (
-    <Layout>
-      <Suspense fallback={<LoadingSpinner size="lg" />}>
-        <Routes>
-          {/* Public routes */}
-          <Route path="/" element={<HomePage />} />
-          <Route 
-            path="/login" 
-            element={user ? <Navigate to="/recipes" /> : <LoginPage />} 
-          />
-          <Route 
-            path="/signup" 
-            element={user ? <Navigate to="/recipes" /> : <SignUpPage />} 
-          />
-          <Route 
-            path="/forgot-password" 
-            element={user ? <Navigate to="/recipes" /> : <ForgotPasswordPage />} 
-          />
-
-          {/* Protected routes */}
-          <Route 
-            path="/recipes" 
-            element={user ? <RecipesPage /> : <Navigate to="/login" />} 
-          />
-          <Route 
-            path="/recipe/:id" 
-            element={user ? <RecipeDetailPage /> : <Navigate to="/login" />} 
-          />
-          <Route 
-            path="/create-recipe" 
-            element={user ? <CreateRecipePage /> : <Navigate to="/login" />} 
-          />
-          <Route 
-            path="/edit-recipe/:id" 
-            element={user ? <EditRecipePage /> : <Navigate to="/login" />} 
-          />
-          <Route 
-            path="/profile" 
-            element={user ? <ProfilePage /> : <Navigate to="/login" />} 
-          />
-
-          {/* Catch all */}
-          <Route path="*" element={<Navigate to="/" />} />
-        </Routes>
-      </Suspense>
-    </Layout>
+    <AuthProvider>
+      <BookingProvider>
+        <Router>
+          <div className="app">
+            <Header />
+            <main className="main-content">
+              <Routes>
+                <Route path="/" element={<Home />} />
+                <Route path="/buses" element={<BusList />} />
+                <Route path="/seats/:busId" element={<SeatSelection />} />
+                <Route path="/payment" element={<Payment />} />
+                <Route path="/ticket/:bookingId" element={<Ticket />} />
+                <Route path="/profile" element={<Profile />} />
+                <Route path="/bookings" element={<BookingHistory />} />
+              </Routes>
+            </main>
+          </div>
+        </Router>
+      </BookingProvider>
+    </AuthProvider>
   );
 }
 

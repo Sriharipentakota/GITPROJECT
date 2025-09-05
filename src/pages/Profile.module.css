@@ -1,0 +1,331 @@
+/* Password field with eye icon for profile page */
+.passwordWrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.passwordWrapper .input {
+  padding-right: 2.5rem;
+}
+
+.eyeButton {
+  position: absolute;
+  right: 0.75rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--neutral-500);
+  padding: 0.25rem;
+  display: flex;
+  align-items: center;
+}
+.eyeButton:focus {
+  outline: none;
+}
+.profilePage {
+  min-height: calc(100vh - 80px);
+  background: var(--neutral-50);
+  padding: var(--spacing-8) 0;
+}
+
+.profileContainer {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.profileHeader {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: var(--spacing-6);
+  align-items: center;
+  background: white;
+  padding: var(--spacing-8);
+  border-radius: var(--radius-2xl);
+  box-shadow: var(--shadow-md);
+  margin-bottom: var(--spacing-8);
+}
+
+.avatar {
+  width: 80px;
+  height: 80px;
+  background: linear-gradient(135deg, var(--primary-500), var(--secondary-500));
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+}
+
+.userInfo h1 {
+  font-size: 1.875rem;
+  font-weight: 700;
+  color: var(--neutral-800);
+  margin-bottom: var(--spacing-1);
+  line-height: var(--line-height-tight);
+}
+
+.userInfo p {
+  color: var(--neutral-600);
+  font-size: 1rem;
+}
+
+.profileContent {
+  display: grid;
+  gap: var(--spacing-8);
+}
+
+.profileSection {
+  background: white;
+  border-radius: var(--radius-2xl);
+  padding: var(--spacing-8);
+  box-shadow: var(--shadow-md);
+}
+
+.profileSection h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--neutral-800);
+  margin-bottom: var(--spacing-6);
+  line-height: var(--line-height-tight);
+}
+
+.fieldGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--spacing-6);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-3);
+}
+
+.field label {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  font-weight: 500;
+  color: var(--neutral-700);
+  font-size: 0.875rem;
+}
+
+.fieldValue {
+  background: var(--neutral-50);
+  padding: var(--spacing-3) var(--spacing-4);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--neutral-200);
+  color: var(--neutral-800);
+  font-weight: 500;
+}
+
+.editActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--spacing-4);
+  margin-top: var(--spacing-6);
+  padding-top: var(--spacing-6);
+  border-top: 1px solid var(--neutral-200);
+}
+
+.actionGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--spacing-4);
+}
+
+.actionCard {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-4);
+  background: var(--neutral-50);
+  border: 1px solid var(--neutral-200);
+  border-radius: var(--radius-xl);
+  padding: var(--spacing-6);
+  cursor: pointer;
+  transition: all 0.3s ease-in-out;
+  text-align: left;
+}
+
+.actionCard:hover {
+  background: var(--primary-50);
+  border-color: var(--primary-200);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.actionIcon {
+  font-size: 2rem;
+  width: 56px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: white;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+.actionCard h3 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--neutral-800);
+  margin-bottom: var(--spacing-1);
+  line-height: var(--line-height-tight);
+}
+
+.actionCard p {
+  font-size: 0.875rem;
+  color: var(--neutral-600);
+}
+
+.settingsGrid {
+  display: grid;
+  gap: var(--spacing-4);
+}
+
+.settingItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--neutral-50);
+  padding: var(--spacing-4);
+  border: 1px solid var(--neutral-200);
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+}
+
+.settingItem:hover {
+  background: var(--neutral-100);
+  border-color: var(--neutral-300);
+}
+
+.toggle {
+  position: relative;
+  width: 48px;
+  height: 24px;
+}
+
+.toggle input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: var(--neutral-300);
+  transition: 0.3s;
+  border-radius: 24px;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: 0.3s;
+  border-radius: 50%;
+}
+
+.toggle input:checked + .slider {
+  background-color: var(--primary-500);
+}
+
+.toggle input:checked + .slider:before {
+  transform: translateX(24px);
+}
+
+.dangerZone {
+  background: white;
+  border-radius: var(--radius-2xl);
+  padding: var(--spacing-8);
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--error-200);
+}
+
+.dangerZone h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--error-600);
+  margin-bottom: var(--spacing-6);
+}
+
+.logoutButton {
+  background: var(--error-500);
+  color: white;
+  border: none;
+  padding: var(--spacing-3) var(--spacing-6);
+  border-radius: var(--radius-lg);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+}
+
+.logoutButton:hover {
+  background: var(--error-600);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .profilePage {
+    padding: var(--spacing-6) 0;
+  }
+
+  .profileHeader {
+    grid-template-columns: 1fr;
+    text-align: center;
+    padding: var(--spacing-6);
+  }
+
+  .fieldGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .actionGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .profileSection {
+    padding: var(--spacing-6);
+  }
+
+  .editActions {
+    flex-direction: column-reverse;
+  }
+
+  .actionCard {
+    padding: var(--spacing-4);
+  }
+}
+
+@media (max-width: 480px) {
+  .profileSection {
+    padding: var(--spacing-4);
+  }
+
+  .profileHeader {
+    padding: var(--spacing-4);
+  }
+
+  .avatar {
+    width: 64px;
+    height: 64px;
+  }
+
+  .userInfo h1 {
+    font-size: 1.5rem;
+  }
+}
