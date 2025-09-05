@@ -1,7 +1,7 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import { BookingProvider } from './contexts/BookingContext';
-import Header from './components/Layout/Header';
+import Header from './components/layout/Header'; 
 import Home from './pages/Home';
 import BusList from './pages/BusList';
 import SeatSelection from './pages/SeatSelection';
