@@ -133,8 +133,25 @@
 .submitButton {
   width: 100%;
   padding: var(--spacing-4) 0;
-  font-size: 1rem;
+  font-size: 1.1rem;
   margin-bottom: var(--spacing-4);
+  font-weight: 600;
+  border-radius: var(--radius-xl);
+  background: linear-gradient(90deg, var(--primary-600), var(--secondary-500));
+  color: white;
+  box-shadow: var(--shadow-lg);
+  border: none;
+  transition: background 0.2s, transform 0.2s;
+}
+.submitButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.submitButton:hover:not(:disabled) {
+  background: linear-gradient(90deg, var(--primary-700), var(--secondary-600));
+  transform: translateY(-2px) scale(1.03);
+  box-shadow: var(--shadow-xl);
 }
 
 .footer {
