@@ -146,7 +146,7 @@ const Contact = () => {
                 </li>
                 <li className="flex items-center">
                   <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-blue-500 rounded-full mr-2 sm:mr-3 flex-shrink-0"></span>
-                  React & Vue.js Applications
+                  React Applications
                 </li>
                 <li className="flex items-center">
                   <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-blue-500 rounded-full mr-2 sm:mr-3 flex-shrink-0"></span>
