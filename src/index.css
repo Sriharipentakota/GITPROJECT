@@ -172,6 +172,18 @@ body {
   box-shadow: var(--shadow-lg);
 }
 
+.btn-danger {
+  background: linear-gradient(135deg, var(--error-500), var(--error-600));
+  color: white;
+  box-shadow: var(--shadow-md);
+}
+
+.btn-danger:hover:not(:disabled) {
+  background: linear-gradient(135deg, var(--error-600), var(--error-700));
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-lg);
+}
+
 .input {
   width: 100%;
   padding: var(--spacing-3) var(--spacing-4);

@@ -42,6 +42,10 @@ const Home = () => {
       alert('Please fill all required fields');
       return;
     }
+    if (searchData.from.id === searchData.to.id) {
+      alert('Departure and destination cities should not be the same');
+      return;
+    }
     if (!isAuthenticated) {
       setShowAuthModal(true);
       return;
@@ -51,10 +55,18 @@ const Home = () => {
 
   const handleCitySelect = (city, type) => {
     if (type === 'from') {
+      if (searchData.to && city.id === searchData.to.id) {
+        alert('Departure and destination cities should not be the same');
+        return;
+      }
       updateSearchData({ from: city });
       setFromQuery(city.name);
       setShowFromDropdown(false);
     } else if (type === 'to') {
+      if (searchData.from && city.id === searchData.from.id) {
+        alert('Departure and destination cities should not be the same');
+        return;
+      }
       updateSearchData({ to: city });
       setToQuery(city.name);
       setShowToDropdown(false);
@@ -63,9 +75,18 @@ const Home = () => {
 
   const swapCities = () => {
     const { from, to } = searchData;
+    
+    // Swap the cities in searchData
     updateSearchData({ from: to, to: from });
-    setFromQuery(to?.name || '');
-    setToQuery(from?.name || '');
+    
+    // Swap the input field values
+    const tempFromQuery = fromQuery;
+    setFromQuery(toQuery);
+    setToQuery(tempFromQuery);
+    
+    // Close any open dropdowns
+    setShowFromDropdown(false);
+    setShowToDropdown(false);
   };
 
   return (

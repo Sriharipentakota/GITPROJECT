@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Download, ArrowLeft, MapPin, Clock, CreditCard } from 'lucide-react';
+import { Download, ArrowLeft, MapPin, Clock, CreditCard, X } from 'lucide-react';
 import { useBooking } from '../contexts/BookingContext';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
@@ -9,8 +9,9 @@ import styles from './Ticket.module.css';
 const Ticket = () => {
   const { bookingId } = useParams();
   const navigate = useNavigate();
-  const { bookings } = useBooking();
+  const { bookings, cancelBooking } = useBooking();
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
+  const [showCancelModal, setShowCancelModal] = useState(false);
   const ticketRef = useRef(null);
 
   const booking = bookings.find(b => b.id === bookingId);
@@ -77,6 +78,24 @@ const Ticket = () => {
     return `${displayHour}:${minutes} ${ampm}`;
   };
 
+  const canCancelBooking = () => {
+    if (booking.status !== 'confirmed') return false;
+    
+    const journeyDateTime = new Date(`${booking.date}T${booking.bus.departure}`);
+    const currentTime = new Date();
+    const timeDifference = journeyDateTime - currentTime;
+    const hoursUntilJourney = timeDifference / (1000 * 60 * 60);
+    
+    return hoursUntilJourney > 2;
+  };
+
+  const handleCancelBooking = () => {
+    cancelBooking(booking.id);
+    setShowCancelModal(false);
+    alert('Your booking has been cancelled successfully. Refund will be processed within 5-7 business days.');
+    navigate('/bookings');
+  };
+
   return (
     <div className={styles.ticketPage}>
       <div className="container">
@@ -106,6 +125,16 @@ const Ticket = () => {
               </>
             )}
           </button>
+
+          {canCancelBooking() && (
+            <button
+              className={`btn btn-danger ${styles.cancelButton}`}
+              onClick={() => setShowCancelModal(true)}
+            >
+              <X size={20} />
+              Cancel Ticket
+            </button>
+          )}
         </div>
 
         <div className={styles.ticketContainer} ref={ticketRef}>
@@ -257,6 +286,59 @@ const Ticket = () => {
             View All Bookings
           </button>
         </div>
+
+        {/* Cancel Confirmation Modal */}
+        {showCancelModal && (
+          <div className={styles.modal}>
+            <div className={styles.modalContent}>
+              <div className={styles.modalHeader}>
+                <h3>Cancel Booking</h3>
+                <button 
+                  className={styles.closeButton}
+                  onClick={() => setShowCancelModal(false)}
+                >
+                  <X size={20} />
+                </button>
+              </div>
+              
+              <div className={styles.modalBody}>
+                <div className={styles.cancelWarning}>
+                  <p><strong>Are you sure you want to cancel this booking?</strong></p>
+                  <div className={styles.bookingDetails}>
+                    <p><strong>PNR:</strong> {booking.pnr}</p>
+                    <p><strong>Route:</strong> {booking.from.name} → {booking.to.name}</p>
+                    <p><strong>Date:</strong> {formatDate(booking.date)}</p>
+                    <p><strong>Seats:</strong> {booking.seats.map(seat => seat.id).join(', ')}</p>
+                  </div>
+                  
+                  <div className={styles.refundInfo}>
+                    <h4>Refund Information:</h4>
+                    <ul>
+                      <li>Refund amount: ₹{Math.round(booking.payment.amount * 0.85)} (85% of paid amount)</li>
+                      <li>Processing time: 5-7 business days</li>
+                      <li>Refund will be credited to original payment method</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+              
+              <div className={styles.modalFooter}>
+                <button 
+                  className="btn btn-secondary"
+                  onClick={() => setShowCancelModal(false)}
+                >
+                  Keep Booking
+                </button>
+                <button 
+                  className="btn btn-danger"
+                  onClick={handleCancelBooking}
+                >
+                  Confirm Cancellation
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

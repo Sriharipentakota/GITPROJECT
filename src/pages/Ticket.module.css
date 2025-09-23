@@ -528,3 +528,159 @@
     flex-direction: column;
   }
 }
+
+/* Cancel Button */
+.cancelButton {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  background: var(--error-500);
+  color: white;
+  border: none;
+  padding: var(--spacing-3) var(--spacing-6);
+  border-radius: var(--radius-lg);
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.cancelButton:hover {
+  background: var(--error-600);
+  transform: translateY(-1px);
+}
+
+/* Modal Styles */
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: var(--spacing-4);
+}
+
+.modalContent {
+  background: white;
+  border-radius: var(--radius-xl);
+  width: 100%;
+  max-width: 500px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.modalHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-6);
+  border-bottom: 1px solid var(--neutral-200);
+}
+
+.modalHeader h3 {
+  margin: 0;
+  color: var(--neutral-900);
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.closeButton {
+  background: none;
+  border: none;
+  color: var(--neutral-500);
+  cursor: pointer;
+  padding: var(--spacing-1);
+  border-radius: var(--radius-md);
+  transition: all 0.2s ease;
+}
+
+.closeButton:hover {
+  background: var(--neutral-100);
+  color: var(--neutral-700);
+}
+
+.modalBody {
+  padding: var(--spacing-6);
+}
+
+.cancelWarning {
+  text-align: center;
+}
+
+.cancelWarning > p {
+  margin-bottom: var(--spacing-4);
+  font-size: 1.125rem;
+  color: var(--neutral-900);
+}
+
+.bookingDetails {
+  background: var(--neutral-50);
+  padding: var(--spacing-4);
+  border-radius: var(--radius-lg);
+  margin: var(--spacing-4) 0;
+  text-align: left;
+}
+
+.bookingDetails p {
+  margin: var(--spacing-2) 0;
+  color: var(--neutral-700);
+}
+
+.refundInfo {
+  text-align: left;
+  margin-top: var(--spacing-4);
+}
+
+.refundInfo h4 {
+  color: var(--neutral-900);
+  margin-bottom: var(--spacing-3);
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.refundInfo ul {
+  margin: 0;
+  padding-left: var(--spacing-5);
+}
+
+.refundInfo li {
+  margin: var(--spacing-2) 0;
+  color: var(--neutral-700);
+  line-height: 1.5;
+}
+
+.modalFooter {
+  display: flex;
+  gap: var(--spacing-3);
+  padding: var(--spacing-6);
+  border-top: 1px solid var(--neutral-200);
+}
+
+.modalFooter button {
+  flex: 1;
+  padding: var(--spacing-3) var(--spacing-4);
+  border-radius: var(--radius-lg);
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+@media (max-width: 768px) {
+  .header {
+    flex-direction: column;
+    gap: var(--spacing-4);
+    align-items: stretch;
+  }
+
+  .header .downloadButton,
+  .header .cancelButton {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .modalFooter {
+    flex-direction: column;
+  }
+}
