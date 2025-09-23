@@ -23,8 +23,20 @@ const Contact = () => {
     e.preventDefault();
     setIsSubmitting(true);
 
-    // Simulate form submission
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    // Create mailto URL with pre-filled data
+    const subject = encodeURIComponent(formData.subject || 'Contact from Portfolio Website');
+    const body = encodeURIComponent(
+      `Hi Srihari,\n\n${formData.message}\n\nBest regards,\n${formData.name}\nEmail: ${formData.email}`
+    );
+    const recipient = 'sriharipentakota07@gmail.com';
+    
+    const mailtoUrl = `mailto:${recipient}?subject=${subject}&body=${body}`;
+
+    // Simulate loading state briefly
+    await new Promise(resolve => setTimeout(resolve, 500));
+
+    // Open email client with pre-filled data
+    window.location.href = mailtoUrl;
 
     setSubmitStatus('success');
     setIsSubmitting(false);
