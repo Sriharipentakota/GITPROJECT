@@ -121,6 +121,24 @@ export const projects = [
         githubUrl: 'https://github.com/Sriharipentakota/GITPROJECT/tree/portfolio-editor',
         date: 'January 2024'
     },
+    {
+        title: 'BusGo - Professional Bus Booking App',
+        description: 'A comprehensive bus travel application with seat selection, ticket booking, PDF downloads, payment integration, and booking management. Features include real-time bus tracking, multi-city routes, and professional travel management.',
+        image: 'https://images.pexels.com/photos/1004584/pexels-photo-1004584.jpeg?auto=compress&cs=tinysrgb&w=600',
+        technologies: ['React', 'JavaScript', 'Tailwind CSS', 'Context API', 'PDF Generation', 'Date Picker', 'Local Storage'],
+        liveUrl: 'https://hari-bustravelling-app.netlify.app',
+        githubUrl: 'https://github.com/Sriharipentakota/GITPROJECT/tree/travelling-app',
+        date: 'April 2024'
+    },
+    {
+        title: 'Dynamic Portfolio Editor',
+        description: 'An interactive portfolio website builder with live editing capabilities. Users can edit sections in real-time, customize content, preview changes instantly, and export their portfolio data as PDF resume or HTML format. Features drag-and-drop functionality and multiple export options.',
+        image: 'https://images.pexels.com/photos/3183150/pexels-photo-3183150.jpeg?auto=compress&cs=tinysrgb&w=600',
+        technologies: ['React', 'JavaScript', 'CSS Modules', 'PDF Generation', 'HTML Export', 'Local Storage', 'Content Editable'],
+        liveUrl: 'https://hari-editable-portfolio.netlify.app',
+        githubUrl: 'https://github.com/Sriharipentakota/GITPROJECT/tree/editable-portfolio',
+        date: 'May 2024'
+    }
 ];
 
 export const handleResumeFormatter = (params) => {
