@@ -75,7 +75,17 @@ function QRCodeGenerator() {
 
   const testUrl = () => {
     if (generatedUrl) {
-      window.open(generatedUrl, '_blank');
+      // Open in new window/tab with specific features
+      const newWindow = window.open(
+        generatedUrl, 
+        '_blank',
+        'noopener,noreferrer,menubar=no,toolbar=no,location=no,status=no,resizable=yes,scrollbars=yes,width=800,height=600'
+      );
+      
+      // Optional: Focus the new window
+      if (newWindow) {
+        newWindow.focus();
+      }
     }
   };
 
