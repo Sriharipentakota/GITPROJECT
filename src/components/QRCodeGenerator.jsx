@@ -6,6 +6,7 @@ function QRCodeGenerator() {
   const [qrCodeDataURL, setQrCodeDataURL] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [generatedUrl, setGeneratedUrl] = useState('');
 
   const generateQRCode = async () => {
     if (!text.trim()) {
@@ -17,7 +18,27 @@ function QRCodeGenerator() {
     setError('');
 
     try {
-      const dataURL = await QRCode.toDataURL(text, {
+      // Smart URL detection with environment variable support
+      let deployedUrl;
+      
+      // Priority: Environment variable > Production check > Localhost fallback
+      if (process.env.REACT_APP_DEPLOYED_URL) {
+        deployedUrl = process.env.REACT_APP_DEPLOYED_URL;
+      } else if (process.env.NODE_ENV === 'production' || window.location.hostname !== 'localhost') {
+        // Use the actual deployed URL - UPDATE THIS with your real Netlify URL
+        deployedUrl = 'https://hari-qrgenerator.netlify.app';
+      } else {
+        // Development mode: warn user and use localhost (won't work on mobile)
+        deployedUrl = window.location.origin;
+        console.warn('⚠️ Development mode: QR codes will only work locally. Deploy to production for mobile compatibility.');
+      }
+      
+      const encodedText = encodeURIComponent(text);
+      const displayUrl = `${deployedUrl}/view?content=${encodedText}`;
+      
+      setGeneratedUrl(displayUrl);
+      
+      const dataURL = await QRCode.toDataURL(displayUrl, {
         width: 300,
         margin: 2,
         errorCorrectionLevel: 'M',
@@ -48,7 +69,14 @@ function QRCodeGenerator() {
   const clearQRCode = () => {
     setText('');
     setQrCodeDataURL('');
+    setGeneratedUrl('');
     setError('');
+  };
+
+  const testUrl = () => {
+    if (generatedUrl) {
+      window.open(generatedUrl, '_blank');
+    }
   };
 
   return (
@@ -99,12 +127,39 @@ function QRCodeGenerator() {
           <div className="qr-code-container">
             <img src={qrCodeDataURL} alt="Generated QR Code" />
           </div>
-          <button className="download-btn" onClick={downloadQRCode}>
-            Download QR Code
-          </button>
+          
+          <div className="button-group">
+            <button className="download-btn" onClick={downloadQRCode}>
+              Download QR Code
+            </button>
+            <button className="test-url-btn" onClick={testUrl}>
+              Test Link
+            </button>
+          </div>
+          
           <div className="qr-info">
-            <p><strong>Encoded text:</strong> {text}</p>
-            <p><em>Scan this QR code with any QR scanner to view the text</em></p>
+            <p><strong>Original text:</strong> {text}</p>
+            <p><strong>Generated URL:</strong> <a href={generatedUrl} target="_blank" rel="noopener noreferrer">{generatedUrl}</a></p>
+            
+            {(window.location.hostname === 'localhost' && !process.env.REACT_APP_DEPLOYED_URL) ? (
+              <div className="dev-warning">
+                <p><em>⚠️ Development Mode Warning:</em></p>
+                <p><em>QR codes will only work on this computer. To make them work on mobile devices, deploy the app to production first.</em></p>
+              </div>
+            ) : (
+              <p><em>📱 Scan this QR code with any device to open a clickable link that displays your text</em></p>
+            )}
+            
+            <p><em>🌐 Works on any device when deployed - QR codes link to your production site</em></p>
+            <div className="workflow-info">
+              <h4>How it works:</h4>
+              <ol>
+                <li>📱 Scan the QR code with your mobile device</li>
+                <li>🔗 A clickable link will appear in your QR scanner app</li>
+                <li>👆 Tap the link to open a new web page</li>
+                <li>📄 The original text will be displayed centered on the page</li>
+              </ol>
+            </div>
           </div>
         </div>
       )}
