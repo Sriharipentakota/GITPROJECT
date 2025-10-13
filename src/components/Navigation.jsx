@@ -7,19 +7,16 @@ function Navigation() {
   return (
     <nav className="navigation">
       <div className="nav-container">
-        <Link to="/" className="nav-brand">QR Code App</Link>
+        <Link to="/" className="nav-brand">
+          <span className="brand-icon">📱</span>
+          QR Generator
+        </Link>
         <div className="nav-links">
           <Link 
             to="/" 
             className={location.pathname === '/' ? 'nav-link active' : 'nav-link'}
           >
-            Generator
-          </Link>
-          <Link 
-            to="/scanner" 
-            className={location.pathname === '/scanner' ? 'nav-link active' : 'nav-link'}
-          >
-            Scanner
+            🏠 Home
           </Link>
         </div>
       </div>
