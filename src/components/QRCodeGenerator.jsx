@@ -1,27 +1,23 @@
-import { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import QRCode from 'qrcode';
 
 function QRCodeGenerator() {
-  const [inputType, setInputType] = useState('text');
-  const [textInput, setTextInput] = useState('');
-  const [imageFile, setImageFile] = useState(null);
-  const [qrCodeUrl, setQrCodeUrl] = useState('');
-  const [imageDataUrl, setImageDataUrl] = useState('');
-  const [processing, setProcessing] = useState(false);
+  const [text, setText] = useState('');
+  const [qrCodeDataURL, setQrCodeDataURL] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
 
-  useEffect(() => {
-    if (inputType === 'text' && textInput.trim()) {
-      generateQRFromText(textInput);
-    } else if (inputType === 'image' && imageDataUrl) {
-      generateQRFromImage(imageDataUrl);
-    } else {
-      setQrCodeUrl('');
+  const generateQRCode = async () => {
+    if (!text.trim()) {
+      setError('Please enter some text to generate QR code');
+      return;
     }
-  }, [textInput, imageDataUrl, inputType]);
 
-  const generateQRFromText = async (text) => {
+    setIsLoading(true);
+    setError('');
+
     try {
-      const url = await QRCode.toDataURL(text, {
+      const dataURL = await QRCode.toDataURL(text, {
         width: 300,
         margin: 2,
         errorCorrectionLevel: 'M',
@@ -30,179 +26,86 @@ function QRCodeGenerator() {
           light: '#FFFFFF'
         }
       });
-      setQrCodeUrl(url);
+      setQrCodeDataURL(dataURL);
     } catch (err) {
-      console.error('Error generating QR code:', err);
+      setError('Failed to generate QR code: ' + err.message);
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const compressImage = (file) => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const img = new Image();
-        img.onload = () => {
-          const canvas = document.createElement('canvas');
-          let width = img.width;
-          let height = img.height;
-          const maxSize = 400;
+  const downloadQRCode = () => {
+    if (!qrCodeDataURL) return;
 
-          if (width > height && width > maxSize) {
-            height = (height * maxSize) / width;
-            width = maxSize;
-          } else if (height > maxSize) {
-            width = (width * maxSize) / height;
-            height = maxSize;
-          }
-
-          canvas.width = width;
-          canvas.height = height;
-          const ctx = canvas.getContext('2d');
-          ctx.drawImage(img, 0, 0, width, height);
-
-          const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.7);
-          resolve(compressedDataUrl);
-        };
-        img.onerror = reject;
-        img.src = e.target.result;
-      };
-      reader.onerror = reject;
-      reader.readAsDataURL(file);
-    });
+    const link = document.createElement('a');
+    link.href = qrCodeDataURL;
+    link.download = `qrcode-${Date.now()}.png`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
-  const generateQRFromImage = async (dataUrl) => {
-    try {
-      setProcessing(true);
-      const url = await QRCode.toDataURL(dataUrl, {
-        width: 300,
-        margin: 2,
-        errorCorrectionLevel: 'L',
-        color: {
-          dark: '#000000',
-          light: '#FFFFFF'
-        }
-      });
-      setQrCodeUrl(url);
-      setProcessing(false);
-    } catch (err) {
-      console.error('Error generating QR code:', err);
-      alert('Unable to generate QR code. Please try a different image.');
-      setProcessing(false);
-    }
-  };
-
-  const handleImageUpload = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    if (!file.type.startsWith('image/')) {
-      alert('Please select an image file.');
-      return;
-    }
-
-    try {
-      setProcessing(true);
-      setImageFile(file);
-
-      const originalReader = new FileReader();
-      originalReader.onload = () => {
-        setImageDataUrl(originalReader.result);
-      };
-      originalReader.readAsDataURL(file);
-
-      const compressedDataUrl = await compressImage(file);
-      setImageDataUrl(compressedDataUrl);
-      setProcessing(false);
-    } catch (error) {
-      console.error('Error processing image:', error);
-      alert('Error processing image. Please try again.');
-      setProcessing(false);
-    }
-  };
-
-  const handleDownload = () => {
-    if (qrCodeUrl) {
-      const link = document.createElement('a');
-      link.href = qrCodeUrl;
-      link.download = `qrcode-${Date.now()}.png`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    }
-  };
-
-  const handleInputTypeChange = (type) => {
-    setInputType(type);
-    setTextInput('');
-    setImageFile(null);
-    setImageDataUrl('');
-    setQrCodeUrl('');
+  const clearQRCode = () => {
+    setText('');
+    setQrCodeDataURL('');
+    setError('');
   };
 
   return (
     <div className="qr-generator">
       <h1>QR Code Generator</h1>
 
-      <div className="input-type-selector">
-        <button
-          className={inputType === 'text' ? 'active' : ''}
-          onClick={() => handleInputTypeChange('text')}
-        >
-          Text
-        </button>
-        <button
-          className={inputType === 'image' ? 'active' : ''}
-          onClick={() => handleInputTypeChange('image')}
-        >
-          Image
-        </button>
-      </div>
-
       <div className="input-section">
-        {inputType === 'text' ? (
-          <div className="text-input-container">
-            <label htmlFor="text-input">Enter text to encode:</label>
-            <textarea
-              id="text-input"
-              value={textInput}
-              onChange={(e) => setTextInput(e.target.value)}
-              placeholder="Type something..."
-              rows="4"
-            />
-          </div>
-        ) : (
-          <div className="image-input-container">
-            <label htmlFor="image-input">Upload an image:</label>
-            <input
-              id="image-input"
-              type="file"
-              accept="image/*"
-              onChange={handleImageUpload}
-              disabled={processing}
-            />
-            {processing && <p className="upload-status">Processing image...</p>}
-            {imageFile && !processing && (
-              <>
-                <p className="file-name">Selected: {imageFile.name}</p>
-                <div className="image-preview">
-                  <img src={imageDataUrl} alt="Uploaded preview" />
-                </div>
-              </>
+        <div className="text-input-container">
+          <label htmlFor="text-input">Enter text to encode:</label>
+          <textarea
+            id="text-input"
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            placeholder="Enter text, URL, phone number, email, or any message..."
+            rows="4"
+          />
+          
+          <div className="button-group">
+            <button 
+              onClick={generateQRCode} 
+              disabled={isLoading || !text.trim()}
+              className={`generate-btn ${(isLoading || !text.trim()) ? 'disabled' : ''}`}
+            >
+              {isLoading ? 'Generating...' : 'Generate QR Code'}
+            </button>
+            
+            {qrCodeDataURL && (
+              <button 
+                onClick={clearQRCode}
+                className="clear-btn"
+              >
+                Clear
+              </button>
             )}
           </div>
-        )}
+        </div>
       </div>
 
-      {qrCodeUrl && (
+      {error && (
+        <div className="error-message">
+          {error}
+        </div>
+      )}
+
+      {qrCodeDataURL && (
         <div className="qr-output">
           <h2>Generated QR Code</h2>
           <div className="qr-code-container">
-            <img src={qrCodeUrl} alt="Generated QR Code" />
+            <img src={qrCodeDataURL} alt="Generated QR Code" />
           </div>
-          <button className="download-btn" onClick={handleDownload}>
+          <button className="download-btn" onClick={downloadQRCode}>
             Download QR Code
           </button>
+          <div className="qr-info">
+            <p><strong>Encoded text:</strong> {text}</p>
+            <p><em>Scan this QR code with any QR scanner to view the text</em></p>
+          </div>
         </div>
       )}
     </div>
