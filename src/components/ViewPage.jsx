@@ -1,10 +1,20 @@
 import React from 'react';
 import { useLocation } from 'react-router-dom';
 
+function isValidUrl(url) {
+  try {
+    new URL(url);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 function ViewPage() {
   const location = useLocation();
   const urlParams = new URLSearchParams(location.search);
   const content = urlParams.get('content') || 'No content available';
+  const type = urlParams.get('type') || 'text';
 
   // Disable browser back button functionality
   React.useEffect(() => {
@@ -66,7 +76,24 @@ function ViewPage() {
         <div className="content-frame">
           <div className="content-display">
             <div className="content-text">
-              {content}
+              {type === 'link' && isValidUrl(content) ? (
+                <a
+                  href={content}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    color: '#667eea',
+                    textDecoration: 'underline',
+                    fontWeight: 700,
+                    fontSize: '1.3em',
+                    wordBreak: 'break-all'
+                  }}
+                >
+                  {content}
+                </a>
+              ) : (
+                content
+              )}
             </div>
           </div>
         </div>
