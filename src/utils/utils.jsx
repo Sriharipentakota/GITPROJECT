@@ -138,6 +138,14 @@ export const projects = [
         liveUrl: 'https://hari-editable-portfolio.netlify.app',
         githubUrl: 'https://github.com/Sriharipentakota/GITPROJECT/tree/editable-portfolio',
         date: 'May 2024'
+    },  {
+        title: 'QR Code Generator App',
+        description: 'A versatile QR code generator application with three dynamic modes: text, link, and image. Users can input content and instantly generate scannable QR codes. When scanned, the codes display the respective content - plain text, redirect to URLs, or show images. Features real-time generation, downloadable QR codes, and responsive design.',
+        image: 'https://images.pexels.com/photos/8369648/pexels-photo-8369648.jpeg?auto=compress&cs=tinysrgb&w=600',
+        technologies: ['React', 'JavaScript', 'QR Code Library', 'Tailwind CSS', 'File Upload', 'Canvas API'],
+        liveUrl: 'https://hari-qrgenerator.netlify.app',
+        githubUrl: 'https://github.com/Sriharipentakota/GITPROJECT/tree/qr-generator',
+        date: 'June 2024'
     }
 ];
 
