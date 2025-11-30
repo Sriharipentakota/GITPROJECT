@@ -21,6 +21,7 @@ import { formatFileSize } from '../../utils/fileUtils';
  * @param {Function} props.onErrorChange - Error change handler
  * @param {string} props.uploadService - Current upload service name
  */
+
 const ContentInput = ({
   mode,
   text,
