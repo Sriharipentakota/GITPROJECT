@@ -2,6 +2,9 @@ import { Download } from "lucide-react";
 import employeeManagement from '../assests/employeeManagement.png'
 import ATSResumeFormatter from '../assests/ATSResumeFormatter.png'
 import Builder from '../assests/builder.png'
+import QRGenerator from '../assests/QRGenerator.png'
+import BusGo from '../assests/BusGo.png'
+import PortfolioEditor from '../assests/PortfolioEditor.png'
 
 
 // Base styles that apply to all button variants
@@ -124,7 +127,7 @@ export const projects = [
     {
         title: 'BusGo - Professional Bus Booking App',
         description: 'A comprehensive bus travel application with seat selection, ticket booking, PDF downloads, payment integration, and booking management. Features include real-time bus tracking, multi-city routes, and professional travel management.',
-        image: 'https://images.pexels.com/photos/1004584/pexels-photo-1004584.jpeg?auto=compress&cs=tinysrgb&w=600',
+        image: BusGo,
         technologies: ['React', 'JavaScript', 'Tailwind CSS', 'Context API', 'PDF Generation', 'Date Picker', 'Local Storage'],
         liveUrl: 'https://hari-bustravelling-app.netlify.app',
         githubUrl: 'https://github.com/Sriharipentakota/GITPROJECT/tree/travelling-app',
@@ -133,7 +136,7 @@ export const projects = [
     {
         title: 'Dynamic Portfolio Editor',
         description: 'An interactive portfolio website builder with live editing capabilities. Users can edit sections in real-time, customize content, preview changes instantly, and export their portfolio data as PDF resume or HTML format. Features drag-and-drop functionality and multiple export options.',
-        image: 'https://images.pexels.com/photos/3183150/pexels-photo-3183150.jpeg?auto=compress&cs=tinysrgb&w=600',
+        image: PortfolioEditor,
         technologies: ['React', 'JavaScript', 'CSS Modules', 'PDF Generation', 'HTML Export', 'Local Storage', 'Content Editable'],
         liveUrl: 'https://hari-editable-portfolio.netlify.app',
         githubUrl: 'https://github.com/Sriharipentakota/GITPROJECT/tree/editable-portfolio',
@@ -141,7 +144,7 @@ export const projects = [
     },  {
         title: 'QR Code Generator App',
         description: 'A versatile QR code generator application with three dynamic modes: text, link, and image. Users can input content and instantly generate scannable QR codes. When scanned, the codes display the respective content - plain text, redirect to URLs, or show images. Features real-time generation, downloadable QR codes, and responsive design.',
-        image: 'https://images.pexels.com/photos/8369648/pexels-photo-8369648.jpeg?auto=compress&cs=tinysrgb&w=600',
+        image: QRGenerator,
         technologies: ['React', 'JavaScript', 'QR Code Library', 'Tailwind CSS', 'File Upload', 'Canvas API'],
         liveUrl: 'https://hari-qrgenerator.netlify.app',
         githubUrl: 'https://github.com/Sriharipentakota/GITPROJECT/tree/qr-generator',
