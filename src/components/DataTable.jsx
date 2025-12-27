@@ -18,7 +18,6 @@ const DataTable = ({ data, columns: initialColumns, setData }) => {
   const [columns, setColumns] = useState(initialColumns);
   const [editingColumn, setEditingColumn] = useState(null);
   const [editingRow, setEditingRow] = useState(null);
-  console.log(columns, "columns");
 
   const deleteRow = useCallback((index) => {
     setData(prev => prev.filter((_, i) => i !== index));
@@ -38,19 +37,37 @@ const DataTable = ({ data, columns: initialColumns, setData }) => {
       acc[column.accessorKey] = '';
       return acc;
     }, {});
-    console.log(emptyRow, "emptyRow");
-    setData(prev => [...prev, emptyRow]);
-  }, [columns, setData]);
-  const addColumn = useCallback(() => {
-    const emptyRow = columns.reduce((acc, column) => {
-      acc[column.accessorKey] = '';
-      return acc;
-    }, {});
     setData(prev => [...prev, emptyRow]);
   }, [columns, setData]);
 
+
+const addColumn = useCallback((columnName) => {
+  // Sanitize and transform the column name as needed
+  const accessorKey = columnName.trim().replace(/\s+/g, '_'); // replace spaces with underscores
+  if (!accessorKey) {
+    throw new Error('Column name cannot be empty.');
+  }
+  // Build column definition
+  const newColDef = {
+    accessorKey,
+    id: accessorKey,
+    header: columnName, // show user-entered name as header
+    cell: info => info.getValue() ?? '', // default cell renderer
+  };
+  setColumns(prevColumns => [
+    ...prevColumns,
+    newColDef
+  ]);
+  setData(prevData =>
+    prevData.map(row => ({
+      ...row,
+      [accessorKey]: '',
+    }))
+  );
+}, [setColumns, setData]);
+
   const handleColumnSave = useCallback((editedColumn) => {
-    setColumns(prev => prev.map(col =>
+    setColumns(prev => prev.map(col => 
       col.accessorKey === editedColumn.accessorKey
         ? { ...col, header: editedColumn.header }
         : col
@@ -58,7 +75,7 @@ const DataTable = ({ data, columns: initialColumns, setData }) => {
   }, []);
 
   const handleRowSave = useCallback((editedRow) => {
-    setData(prev => prev.map((row, index) =>
+    setData(prev => prev.map((row, index) => 
       index === editingRow.index ? editedRow : row
     ));
   }, [editingRow, setData]);
@@ -88,22 +105,13 @@ const DataTable = ({ data, columns: initialColumns, setData }) => {
 
   return (
     <div>
-      <TableActions
-        onExport={handleExport}
-        onAddRow={addRow}
-        onAddColumn={addColumn}
-        isOpen={editingRow !== null}
-        onClose={() => setEditingRow(null)}
-        rowData={editingRow?.data}
-        columns={columns}
-        onSave={handleRowSave}
-      />
+      <TableActions onExport={handleExport} onAddRow={addRow}  onAddColumn={addColumn}/>
       <div className="overflow-x-auto">
         <table className="min-w-full bg-white border border-gray-300">
           <thead>
             {table.getHeaderGroups().map(headerGroup => (
-              <TableHeader
-                key={headerGroup.id}
+              <TableHeader 
+                key={headerGroup.id} 
                 headerGroup={headerGroup}
                 onEditColumn={setEditingColumn}
                 onDeleteColumn={deleteColumn}
