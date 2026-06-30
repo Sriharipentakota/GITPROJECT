@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { phaseThemes } from '../data/roadmap'
 import TopicChip from './TopicChip'
 
-export default function SectionAccordion({ section, phaseId }) {
+export default function SectionAccordion({ section, phaseId, onTopicSelect }) {
   const [open, setOpen] = useState(true)
   const theme = phaseThemes[phaseId]
 
@@ -47,7 +47,7 @@ export default function SectionAccordion({ section, phaseId }) {
               key={topic.id}
               topic={topic}
               phaseId={phaseId}
-              onClick={() => {}}
+              onClick={() => onTopicSelect(topic)}
             />
           ))}
         </div>

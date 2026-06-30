@@ -3,9 +3,11 @@ import { roadmapData, phaseThemes } from './data/roadmap'
 import Header from './components/Header'
 import PhaseNav from './components/PhaseNav'
 import SectionAccordion from './components/SectionAccordion'
+import VideoModal from './components/VideoModal'
 
 export default function App() {
   const [selectedPhaseId, setSelectedPhaseId] = useState(1)
+  const [selectedTopic, setSelectedTopic] = useState(null)
 
   const phase = roadmapData.find(p => p.id === selectedPhaseId)
   const theme = phaseThemes[selectedPhaseId]
@@ -22,7 +24,7 @@ export default function App() {
       <PhaseNav
         phases={roadmapData}
         selectedPhase={selectedPhaseId}
-        onSelect={id => setSelectedPhaseId(id)}
+        onSelect={id => { setSelectedPhaseId(id); setSelectedTopic(null) }}
       />
 
       {/* Phase hero */}
@@ -69,6 +71,7 @@ export default function App() {
               key={section.id}
               section={section}
               phaseId={selectedPhaseId}
+              onTopicSelect={setSelectedTopic}
             />
           ))}
         </div>
