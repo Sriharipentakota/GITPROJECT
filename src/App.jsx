@@ -1,50 +1,85 @@
-import { useState } from 'react';
-import DataTable from './components/DataTable';
-import FileUpload from './components/FileUpload';
-import { parseExcelFile } from './utils/excelParser';
+import { useState } from 'react'
+import { roadmapData, phaseThemes } from './data/roadmap'
+import Header from './components/Header'
+import PhaseNav from './components/PhaseNav'
+import SectionAccordion from './components/SectionAccordion'
 
-function App() {
-  const [data, setData] = useState([]);
-  const [columns, setColumns] = useState([]);
+export default function App() {
+  const [selectedPhaseId, setSelectedPhaseId] = useState(1)
 
-console.log(data,"data")
+  const phase = roadmapData.find(p => p.id === selectedPhaseId)
+  const theme = phaseThemes[selectedPhaseId]
 
-  const handleFileUpload = async (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      try {
-        const { data: excelData, columns: tableColumns } = await parseExcelFile(file);
-        setColumns(tableColumns);
-        setData(excelData);
-      } catch (error) {
-        console.error('Error parsing Excel file:', error);
-      }
-    }
-  };
+  const totalTopics = phase.sections.reduce((sum, s) => sum + s.topics.length, 0)
+  const linkedTopics = phase.sections.reduce(
+    (sum, s) => sum + s.topics.filter(t => t.videoId && t.videoId.trim() !== '').length,
+    0
+  )
 
   return (
-    <div className="min-h-screen bg-gray-100 p-8">
-      <div className="max-w-7xl mx-auto">
-        <h1 className="text-3xl font-bold mb-8">Excel Data Table</h1>
-        
-        <FileUpload onFileUpload={handleFileUpload} />
+    <div className="min-h-screen flex flex-col">
+      <Header />
+      <PhaseNav
+        phases={roadmapData}
+        selectedPhase={selectedPhaseId}
+        onSelect={id => setSelectedPhaseId(id)}
+      />
 
-        {data.length > 0 ? (
-          <div className="bg-white rounded-lg shadow p-6">
-            <DataTable 
-              data={data} 
-              columns={columns} 
-              setData={setData}
-            />
+      {/* Phase hero */}
+      <div className={`border-b border-gray-800 ${theme.sectionBg}`}>
+        <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 py-5">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className={`text-xs font-semibold uppercase tracking-widest ${theme.accent}`}>
+                  Phase {phase.id}
+                </span>
+                <span className={`text-xs px-2 py-0.5 rounded-full ${theme.badge}`}>
+                  {phase.level}
+                </span>
+                <span className="text-xs text-gray-500">{phase.weeks}</span>
+              </div>
+              <h2 className="mt-1 text-2xl sm:text-3xl font-bold text-white">
+                {phase.title}
+              </h2>
+              <p className="mt-0.5 text-sm text-gray-400">{phase.outcome}</p>
+            </div>
+
+            {/* Progress indicator */}
+            <div className="shrink-0 text-right">
+              <p className="text-xs text-gray-500 mb-1">
+                {linkedTopics}/{totalTopics} videos linked
+              </p>
+              <div className="w-40 h-2 bg-gray-800 rounded-full overflow-hidden">
+                <div
+                  className={`h-full rounded-full transition-all duration-500 ${theme.progress}`}
+                  style={{ width: totalTopics > 0 ? `${(linkedTopics / totalTopics) * 100}%` : '0%' }}
+                />
+              </div>
+            </div>
           </div>
-        ) : (
-          <div className="text-center text-gray-500 py-12">
-            Upload an Excel file to view data
-          </div>
-        )}
+        </div>
       </div>
-    </div>
-  );
-}
 
-export default App;
+      {/* Sections */}
+      <main className="flex-1 max-w-screen-2xl mx-auto w-full px-4 sm:px-6 py-6">
+        <div className="flex flex-col gap-4">
+          {phase.sections.map(section => (
+            <SectionAccordion
+              key={section.id}
+              section={section}
+              phaseId={selectedPhaseId}
+            />
+          ))}
+        </div>
+
+        {/* Footer note */}
+        <p className="mt-8 text-center text-xs text-gray-600">
+          Click any topic to watch its video · Add YouTube IDs in{' '}
+          <code className="bg-gray-800 px-1.5 py-0.5 rounded">src/data/roadmap.js</code>
+        </p>
+      </main>
+
+    </div>
+  )
+}
