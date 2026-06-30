@@ -83,6 +83,13 @@ export default function App() {
         </p>
       </main>
 
+      {selectedTopic && (
+        <VideoModal
+          topic={selectedTopic}
+          phaseId={selectedPhaseId}
+          onClose={() => setSelectedTopic(null)}
+        />
+      )}
     </div>
   )
 }
