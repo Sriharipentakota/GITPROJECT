@@ -1,11 +1,15 @@
 import { useEffect, useState } from 'react'
-import { roadmapData, phaseThemes } from './data/roadmap'
+import { roadmapData, phaseThemes, PLAYWRIGHT_TOPIC_IDS } from './data/roadmap'
 import Header from './components/Header'
 import PhaseNav from './components/PhaseNav'
 import SectionAccordion from './components/SectionAccordion'
 import VideoModal from './components/VideoModal'
 
 const STORAGE_KEY = 'roadmap-view-state'
+const FILTER_MODE = {
+  ALL: 'all',
+  PLAYWRIGHT: 'playwright',
+}
 
 function findTopicById(topicId) {
   for (const phase of roadmapData) {
@@ -24,20 +28,21 @@ function getStateFromSearchParams() {
   const params = new URLSearchParams(window.location.search)
   const topicId = params.get('topic')
   const phaseParam = params.get('phase')
+  const filter = params.get('filter') || FILTER_MODE.ALL
 
   if (topicId) {
     const matched = findTopicById(topicId)
     if (matched) {
-      return { selectedPhaseId: matched.phaseId, selectedTopic: matched.topic }
+      return { selectedPhaseId: matched.phaseId, selectedTopic: matched.topic, selectedFilter: filter }
     }
   }
 
   const phaseId = Number(phaseParam)
   if (params.has('phase') && Number.isInteger(phaseId) && roadmapData.some(p => p.id === phaseId)) {
-    return { selectedPhaseId: phaseId, selectedTopic: null }
+    return { selectedPhaseId: phaseId, selectedTopic: null, selectedFilter: filter }
   }
 
-  return null
+  return { selectedPhaseId: 1, selectedTopic: null, selectedFilter: filter }
 }
 
 function getStateFromStorage() {
@@ -50,12 +55,20 @@ function getStateFromStorage() {
     if (parsed.topicId) {
       const matched = findTopicById(parsed.topicId)
       if (matched) {
-        return { selectedPhaseId: matched.phaseId, selectedTopic: matched.topic }
+        return {
+          selectedPhaseId: matched.phaseId,
+          selectedTopic: matched.topic,
+          selectedFilter: parsed.selectedFilter || FILTER_MODE.ALL,
+        }
       }
     }
 
     if (Number.isInteger(parsed.phaseId) && roadmapData.some(p => p.id === parsed.phaseId)) {
-      return { selectedPhaseId: parsed.phaseId, selectedTopic: null }
+      return {
+        selectedPhaseId: parsed.phaseId,
+        selectedTopic: null,
+        selectedFilter: parsed.selectedFilter || FILTER_MODE.ALL,
+      }
     }
   } catch {
     // ignore invalid storage data
@@ -63,18 +76,20 @@ function getStateFromStorage() {
   return null
 }
 
-function buildSearchParams(phaseId, topic) {
+function buildSearchParams(phaseId, topic, filter) {
   const params = new URLSearchParams()
   params.set('phase', String(phaseId))
   if (topic) params.set('topic', topic.id)
+  if (filter && filter !== FILTER_MODE.ALL) params.set('filter', filter)
   return params.toString()
 }
 
-function saveAppState(phaseId, topic) {
+function saveAppState(phaseId, topic, filter) {
   try {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify({
       phaseId,
       topicId: topic?.id ?? null,
+      selectedFilter: filter,
     }))
   } catch {
     // localStorage may be unavailable in stricter browser modes
@@ -89,13 +104,51 @@ export default function App() {
     const fromStorage = getStateFromStorage()
     if (fromStorage) return fromStorage
 
-    return { selectedPhaseId: 1, selectedTopic: null }
+    return { selectedPhaseId: 1, selectedTopic: null, selectedFilter: FILTER_MODE.ALL }
   })()
 
   const [selectedPhaseId, setSelectedPhaseId] = useState(initialState.selectedPhaseId)
   const [selectedTopic, setSelectedTopic] = useState(initialState.selectedTopic)
+  const [selectedFilter, setSelectedFilter] = useState(initialState.selectedFilter)
 
-  const phase = roadmapData.find(p => p.id === selectedPhaseId) || roadmapData[0]
+  const filteredRoadmap = roadmapData.map(phase => {
+    if (selectedFilter !== FILTER_MODE.PLAYWRIGHT) {
+      return phase
+    }
+
+    const sections = phase.sections
+      .map(section => ({
+        ...section,
+        topics: section.topics.filter(topic => PLAYWRIGHT_TOPIC_IDS.has(topic.id)),
+      }))
+      .filter(section => section.topics.length > 0)
+
+    return { ...phase, sections }
+  }).filter(phase => phase.sections.length > 0)
+
+  const availablePhaseIds = filteredRoadmap.map(p => p.id)
+  const currentPhaseId = availablePhaseIds.includes(selectedPhaseId)
+    ? selectedPhaseId
+    : filteredRoadmap[0]?.id ?? roadmapData[0].id
+
+  useEffect(() => {
+    if (!availablePhaseIds.includes(selectedPhaseId)) {
+      setSelectedPhaseId(currentPhaseId)
+    }
+  }, [availablePhaseIds, selectedPhaseId, currentPhaseId])
+
+  useEffect(() => {
+    if (selectedTopic && !findTopicById(selectedTopic.id)) {
+      setSelectedTopic(null)
+      return
+    }
+
+    if (selectedFilter === FILTER_MODE.PLAYWRIGHT && selectedTopic && !PLAYWRIGHT_TOPIC_IDS.has(selectedTopic.id)) {
+      setSelectedTopic(null)
+    }
+  }, [selectedFilter, selectedTopic])
+
+  const phase = filteredRoadmap.find(p => p.id === currentPhaseId) || roadmapData[0]
   const theme = phaseThemes[phase.id]
 
   const totalTopics = phase.sections.reduce((sum, s) => sum + s.topics.length, 0)
@@ -105,14 +158,18 @@ export default function App() {
   )
 
   useEffect(() => {
-    saveAppState(selectedPhaseId, selectedTopic)
-    const query = buildSearchParams(selectedPhaseId, selectedTopic)
+    saveAppState(currentPhaseId, selectedTopic, selectedFilter)
+    const query = buildSearchParams(currentPhaseId, selectedTopic, selectedFilter)
     window.history.replaceState(null, '', `${window.location.pathname}?${query}`)
-  }, [selectedPhaseId, selectedTopic])
+  }, [currentPhaseId, selectedTopic, selectedFilter])
 
   const handleSelectPhase = (id) => {
     setSelectedPhaseId(id)
     setSelectedTopic(null)
+  }
+
+  const handleFilterChange = (event) => {
+    setSelectedFilter(event.target.value)
   }
 
   const handleTopicSelect = (topic) => {
@@ -129,10 +186,28 @@ export default function App() {
     <div className="min-h-screen flex flex-col">
       <Header />
       <PhaseNav
-        phases={roadmapData}
-        selectedPhase={selectedPhaseId}
+        phases={filteredRoadmap}
+        selectedPhase={currentPhaseId}
         onSelect={handleSelectPhase}
       />
+
+      <div className="border-b border-gray-800 bg-gray-900/50">
+        <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div>
+            <p className="text-xs uppercase tracking-widest text-gray-400 font-semibold">Filter topics</p>
+            <label className="sr-only" htmlFor="roadmap-filter">Roadmap filter</label>
+            <select
+              id="roadmap-filter"
+              value={selectedFilter}
+              onChange={handleFilterChange}
+              className="mt-2 w-full sm:w-auto bg-gray-950 border border-gray-700 text-white text-sm rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-sky-500"
+            >
+              <option value={FILTER_MODE.ALL}>All JavaScript</option>
+              <option value={FILTER_MODE.PLAYWRIGHT}>Playwright Essentials</option>
+            </select>
+          </div>
+        </div>
+      </div>
 
       {/* Phase hero */}
       <div className={`border-b border-gray-800 ${theme.sectionBg}`}>
