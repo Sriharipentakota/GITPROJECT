@@ -1,18 +1,17 @@
-import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
+import { useState, useMemo, useCallback, useRef, useEffect, Suspense, lazy } from 'react';
 import { CONCEPTS } from './data/concepts';
-import { QUESTIONS_RAW } from './data/questions';
 import { PLAYWRIGHT_CONCEPTS } from './data/playwrightConcepts';
-import { PLAYWRIGHT_QUESTIONS_RAW } from './data/playwrightQuestions';
 import type { Question, SaveStatus, InProgressState } from './types';
 import { useProgress } from './hooks/useProgress';
 import { useSession } from './hooks/useSession';
 import Header from './components/Header';
 import Sidebar from './components/Sidebar';
-import ConceptView from './components/ConceptView';
-import QuizView from './components/QuizView';
 import './App.css';
 
 type Mode = 'learn' | 'quiz';
+
+const ConceptView = lazy(() => import('./components/ConceptView'));
+const QuizView = lazy(() => import('./components/QuizView'));
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function rawToQuestion(r: any[]): Question {
@@ -28,7 +27,8 @@ export default function App() {
   );
 
   const concepts = pathId === 'playwright' ? PLAYWRIGHT_CONCEPTS : CONCEPTS;
-  const questionsRaw: Record<string, unknown[][]> = pathId === 'playwright' ? PLAYWRIGHT_QUESTIONS_RAW : QUESTIONS_RAW;
+  const [questionsRaw, setQuestionsRaw] = useState<Record<string, unknown[][]>>({});
+  const [isQuestionsLoaded, setIsQuestionsLoaded] = useState(false);
 
   const session = useSession(pathId);
   const { progress, markLearned, saveQuiz } = useProgress(pathId);
@@ -49,6 +49,32 @@ export default function App() {
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle');
   const savedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  useEffect(() => {
+    let active = true;
+    setIsQuestionsLoaded(false);
+
+    const loadQuestions = async () => {
+      const module = pathId === 'playwright'
+        ? await import('./data/playwrightQuestions')
+        : await import('./data/questions');
+
+      if (!active) return;
+
+      const data = pathId === 'playwright'
+        ? (module as typeof import('./data/playwrightQuestions')).PLAYWRIGHT_QUESTIONS_RAW
+        : (module as typeof import('./data/questions')).QUESTIONS_RAW;
+
+      setQuestionsRaw(data as Record<string, unknown[][]>);
+      setIsQuestionsLoaded(true);
+    };
+
+    void loadQuestions();
+
+    return () => {
+      active = false;
+    };
+  }, [pathId]);
+
   useEffect(() => () => { if (savedTimerRef.current) clearTimeout(savedTimerRef.current); }, []);
 
   const concept = useMemo(() => concepts.find(c => c.id === conceptId) ?? concepts[0], [concepts, conceptId]);
@@ -59,6 +85,8 @@ export default function App() {
 
   const handleSwitchPath = useCallback((newPathId: string) => {
     localStorage.setItem('jml_path', newPathId);
+    setQuestionsRaw({});
+    setIsQuestionsLoaded(false);
     setPathId(newPathId);
     const newConcepts = newPathId === 'playwright' ? PLAYWRIGHT_CONCEPTS : CONCEPTS;
     setConceptId(newConcepts[0].id);
@@ -107,6 +135,8 @@ export default function App() {
     [questionsRaw]
   );
 
+  const showContent = mode !== 'quiz' || isQuestionsLoaded;
+
   return (
     <div className="app" data-theme={theme}>
       <Header
@@ -132,26 +162,32 @@ export default function App() {
         </div>
         {sidebarOpen && <div className="sidebar-overlay" onClick={() => setSidebarOpen(false)} />}
         <main className="main">
-          {mode === 'learn' ? (
-            <ConceptView
-              concept={concept}
-              onStartQuiz={handleStartQuiz}
-              isLearned={progress[conceptId]?.learned ?? false}
-              onMarkLearned={() => markLearned(conceptId)}
-              questionCount={questions.length}
-              hasInProgress={!!session.inProgress[conceptId]}
-            />
+          {showContent ? (
+            <Suspense fallback={<div style={{ padding: '2rem', color: 'var(--tx)' }}>Loading content…</div>}>
+              {mode === 'learn' ? (
+                <ConceptView
+                  concept={concept}
+                  onStartQuiz={handleStartQuiz}
+                  isLearned={progress[conceptId]?.learned ?? false}
+                  onMarkLearned={() => markLearned(conceptId)}
+                  questionCount={questions.length}
+                  hasInProgress={!!session.inProgress[conceptId]}
+                />
+              ) : (
+                <QuizView
+                  key={conceptId}
+                  concept={concept}
+                  questions={questions}
+                  onBack={handleBackToLearn}
+                  onComplete={handleComplete}
+                  inProgress={session.getInProgress(conceptId)}
+                  onSaveInProgress={handleSaveInProgress}
+                  onClearInProgress={handleClearInProgress}
+                />
+              )}
+            </Suspense>
           ) : (
-            <QuizView
-              key={conceptId}
-              concept={concept}
-              questions={questions}
-              onBack={handleBackToLearn}
-              onComplete={handleComplete}
-              inProgress={session.getInProgress(conceptId)}
-              onSaveInProgress={handleSaveInProgress}
-              onClearInProgress={handleClearInProgress}
-            />
+            <div style={{ padding: '2rem', color: 'var(--tx)' }}>Loading questions…</div>
           )}
         </main>
       </div>
