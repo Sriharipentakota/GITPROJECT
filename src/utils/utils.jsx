@@ -5,6 +5,8 @@ import Builder from '../assests/builder.png'
 import QRGenerator from '../assests/QRGenerator.png'
 import BusGo from '../assests/BusGo.png'
 import PortfolioEditor from '../assests/PortfolioEditor.png'
+import JavascriptLearning from '../assests/JavascriptLearning.png'
+import JavascriptQuiz from '../assests/JavscriptQuiz.png'
 
 
 // Base styles that apply to all button variants
@@ -141,7 +143,8 @@ export const projects = [
         liveUrl: 'https://hari-editable-portfolio.netlify.app',
         githubUrl: 'https://github.com/Sriharipentakota/GITPROJECT/tree/editable-portfolio',
         date: 'May 2024'
-    },  {
+    },
+    {
         title: 'QR Code Generator App',
         description: 'A versatile QR code generator application with three dynamic modes: text, link, and image. Users can input content and instantly generate scannable QR codes. When scanned, the codes display the respective content - plain text, redirect to URLs, or show images. Features real-time generation, downloadable QR codes, and responsive design.',
         image: QRGenerator,
@@ -149,6 +152,24 @@ export const projects = [
         liveUrl: 'https://hari-qrgenerator.netlify.app',
         githubUrl: 'https://github.com/Sriharipentakota/GITPROJECT/tree/qr-generator',
         date: 'June 2024'
+    },
+    {
+        title: 'Javascript Learning App',
+        description: 'An interactive application for learning JavaScript concepts with hands-on exercises and real-time feedback. Users can practice coding challenges, receive instant evaluations, and track their progress through various difficulty levels.',
+        image: JavascriptLearning,
+        technologies: ['React', 'Typescript', 'Vite', 'Tailwind CSS'],
+        liveUrl: 'https://hari-jsconcepts.netlify.app/',
+        githubUrl: 'https://github.com/Sriharipentakota/GITPROJECT',
+        date: 'June 2025'
+    },
+    {
+        title: 'Javascript Quiz App',
+        description: 'An engaging quiz application designed to test and enhance JavaScript knowledge. Users can take quizzes on various JavaScript topics, receive immediate feedback on their answers, and track their scores. The app features a user-friendly interface, multiple-choice questions, and a scoring system to encourage learning and improvement.',
+        image: JavascriptQuiz,
+        technologies: ['React', 'Typescript', 'Vite', 'Tailwind CSS'],
+        liveUrl: 'https://playwrightandjs.netlify.app//',
+        githubUrl: 'https://github.com/Sriharipentakota/GITPROJECT',
+        date: 'June 2025'
     }
 ];
 
