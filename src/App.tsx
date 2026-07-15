@@ -1,6 +1,7 @@
 import { useState, useMemo, useCallback, useRef, useEffect, Suspense, lazy } from 'react';
 import { CONCEPTS } from './data/concepts';
 import { PLAYWRIGHT_CONCEPTS } from './data/playwrightConcepts';
+import { TOSCA_CONCEPTS } from './data/toscaConcepts';
 import type { Question, SaveStatus, InProgressState } from './types';
 import { useProgress } from './hooks/useProgress';
 import { useSession } from './hooks/useSession';
@@ -26,7 +27,7 @@ export default function App() {
     () => localStorage.getItem('jml_path') || 'javascript'
   );
 
-  const concepts = pathId === 'playwright' ? PLAYWRIGHT_CONCEPTS : CONCEPTS;
+  const concepts = pathId === 'playwright' ? PLAYWRIGHT_CONCEPTS : pathId === 'tosca' ? TOSCA_CONCEPTS : CONCEPTS;
   const [questionsRaw, setQuestionsRaw] = useState<Record<string, unknown[][]>>({});
   const [isQuestionsLoaded, setIsQuestionsLoaded] = useState(false);
 
@@ -56,12 +57,16 @@ export default function App() {
     const loadQuestions = async () => {
       const module = pathId === 'playwright'
         ? await import('./data/playwrightQuestions')
+        : pathId === 'tosca'
+        ? await import('./data/toscaQuestions')
         : await import('./data/questions');
 
       if (!active) return;
 
       const data = pathId === 'playwright'
         ? (module as typeof import('./data/playwrightQuestions')).PLAYWRIGHT_QUESTIONS_RAW
+        : pathId === 'tosca'
+        ? (module as typeof import('./data/toscaQuestions')).TOSCA_QUESTIONS_RAW
         : (module as typeof import('./data/questions')).QUESTIONS_RAW;
 
       setQuestionsRaw(data as Record<string, unknown[][]>);
@@ -88,7 +93,7 @@ export default function App() {
     setQuestionsRaw({});
     setIsQuestionsLoaded(false);
     setPathId(newPathId);
-    const newConcepts = newPathId === 'playwright' ? PLAYWRIGHT_CONCEPTS : CONCEPTS;
+    const newConcepts = newPathId === 'playwright' ? PLAYWRIGHT_CONCEPTS : newPathId === 'tosca' ? TOSCA_CONCEPTS : CONCEPTS;
     setConceptId(newConcepts[0].id);
     setMode('learn');
     setSidebarOpen(false);
@@ -204,3 +209,5 @@ function loadSessionLastId(pathId: string): string {
     return '';
   }
 }
+
+// Note: TOSCA_CONCEPTS imported above for handleSwitchPath / concept resolution
