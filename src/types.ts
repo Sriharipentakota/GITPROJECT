@@ -46,6 +46,17 @@ export interface InProgressState {
 
 export type SaveStatus = 'idle' | 'saving' | 'saved';
 
+export interface Task {
+  id: number;
+  level: 1 | 2 | 3 | 4 | 5;
+  title: string;
+  scenario: string;
+  objective: string;
+  constraints: string;
+  expectedOutput: string;
+  check: string;
+}
+
 export const TYPE_LABELS: Record<QuestionType, string> = {
   O: 'Output',
   F: 'Fill-in',

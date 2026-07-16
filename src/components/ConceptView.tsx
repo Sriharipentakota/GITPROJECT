@@ -4,13 +4,15 @@ import type { Concept } from '../types';
 interface Props {
   concept: Concept;
   onStartQuiz: () => void;
+  onStartTasks?: () => void;
   isLearned: boolean;
   onMarkLearned: () => void;
   questionCount: number;
+  taskCount?: number;
   hasInProgress: boolean;
 }
 
-export default function ConceptView({ concept, onStartQuiz, isLearned, onMarkLearned, questionCount, hasInProgress }: Props) {
+export default function ConceptView({ concept, onStartQuiz, onStartTasks, isLearned, onMarkLearned, questionCount, taskCount, hasInProgress }: Props) {
   const [openExample, setOpenExample] = useState<number | null>(null);
 
   return (
@@ -29,6 +31,11 @@ export default function ConceptView({ concept, onStartQuiz, isLearned, onMarkLea
             <button className="btn btn-secondary" onClick={onMarkLearned}>Mark as Learned</button>
           )}
           {isLearned && <span className="learned-chip">✓ Learned</span>}
+          {onStartTasks && (
+            <button className="btn btn-tasks" onClick={onStartTasks}>
+              🛠 Tasks ({taskCount})
+            </button>
+          )}
           <button className="btn btn-primary resume-btn" onClick={onStartQuiz}>
             {hasInProgress ? '▶ Resume Quiz' : `Practice (${questionCount} Qs)`}
           </button>

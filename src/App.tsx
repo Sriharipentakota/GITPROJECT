@@ -2,21 +2,30 @@ import { useState, useMemo, useCallback, useRef, useEffect, Suspense, lazy } fro
 import { CONCEPTS } from './data/concepts';
 import { PLAYWRIGHT_CONCEPTS } from './data/playwrightConcepts';
 import { TOSCA_CONCEPTS } from './data/toscaConcepts';
-import type { Question, SaveStatus, InProgressState } from './types';
+import { JS_TASKS } from './data/jsTasks';
+import { PW_TASKS } from './data/playwrightTasks';
+import type { Question, Task, SaveStatus, InProgressState } from './types';
 import { useProgress } from './hooks/useProgress';
 import { useSession } from './hooks/useSession';
 import Header from './components/Header';
 import Sidebar from './components/Sidebar';
 import './App.css';
 
-type Mode = 'learn' | 'quiz';
+type Mode = 'learn' | 'quiz' | 'tasks';
 
 const ConceptView = lazy(() => import('./components/ConceptView'));
 const QuizView = lazy(() => import('./components/QuizView'));
+const TasksView = lazy(() => import('./components/TasksView'));
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function rawToQuestion(r: any[]): Question {
   return { type: r[0] as Question['type'], diff: r[1] as Question['diff'], q: r[2], code: r[3] ?? null, opts: r[4], ans: r[5], hint: r[6] };
+}
+
+function getTasksForPath(pathId: string, conceptId: string): Task[] {
+  if (pathId === 'javascript') return JS_TASKS[conceptId] ?? [];
+  if (pathId === 'playwright') return PW_TASKS[conceptId] ?? [];
+  return [];
 }
 
 export default function App() {
@@ -111,6 +120,11 @@ export default function App() {
     session.setLastConcept(conceptId, 'quiz');
   }, [conceptId, session]);
 
+  const handleStartTasks = useCallback(() => {
+    setMode('tasks');
+    session.setLastConcept(conceptId, 'learn');
+  }, [conceptId, session]);
+
   const handleBackToLearn = useCallback(() => {
     setMode('learn');
     session.setLastConcept(conceptId, 'learn');
@@ -139,6 +153,9 @@ export default function App() {
     () => Object.values(questionsRaw).reduce((s, qs) => s + qs.length, 0),
     [questionsRaw]
   );
+
+  const tasks = useMemo<Task[]>(() => getTasksForPath(pathId, conceptId), [pathId, conceptId]);
+  const tasksStorageKey = `jml_tasks_${pathId}_${conceptId}`;
 
   const showContent = mode !== 'quiz' || isQuestionsLoaded;
 
@@ -173,10 +190,20 @@ export default function App() {
                 <ConceptView
                   concept={concept}
                   onStartQuiz={handleStartQuiz}
+                  onStartTasks={tasks.length > 0 ? handleStartTasks : undefined}
                   isLearned={progress[conceptId]?.learned ?? false}
                   onMarkLearned={() => markLearned(conceptId)}
                   questionCount={questions.length}
+                  taskCount={tasks.length}
                   hasInProgress={!!session.inProgress[conceptId]}
+                />
+              ) : mode === 'tasks' ? (
+                <TasksView
+                  key={`${pathId}-${conceptId}-tasks`}
+                  concept={concept}
+                  tasks={tasks}
+                  onBack={handleBackToLearn}
+                  storageKey={tasksStorageKey}
                 />
               ) : (
                 <QuizView
