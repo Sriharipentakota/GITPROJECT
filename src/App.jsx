@@ -9,13 +9,12 @@ import CreatePage from './pages/CreatePage';
 import LibraryPage from './pages/LibraryPage';
 import TemplatesPage from './pages/TemplatesPage';
 import SettingsPage from './pages/SettingsPage';
+import ShowcasePage from './pages/ShowcasePage';
 import './App.css';
 
 function AppContent() {
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-
-  const isStandalone = location.pathname === '/view' || location.pathname === '/login';
 
   if (location.pathname === '/login') {
     return (
@@ -37,9 +36,18 @@ function AppContent() {
     );
   }
 
+  if (location.pathname.startsWith('/showcase/')) {
+    return (
+      <div className="standalone-wrapper">
+        <Routes>
+          <Route path="/showcase/:id" element={<ShowcasePage />} />
+        </Routes>
+      </div>
+    );
+  }
+
   return (
     <div className={`app-shell ${sidebarOpen ? 'sidebar-open' : ''}`}>
-      {/* Mobile overlay */}
       {sidebarOpen && (
         <div className="sidebar-overlay" onClick={() => setSidebarOpen(false)} />
       )}
@@ -48,8 +56,9 @@ function AppContent() {
 
       <div className="app-main">
         <Routes>
-          <Route path="/" element={<Navigate to="/create" replace />} />
-          <Route path="/create" element={
+          <Route path="/" element={<Navigate to="/studio" replace />} />
+          <Route path="/create" element={<Navigate to="/studio" replace />} />
+          <Route path="/studio" element={
             <ProtectedRoute><CreatePage /></ProtectedRoute>
           } />
           <Route path="/library" element={
@@ -61,7 +70,7 @@ function AppContent() {
           <Route path="/settings" element={
             <ProtectedRoute><SettingsPage /></ProtectedRoute>
           } />
-          <Route path="*" element={<Navigate to="/create" replace />} />
+          <Route path="*" element={<Navigate to="/studio" replace />} />
         </Routes>
       </div>
     </div>

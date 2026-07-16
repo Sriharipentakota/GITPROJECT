@@ -1,12 +1,8 @@
 /**
- * Application constants, design tokens, and template definitions
+ * QR Experience Studio — Application Constants
  */
 
-export const QR_MODES = {
-  TEXT: 'text',
-  LINK: 'link',
-  IMAGE: 'image'
-};
+export const QR_MODES = { TEXT: 'text', LINK: 'link', IMAGE: 'image' };
 
 export const FILE_SIZE_LIMITS = {
   IMAGE_MAX_SIZE_MB: 10,
@@ -14,10 +10,7 @@ export const FILE_SIZE_LIMITS = {
   LOGO_MAX_SIZE_MB: 2
 };
 
-export const UPLOAD_SERVICES = {
-  IMGBB: 'ImgBB',
-  POST_IMAGES: 'PostImages'
-};
+export const UPLOAD_SERVICES = { IMGBB: 'ImgBB', POST_IMAGES: 'PostImages' };
 
 export const QR_LIBRARY_STORAGE_KEY = 'qr_studio_library_v1';
 export const QR_SETTINGS_STORAGE_KEY = 'qr_studio_settings_v1';
@@ -49,6 +42,226 @@ export const STYLE_PRESETS = [
   { id: 'amber', name: 'Amber', fgColor: '#92400e', bgColor: '#fffbeb' },
   { id: 'slate', name: 'Slate', fgColor: '#334155', bgColor: '#f1f5f9' }
 ];
+
+export const DESIGN_PRESETS = [
+  { id: 'classic',       label: 'Classic',        fgColor: '#000000', bgColor: '#FFFFFF', category: 'standard' },
+  { id: 'midnight',      label: 'Midnight',       fgColor: '#1e293b', bgColor: '#f8fafc', category: 'standard' },
+  { id: 'ocean',         label: 'Ocean',          fgColor: '#1d4ed8', bgColor: '#eff6ff', category: 'color' },
+  { id: 'forest',        label: 'Forest',         fgColor: '#15803d', bgColor: '#f0fdf4', category: 'color' },
+  { id: 'sunset',        label: 'Sunset',         fgColor: '#9f1239', bgColor: '#fff1f2', category: 'color' },
+  { id: 'violet',        label: 'Violet',         fgColor: '#6d28d9', bgColor: '#f5f3ff', category: 'color' },
+  { id: 'amber',         label: 'Amber',          fgColor: '#92400e', bgColor: '#fffbeb', category: 'color' },
+  { id: 'corporate',     label: 'Corporate',      fgColor: '#1e3a5f', bgColor: '#f8fafc', category: 'professional' },
+  { id: 'high-contrast', label: 'High Contrast',  fgColor: '#000000', bgColor: '#FFFFFF', category: 'accessibility' },
+  { id: 'slate',         label: 'Slate',          fgColor: '#334155', bgColor: '#f1f5f9', category: 'professional' },
+];
+
+/** Intent goals — map user intent to the best QR template */
+export const INTENTS = [
+  {
+    id: 'share-website',
+    label: 'Share a Website',
+    description: 'Link to any URL — product page, portfolio, landing page',
+    icon: '🌐',
+    accentColor: '#6D6AFC',
+    templateId: 'website',
+    hint: 'Enter any https:// URL',
+    category: 'web'
+  },
+  {
+    id: 'share-image',
+    label: 'Share an Image',
+    description: 'Let anyone view a photo or graphic by scanning',
+    icon: '🖼️',
+    accentColor: '#EC4899',
+    templateId: 'image',
+    hint: 'Upload a JPG, PNG, or WebP image',
+    category: 'media'
+  },
+  {
+    id: 'publish-content',
+    label: 'Publish Content',
+    description: 'Share text, instructions, or training material',
+    icon: '📄',
+    accentColor: '#0EA5E9',
+    templateId: 'text',
+    hint: 'Write a message or paste content',
+    category: 'content'
+  },
+  {
+    id: 'create-event',
+    label: 'Create Event QR',
+    description: 'Scanning adds the event directly to a calendar',
+    icon: '📅',
+    accentColor: '#8B5CF6',
+    templateId: 'event',
+    hint: 'Set date, time, location, and description',
+    category: 'utilities'
+  },
+  {
+    id: 'share-wifi',
+    label: 'Share Wi-Fi Access',
+    description: 'Connect guests without typing the password',
+    icon: '📶',
+    accentColor: '#14B8A6',
+    templateId: 'wifi',
+    hint: 'Enter your network name and password',
+    category: 'utilities'
+  },
+  {
+    id: 'share-contact',
+    label: 'Share Contact Details',
+    description: 'Let people save your info to their contacts instantly',
+    icon: '👤',
+    accentColor: '#F59E0B',
+    templateId: 'contact',
+    hint: 'Name, phone, email, organization',
+    category: 'contact'
+  },
+  {
+    id: 'collect-feedback',
+    label: 'Collect Feedback',
+    description: 'Link to a survey, form, or feedback page',
+    icon: '💬',
+    accentColor: '#10B981',
+    templateId: 'website',
+    hint: 'Paste your form or survey URL',
+    category: 'web'
+  },
+  {
+    id: 'product-label',
+    label: 'Product Label',
+    description: 'Link customers to product details, support, or instructions',
+    icon: '🏷️',
+    accentColor: '#F43F5E',
+    templateId: 'website',
+    hint: 'Product page or support URL',
+    category: 'web'
+  },
+];
+
+/** Physical-world mockup scenes for the Preview Lab */
+export const MOCKUP_SCENES = [
+  {
+    id: 'business-card',
+    label: 'Business Card',
+    icon: '💼',
+    svgWidth: 340,
+    svgHeight: 215,
+    bgColor: '#FFFFFF',
+    fgColor: '#1E293B',
+    description: '85 × 54 mm — ISO 7810 ID-1',
+    defaultQRSize: 72,
+    defaultQRX: 252,
+    defaultQRY: 71,
+    minQRSize: 48,
+    warningBelowSize: 56,
+    maxQRSize: 120,
+  },
+  {
+    id: 'a4-poster',
+    label: 'A4 Poster',
+    icon: '📄',
+    svgWidth: 240,
+    svgHeight: 340,
+    bgColor: '#F8F9FA',
+    fgColor: '#111827',
+    description: '210 × 297 mm',
+    defaultQRSize: 100,
+    defaultQRX: 70,
+    defaultQRY: 220,
+    minQRSize: 60,
+    warningBelowSize: 80,
+    maxQRSize: 160,
+  },
+  {
+    id: 'event-badge',
+    label: 'Event Badge',
+    icon: '🏷️',
+    svgWidth: 240,
+    svgHeight: 330,
+    bgColor: '#1E1B4B',
+    fgColor: '#EDE9FE',
+    description: '80 × 110 mm lanyard badge',
+    defaultQRSize: 90,
+    defaultQRX: 75,
+    defaultQRY: 195,
+    minQRSize: 60,
+    warningBelowSize: 70,
+    maxQRSize: 140,
+  },
+  {
+    id: 'product-label',
+    label: 'Product Label',
+    icon: '📦',
+    svgWidth: 240,
+    svgHeight: 160,
+    bgColor: '#FFFFFF',
+    fgColor: '#1E293B',
+    description: '60 × 40 mm label',
+    defaultQRSize: 70,
+    defaultQRX: 155,
+    defaultQRY: 45,
+    minQRSize: 40,
+    warningBelowSize: 56,
+    maxQRSize: 100,
+  },
+  {
+    id: 'table-card',
+    label: 'Menu / Table',
+    icon: '🍽️',
+    svgWidth: 220,
+    svgHeight: 310,
+    bgColor: '#FEF9F0',
+    fgColor: '#78350F',
+    description: '70 × 100 mm table tent',
+    defaultQRSize: 100,
+    defaultQRX: 60,
+    defaultQRY: 170,
+    minQRSize: 60,
+    warningBelowSize: 80,
+    maxQRSize: 140,
+  },
+  {
+    id: 'sticker',
+    label: 'Sticker / Label',
+    icon: '💻',
+    svgWidth: 200,
+    svgHeight: 200,
+    bgColor: '#FFFFFF',
+    fgColor: '#0F172A',
+    description: '50 × 50 mm circular sticker',
+    defaultQRSize: 140,
+    defaultQRX: 30,
+    defaultQRY: 30,
+    minQRSize: 80,
+    warningBelowSize: 100,
+    maxQRSize: 160,
+  },
+];
+
+/** Health check definitions used by QRHealthCenter */
+export const HEALTH_CHECKS = {
+  CONTENT: { id: 'content', label: 'Content present', weight: 20 },
+  URL_VALID: { id: 'url_valid', label: 'URL valid', weight: 10 },
+  HTTPS: { id: 'https', label: 'HTTPS used', weight: 5 },
+  CONTRAST: { id: 'contrast', label: 'Color contrast', weight: 15 },
+  SIZE: { id: 'size', label: 'QR size adequate', weight: 15 },
+  MARGIN: { id: 'margin', label: 'Quiet zone sufficient', weight: 10 },
+  ECL: { id: 'ecl', label: 'Error correction suitable', weight: 10 },
+  DATA_DENSITY: { id: 'data_density', label: 'Data density manageable', weight: 10 },
+  LOGO_SIZE: { id: 'logo_size', label: 'Logo size safe', weight: 5 },
+};
+
+/** QR Timeline event types */
+export const TIMELINE_EVENTS = {
+  CREATED:    { id: 'created',    label: 'Created',    icon: '✦' },
+  UPDATED:    { id: 'updated',    label: 'Updated',    icon: '↻' },
+  STYLED:     { id: 'styled',     label: 'Styled',     icon: '◈' },
+  TESTED:     { id: 'tested',     label: 'Tested',     icon: '◎' },
+  DOWNLOADED: { id: 'downloaded', label: 'Downloaded', icon: '↓' },
+  SAVED:      { id: 'saved',      label: 'Saved',      icon: '◆' },
+};
 
 export const TEMPLATES = [
   {
@@ -108,7 +321,7 @@ export const TEMPLATES = [
     fields: [
       { id: 'ssid', label: 'Network Name (SSID)', placeholder: 'MyHomeWiFi', type: 'text', required: true },
       { id: 'password', label: 'Password', placeholder: 'Leave blank for open networks', type: 'password', required: false },
-      { id: 'security', label: 'Security', type: 'select', options: ['WPA/WPA2', 'WEP', 'None'], required: true },
+      { id: 'security', label: 'Security Type', type: 'select', options: ['WPA/WPA2', 'WEP', 'None'], required: true },
       { id: 'hidden', label: 'Hidden network', type: 'checkbox', required: false }
     ],
     format: (data) => {
@@ -261,7 +474,7 @@ export const TEMPLATES = [
 ];
 
 export const TEMPLATE_CATEGORIES = [
-  { id: 'all', label: 'All Templates' },
+  { id: 'all', label: 'All' },
   { id: 'basic', label: 'Basic' },
   { id: 'web', label: 'Web & Social' },
   { id: 'contact', label: 'Contact' },
@@ -271,35 +484,14 @@ export const TEMPLATE_CATEGORIES = [
 
 export const UI_MESSAGES = {
   MODES: {
-    TEXT: {
-      TITLE: 'Text',
-      DESCRIPTION: 'QR code will show your text through a formatted app page.',
-      INPUT_PLACEHOLDER: 'Enter any text, phone number, email, or message...',
-      INPUT_LABEL: 'Text content'
-    },
-    LINK: {
-      TITLE: 'Direct Link',
-      DESCRIPTION: 'QR code contains the URL directly. Scanning opens the website immediately.',
-      INPUT_PLACEHOLDER: 'https://example.com',
-      INPUT_LABEL: 'URL / Hyperlink'
-    },
-    IMAGE: {
-      TITLE: 'Image',
-      DESCRIPTION: 'Upload an image. Scanning shows it directly in any browser.',
-      HELPER_TEXT: 'Image is uploaded to cloud storage. Multiple backup services ensure reliability.'
-    }
+    TEXT: { TITLE: 'Text', DESCRIPTION: 'QR code will show your text through a formatted app page.', INPUT_PLACEHOLDER: 'Enter any text...', INPUT_LABEL: 'Text content' },
+    LINK: { TITLE: 'Direct Link', DESCRIPTION: 'QR code contains the URL directly.', INPUT_PLACEHOLDER: 'https://example.com', INPUT_LABEL: 'URL / Hyperlink' },
+    IMAGE: { TITLE: 'Image', DESCRIPTION: 'Upload an image. Scanning shows it in any browser.', HELPER_TEXT: 'Image is uploaded to cloud storage.' }
   },
   BUTTONS: {
-    GENERATE: 'Generate QR Code',
-    GENERATING: 'Generating...',
-    UPLOADING: 'Uploading Image...',
-    DOWNLOAD: 'Download PNG',
-    CLEAR: 'Clear',
-    TEST_LINK: 'Test Link',
-    TEST_IMAGE: 'View Image',
-    TEST_APP: 'Preview Content',
-    SAVE: 'Save to Library',
-    COPY: 'Copy Link'
+    GENERATE: 'Generate QR Code', GENERATING: 'Generating...', UPLOADING: 'Uploading Image...',
+    DOWNLOAD: 'Download PNG', CLEAR: 'Clear', TEST_LINK: 'Test Link',
+    TEST_IMAGE: 'View Image', TEST_APP: 'Preview Content', SAVE: 'Save to Library', COPY: 'Copy Link'
   },
   ERRORS: {
     NO_IMAGE: 'Please upload an image to generate a QR code',
@@ -326,8 +518,8 @@ export const CSS_CLASSES = {
 };
 
 export const NAV_ITEMS = [
-  { path: '/create', label: 'Create', icon: '✦', title: 'Create QR Code' },
-  { path: '/library', label: 'My QR Codes', icon: '◫', title: 'QR Code Library' },
+  { path: '/studio', label: 'Studio', icon: '✦', title: 'QR Experience Studio' },
+  { path: '/library', label: 'Library', icon: '◫', title: 'QR Code Library' },
   { path: '/templates', label: 'Templates', icon: '⊞', title: 'QR Templates' },
   { path: '/settings', label: 'Settings', icon: '⚙', title: 'Settings' }
 ];

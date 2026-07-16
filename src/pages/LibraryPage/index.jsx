@@ -44,9 +44,9 @@ function LibraryPage() {
     if (filterType !== 'all') list = list.filter(i => i.templateId === filterType);
     if (filterFav) list = list.filter(i => i.favorite);
     switch (sortBy) {
-      case 'newest': list.sort((a, b) => b.createdAt - a.createdAt); break;
-      case 'oldest': list.sort((a, b) => a.createdAt - b.createdAt); break;
-      case 'name': list.sort((a, b) => a.name.localeCompare(b.name)); break;
+      case 'newest':  list.sort((a, b) => b.createdAt - a.createdAt); break;
+      case 'oldest':  list.sort((a, b) => a.createdAt - b.createdAt); break;
+      case 'name':    list.sort((a, b) => a.name.localeCompare(b.name)); break;
       case 'updated': list.sort((a, b) => b.updatedAt - a.updatedAt); break;
       default: break;
     }
@@ -58,7 +58,11 @@ function LibraryPage() {
   }
 
   function handleEdit(item) {
-    navigate('/create');
+    navigate('/studio', { state: { editItem: item } });
+  }
+
+  function handleShowcase(item) {
+    navigate(`/showcase/${item.id}`);
   }
 
   function startRename(item) {
@@ -94,25 +98,28 @@ function LibraryPage() {
             <div className="page-title">My QR Codes</div>
             <div className="page-subtitle">{items.length} saved QR code{items.length !== 1 ? 's' : ''}</div>
           </div>
-          <button className="btn btn-primary" onClick={() => navigate('/create')}>
-            + Create New
+          <button className="btn btn-primary" onClick={() => navigate('/studio')}>
+            + New QR
           </button>
         </div>
       </div>
 
       {/* Toolbar */}
       <div className="library-toolbar">
-        {/* Search */}
         <div className="search-box">
           <span className="search-box-icon">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
               <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
             </svg>
           </span>
-          <input className="search-input" placeholder="Search by name or content…" value={search} onChange={e => setSearch(e.target.value)} />
+          <input
+            className="search-input"
+            placeholder="Search by name or content…"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+          />
         </div>
 
-        {/* Type filter */}
         <select className="filter-select" value={filterType} onChange={e => setFilterType(e.target.value)}>
           <option value="all">All Types</option>
           {templateTypes.filter(t => t !== 'all').map(t => (
@@ -120,7 +127,6 @@ function LibraryPage() {
           ))}
         </select>
 
-        {/* Sort */}
         <select className="filter-select" value={sortBy} onChange={e => setSortBy(e.target.value)}>
           <option value="newest">Newest first</option>
           <option value="oldest">Oldest first</option>
@@ -128,7 +134,6 @@ function LibraryPage() {
           <option value="name">Name A–Z</option>
         </select>
 
-        {/* Favorites toggle */}
         <button
           className={`btn ${filterFav ? 'btn-warning' : 'btn-secondary'} btn-sm`}
           onClick={() => setFilterFav(v => !v)}
@@ -137,19 +142,23 @@ function LibraryPage() {
           {filterFav ? '★ Favorites' : '☆ Favorites'}
         </button>
 
-        {/* View toggle */}
         <div className="view-toggle">
           <button className={`view-toggle-btn ${viewMode === 'grid' ? 'active' : ''}`} onClick={() => setViewMode('grid')} title="Grid view">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+              <rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>
+            </svg>
           </button>
           <button className={`view-toggle-btn ${viewMode === 'list' ? 'active' : ''}`} onClick={() => setViewMode('list')} title="List view">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+            </svg>
           </button>
         </div>
       </div>
 
       {/* Body */}
-      <div className="library-body page-body">
+      <div className="page-body">
         {filtered.length === 0 ? (
           <div className="empty-state">
             <div className="empty-state-icon">◫</div>
@@ -158,12 +167,12 @@ function LibraryPage() {
             </div>
             <p className="empty-state-text">
               {items.length === 0
-                ? 'Create your first QR code in the Create Studio and save it to see it here.'
+                ? 'Create your first QR code in the Studio and save it to see it here.'
                 : 'Try a different search or filter.'}
             </p>
             {items.length === 0 && (
-              <button className="btn btn-primary" onClick={() => navigate('/create')}>
-                Create Your First QR
+              <button className="btn btn-primary" onClick={() => navigate('/studio')}>
+                Open Studio
               </button>
             )}
           </div>
@@ -176,7 +185,7 @@ function LibraryPage() {
                     ? <img src={item.dataURL} alt={item.name} />
                     : <div style={{ fontSize: '2rem', opacity: 0.3 }}>◫</div>
                   }
-                  <button className="qr-card-fav" onClick={() => toggleFavorite(item.id)}>
+                  <button className="qr-card-fav" onClick={() => toggleFavorite(item.id)} title="Toggle favorite">
                     {item.favorite ? '★' : '☆'}
                   </button>
                 </div>
@@ -189,31 +198,41 @@ function LibraryPage() {
                       onBlur={commitRename}
                       onKeyDown={e => { if (e.key === 'Enter') commitRename(); if (e.key === 'Escape') setRenamingId(null); }}
                       className="field-input"
-                      style={{ padding: '0.25rem 0.5rem', fontSize: '0.8125rem', marginBottom: '0.25rem' }}
+                      style={{ padding: '4px 8px', fontSize: '0.8125rem', marginBottom: 4 }}
                     />
                   ) : (
-                    <div className="qr-card-name" onClick={() => startRename(item)} title="Click to rename">{item.name}</div>
+                    <div className="qr-card-name" onClick={() => startRename(item)} title="Click to rename">
+                      {item.name}
+                    </div>
                   )}
                   <div className="qr-card-meta">
-                    <span className="badge badge-gray" style={{ marginRight: '0.4rem' }}>
-                      {getTemplateLabel(item.templateId)}
-                    </span>
+                    <span className="badge badge-gray">{getTemplateLabel(item.templateId)}</span>
                     {timeAgo(item.updatedAt)}
                   </div>
                   <div className="qr-card-actions">
-                    <button className="btn btn-secondary btn-sm" onClick={() => handleDownload(item)} title="Download PNG">
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                    <button className="btn btn-secondary btn-sm" onClick={() => handleEdit(item)} title="Edit in Studio">
+                      Edit
                     </button>
-                    <button className="btn btn-secondary btn-sm" onClick={() => duplicateQR(item.id)} title="Duplicate">
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                    <button className="btn btn-secondary btn-sm" onClick={() => handleDownload(item)} title="Download PNG">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                        <polyline points="7 10 12 15 17 10"/>
+                        <line x1="12" y1="15" x2="12" y2="3"/>
+                      </svg>
+                    </button>
+                    <button className="btn btn-ghost btn-sm" onClick={() => handleShowcase(item)} title="Showcase">
+                      ↗
                     </button>
                     <button
                       className={`btn btn-sm ${confirmDeleteId === item.id ? 'btn-danger' : 'btn-ghost'}`}
                       onClick={() => handleDelete(item.id)}
                       title={confirmDeleteId === item.id ? 'Click again to confirm delete' : 'Delete'}
                     >
-                      {confirmDeleteId === item.id ? 'Confirm' : (
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>
+                      {confirmDeleteId === item.id ? '✕ Confirm' : (
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                          <polyline points="3 6 5 6 21 6"/>
+                          <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+                        </svg>
                       )}
                     </button>
                   </div>
@@ -240,26 +259,39 @@ function LibraryPage() {
                       onBlur={commitRename}
                       onKeyDown={e => { if (e.key === 'Enter') commitRename(); if (e.key === 'Escape') setRenamingId(null); }}
                       className="field-input"
-                      style={{ padding: '0.25rem 0.5rem', fontSize: '0.8125rem', marginBottom: '0.2rem' }}
+                      style={{ padding: '4px 8px', fontSize: '0.8125rem', marginBottom: 2 }}
                     />
                   ) : (
-                    <div className="qr-list-name" onClick={() => startRename(item)} title="Click to rename">{item.name}</div>
+                    <div className="qr-list-name" onClick={() => startRename(item)} title="Click to rename">
+                      {item.name}
+                    </div>
                   )}
                   <div className="qr-list-meta">
                     {getTemplateLabel(item.templateId)} · {timeAgo(item.updatedAt)}
-                    {item.favorite && <span style={{ marginLeft: '0.4rem' }}>★</span>}
+                    {item.favorite && <span style={{ marginLeft: '0.4rem', color: 'var(--warning)' }}>★</span>}
                   </div>
                 </div>
                 <div className="qr-list-actions">
+                  <button className="btn btn-ghost btn-sm" onClick={() => handleEdit(item)} title="Edit in Studio">
+                    Edit
+                  </button>
                   <button className="btn btn-ghost btn-icon" onClick={() => toggleFavorite(item.id)} title="Toggle favorite">
                     {item.favorite ? '★' : '☆'}
                   </button>
                   <button className="btn btn-ghost btn-icon" onClick={() => handleDownload(item)} title="Download">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                      <polyline points="7 10 12 15 17 10"/>
+                      <line x1="12" y1="15" x2="12" y2="3"/>
+                    </svg>
                   </button>
                   <button className="btn btn-ghost btn-icon" onClick={() => duplicateQR(item.id)} title="Duplicate">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                      <rect x="9" y="9" width="13" height="13" rx="2"/>
+                      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                    </svg>
                   </button>
+                  <button className="btn btn-ghost btn-sm" onClick={() => handleShowcase(item)} title="Showcase">↗</button>
                   <button
                     className={`btn btn-icon ${confirmDeleteId === item.id ? 'btn-danger' : 'btn-ghost'}`}
                     onClick={() => handleDelete(item.id)}
@@ -267,7 +299,10 @@ function LibraryPage() {
                     style={{ fontSize: '0.75rem' }}
                   >
                     {confirmDeleteId === item.id ? '✓' : (
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                        <polyline points="3 6 5 6 21 6"/>
+                        <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+                      </svg>
                     )}
                   </button>
                 </div>

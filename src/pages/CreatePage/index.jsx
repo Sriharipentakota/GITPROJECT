@@ -7,60 +7,97 @@ import { generateViewUrl, triggerFileDownload } from '../../utils/urlUtils';
 import { useQRLibrary } from '../../hooks/useQRLibrary';
 import { isValidImageFile, isValidFileSize } from '../../utils/validation';
 import { formatFileSize } from '../../utils/fileUtils';
+import IntentSelector from '../../components/Studio/IntentSelector';
+import QRHealthCenter from '../../components/Studio/QRHealthCenter';
+import ScanJourneySimulator from '../../components/Studio/ScanJourneySimulator';
+import PhysicalPreviewLab from '../../components/Studio/PhysicalPreviewLab';
+import DestinationBuilder from '../../components/Studio/DestinationBuilder';
 
-const MOBILE_TABS = ['Configure', 'Preview', 'Actions'];
+const CENTER_TABS = ['QR Code', 'Journey', 'Physical', 'Destination'];
+const MOBILE_STEPS = ['Intent', 'Build', 'Preview', 'Inspect', 'Save'];
+
+function timeAgo(ts) {
+  if (!ts) return '';
+  const diff = Date.now() - ts;
+  const min = Math.floor(diff / 60000);
+  if (min < 1) return 'just now';
+  if (min < 60) return `${min}m ago`;
+  const h = Math.floor(min / 60);
+  if (h < 24) return `${h}h ago`;
+  return `${Math.floor(h / 24)}d ago`;
+}
 
 function CreatePage() {
   const navigate = useNavigate();
   const location = useLocation();
   const { saveQR } = useQRLibrary();
 
-  // Template & fields — read initial template from navigation state (from TemplatesPage)
+  /* ─── Intent / onboarding ─── */
+  const [intent, setIntent] = useState(null);
+  const [showIntentScreen, setShowIntentScreen] = useState(true);
+
+  /* ─── Template & fields ─── */
   const initialTemplateId = location.state?.templateId || 'website';
   const [templateId, setTemplateId] = useState(initialTemplateId);
-  const [fields, setFields] = useState({});
-  const [qrName, setQrName] = useState('');
+  const [fields, setFields] = useState(location.state?.fields || {});
+  const [qrName, setQrName] = useState(location.state?.name || '');
 
-  // QR generation state
-  const [qrDataURL, setQrDataURL] = useState('');
-  const [qrContent, setQrContent] = useState('');
+  /* ─── QR generation ─── */
+  const [qrDataURL, setQrDataURL]   = useState('');
+  const [qrContent, setQrContent]   = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
-  const [genError, setGenError] = useState('');
+  const [genError, setGenError]     = useState('');
 
-  // Image upload state (for image template)
+  /* ─── Image upload ─── */
   const [selectedImage, setSelectedImage] = useState(null);
-  const [imagePreview, setImagePreview] = useState('');
-  const [isUploading, setIsUploading] = useState(false);
-  const [uploadedUrl, setUploadedUrl] = useState('');
+  const [imagePreview, setImagePreview]   = useState('');
+  const [isUploading, setIsUploading]     = useState(false);
+  const [uploadedUrl, setUploadedUrl]     = useState('');
   const [uploadService, setUploadService] = useState('');
-  const [uploadError, setUploadError] = useState('');
-  const [isDragOver, setIsDragOver] = useState(false);
+  const [uploadError, setUploadError]     = useState('');
+  const [isDragOver, setIsDragOver]       = useState(false);
 
-  // Customization
+  /* ─── Customization ─── */
   const [custom, setCustom] = useState({ ...DEFAULT_CUSTOMIZATION });
-
-  // Logo
   const [logoDataURL, setLogoDataURL] = useState(null);
   const logoInputRef = useRef(null);
-
-  // UI state
-  const [mobileTab, setMobileTab] = useState(0);
-  const [previewView, setPreviewView] = useState('qr'); // 'qr' | 'phone'
-  const [savedId, setSavedId] = useState('');
-  const [justSaved, setJustSaved] = useState(false);
   const [showCustomize, setShowCustomize] = useState(false);
 
-  // Debounce ref
+  /* ─── UI state ─── */
+  const [centerTab, setCenterTab] = useState(0);
+  const [mobileStep, setMobileStep] = useState(0);
+  const [savedId, setSavedId]         = useState('');
+  const [justSaved, setJustSaved]     = useState(false);
+  const [timeline, setTimeline]       = useState([]);
+
+  /* ─── Debounce ─── */
   const debounceRef = useRef(null);
 
   const template = TEMPLATES.find(t => t.id === templateId) || TEMPLATES[0];
 
-  // Auto-generate QR on input change (debounced 600ms)
+  /* Load from library edit state */
+  useEffect(() => {
+    if (location.state?.editItem) {
+      const item = location.state.editItem;
+      setTemplateId(item.templateId || 'website');
+      setFields(item.templateData || {});
+      setQrName(item.name || '');
+      setSavedId(item.id || '');
+      if (item.customization) setCustom({ ...DEFAULT_CUSTOMIZATION, ...item.customization });
+      if (item.dataURL) {
+        setQrDataURL(item.dataURL);
+        setQrContent(item.content || '');
+      }
+      setShowIntentScreen(false);
+    } else if (location.state?.templateId) {
+      setShowIntentScreen(false);
+    }
+  }, []); // eslint-disable-line
+
+  /* Debounced auto-generate */
   const scheduleGenerate = useCallback(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => {
-      generateQR();
-    }, 600);
+    debounceRef.current = setTimeout(() => generateQR(), 600);
   }, [fields, custom, templateId, logoDataURL, uploadedUrl]); // eslint-disable-line
 
   useEffect(() => {
@@ -92,6 +129,28 @@ function CreatePage() {
     }
   }
 
+  function handleIntentSelect(selectedIntent) {
+    setIntent(selectedIntent);
+    setShowIntentScreen(false);
+    const tid = selectedIntent.templateId;
+    if (TEMPLATES.find(t => t.id === tid)) {
+      handleTemplateChange(tid);
+    }
+    addTimelineEvent('created', `Goal: ${selectedIntent.label}`);
+  }
+
+  function handleIntentSkip() {
+    setShowIntentScreen(false);
+    addTimelineEvent('created', 'Manual configuration');
+  }
+
+  function addTimelineEvent(type, detail) {
+    setTimeline(prev => [
+      { type, detail, ts: Date.now() },
+      ...prev.slice(0, 9)
+    ]);
+  }
+
   function getDeployedUrl() {
     return process.env.REACT_APP_DEPLOYED_URL || window.location.origin;
   }
@@ -117,6 +176,7 @@ function CreatePage() {
       const dataURL = await generateQRCodeWithLogo(content, options, logoDataURL, custom.logoSizePercent);
       setQrDataURL(dataURL);
       setQrContent(content);
+      addTimelineEvent('updated', 'QR regenerated');
     } catch (err) {
       setGenError('Failed to generate QR: ' + err.message);
     } finally {
@@ -131,16 +191,11 @@ function CreatePage() {
       setUploadError(`Image must be under ${FILE_SIZE_LIMITS.IMAGE_MAX_SIZE_MB}MB`);
       return;
     }
-
     setUploadError('');
     setSelectedImage(file);
-
-    // Show preview
     const reader = new FileReader();
     reader.onload = e => setImagePreview(e.target.result);
     reader.readAsDataURL(file);
-
-    // Upload
     setIsUploading(true);
     setUploadedUrl('');
     setUploadService('');
@@ -166,15 +221,12 @@ function CreatePage() {
 
   function handleLogoFile(e) {
     const file = e.target.files[0];
-    if (!file) return;
-    if (!isValidImageFile(file)) return;
-    if (!isValidFileSize(file, FILE_SIZE_LIMITS.LOGO_MAX_SIZE_MB)) return;
+    if (!file || !isValidImageFile(file) || !isValidFileSize(file, FILE_SIZE_LIMITS.LOGO_MAX_SIZE_MB)) return;
     const reader = new FileReader();
     reader.onload = ev => {
       setLogoDataURL(ev.target.result);
-      if (custom.ecl === 'L' || custom.ecl === 'M') {
-        setCustom(p => ({ ...p, ecl: 'Q' }));
-      }
+      if (custom.ecl === 'L' || custom.ecl === 'M') setCustom(p => ({ ...p, ecl: 'Q' }));
+      addTimelineEvent('styled', 'Logo added');
     };
     reader.readAsDataURL(file);
   }
@@ -189,20 +241,22 @@ function CreatePage() {
       templateId,
       content: qrContent,
       dataURL: qrDataURL,
-      customization: custom,
+      customization: { ...custom, logoDataURL },
       templateData: fields,
       generatedUrl: qrContent,
       uploadService
     });
     setSavedId(id);
     setJustSaved(true);
-    setTimeout(() => setJustSaved(false), 2000);
+    addTimelineEvent('saved', name);
+    setTimeout(() => setJustSaved(false), 2500);
   }
 
   function handleDownload() {
     if (!qrDataURL) return;
     const name = qrName.trim() || `qr-${templateId}-${Date.now()}`;
     triggerFileDownload(qrDataURL, `${name}.png`);
+    addTimelineEvent('downloaded', `${name}.png`);
   }
 
   function handleTest() {
@@ -213,6 +267,7 @@ function CreatePage() {
       const viewUrl = generateViewUrl(qrContent);
       window.open(viewUrl, '_blank', 'noopener,noreferrer');
     }
+    addTimelineEvent('tested', 'Opened in new tab');
   }
 
   function handleCopy() {
@@ -220,419 +275,482 @@ function CreatePage() {
     navigator.clipboard.writeText(qrContent).catch(() => {});
   }
 
+  function handleShowcase() {
+    if (!savedId) { handleSave(); return; }
+    navigate(`/showcase/${savedId}`);
+  }
+
   function updateCustom(key, value) {
     setCustom(prev => ({ ...prev, [key]: value }));
   }
 
-  const quality = qrDataURL ? calculateQualityScore(qrContent, { ...custom, logoDataURL }) : null;
+  const displayContent = qrContent.length > 80 ? qrContent.slice(0, 77) + '…' : qrContent;
+  const qualityCustom  = { ...custom, logoDataURL };
 
-  const qualityBarColor = quality ? (
-    quality.score >= 85 ? '#22c55e' :
-    quality.score >= 70 ? '#84cc16' :
-    quality.score >= 50 ? '#f59e0b' : '#ef4444'
-  ) : '#e2e8f0';
-
-  const displayContent = qrContent.length > 100 ? qrContent.slice(0, 97) + '…' : qrContent;
+  /* ── Intent screen ── */
+  if (showIntentScreen) {
+    return <IntentSelector onSelect={handleIntentSelect} onSkip={handleIntentSkip} />;
+  }
 
   return (
     <div className="studio-page">
-      {/* Studio header */}
-      <div className="studio-header">
-        <div className="studio-header-title">QR Creation Studio</div>
-        <div className="studio-header-actions">
-          {qrDataURL && (
-            <>
-              <button className="btn btn-secondary btn-sm" onClick={handleCopy} title="Copy QR content">Copy Link</button>
-              <button className="btn btn-secondary btn-sm" onClick={handleTest}>Test</button>
-              <button className="btn btn-success btn-sm" onClick={handleDownload}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                Download
-              </button>
-              <button className={`btn btn-sm ${justSaved ? 'btn-success' : 'btn-primary'}`} onClick={handleSave}>
-                {justSaved ? '✓ Saved!' : 'Save'}
-              </button>
-            </>
+
+      {/* Studio topbar */}
+      <div className="studio-topbar">
+        <div className="studio-topbar-left">
+          <div className="studio-title">QR Experience Studio</div>
+          {intent && (
+            <button className="studio-intent-pill" onClick={() => setShowIntentScreen(true)}>
+              <span className="studio-intent-pill-icon">{intent.icon}</span>
+              <span className="studio-intent-pill-label">{intent.label}</span>
+              <span className="studio-intent-pill-change">Change</span>
+            </button>
+          )}
+          {!intent && (
+            <button className="studio-intent-pill" onClick={() => setShowIntentScreen(true)}>
+              <span style={{ fontSize: '0.75rem' }}>+ Set intent</span>
+            </button>
+          )}
+        </div>
+        <div className="studio-topbar-right">
+          {savedId && (
+            <button className="btn btn-secondary btn-sm" onClick={handleShowcase}>
+              Showcase ↗
+            </button>
           )}
         </div>
       </div>
 
-      {/* Mobile tab navigation */}
-      <div className="mobile-tabs-nav">
-        {MOBILE_TABS.map((tab, i) => (
-          <button key={tab} className={`tab-btn ${mobileTab === i ? 'active' : ''}`} onClick={() => setMobileTab(i)}>
-            {tab}
+      {/* Mobile step navigation */}
+      <div className="mobile-step-nav">
+        {MOBILE_STEPS.map((step, i) => (
+          <button
+            key={step}
+            className={`mobile-step-btn ${mobileStep === i ? 'active' : ''}`}
+            onClick={() => setMobileStep(i)}
+          >
+            {step}
           </button>
         ))}
       </div>
 
-      {/* Studio 3-column layout */}
-      <div className="studio-layout">
+      {/* 3-panel workspace */}
+      <div className="studio-workspace">
 
-        {/* LEFT: Config Panel */}
-        <div className={`studio-config ${mobileTab !== 0 ? 'tab-hidden' : ''}`}>
+        {/* ─── LEFT: Build Panel ─── */}
+        <div className={`panel-left ${mobileStep !== 1 ? 'step-hidden' : ''}`}>
+          <div className="panel-left-scroll">
 
-          {/* QR Name */}
-          <div className="config-section">
-            <div className="config-section-title">QR Name</div>
-            <input
-              className="field-input"
-              placeholder={`${template.name} QR Code`}
-              value={qrName}
-              onChange={e => setQrName(e.target.value)}
-            />
-          </div>
-
-          {/* Template Selector */}
-          <div className="config-section">
-            <div className="config-section-title">Type</div>
-            <div className="template-grid">
-              {TEMPLATES.map(t => (
-                <button
-                  key={t.id}
-                  className={`template-btn ${templateId === t.id ? 'active' : ''}`}
-                  onClick={() => handleTemplateChange(t.id)}
-                  title={t.name}
-                >
-                  <span className="template-btn-icon">{t.icon}</span>
-                  <span className="template-btn-name">{t.name}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Template description */}
-          <div className="config-section">
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
-              <span style={{ fontSize: '1.1rem' }}>{template.icon}</span>
-              <span style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--color-text)' }}>{template.name}</span>
-            </div>
-            <p style={{ fontSize: '0.78rem', color: 'var(--color-text-secondary)', lineHeight: 1.5, marginBottom: '0.875rem' }}>
-              {template.description}
-            </p>
-
-            {/* Image template */}
-            {templateId === 'image' ? (
-              <div>
-                {!imagePreview ? (
-                  <div
-                    className={`upload-zone ${isDragOver ? 'drag-over' : ''}`}
-                    onDragOver={e => { e.preventDefault(); setIsDragOver(true); }}
-                    onDragLeave={() => setIsDragOver(false)}
-                    onDrop={handleImageDrop}
-                    onClick={() => document.getElementById('studio-image-input').click()}
-                  >
-                    <div className="upload-icon">🖼️</div>
-                    <div className="upload-text"><strong>Click or drag</strong> to upload</div>
-                    <div className="upload-sub">JPG, PNG, GIF, WebP · up to {FILE_SIZE_LIMITS.IMAGE_MAX_SIZE_MB}MB</div>
-                    <input
-                      id="studio-image-input"
-                      type="file"
-                      accept="image/*"
-                      style={{ display: 'none' }}
-                      onChange={e => handleImageFile(e.target.files[0])}
-                    />
-                  </div>
-                ) : (
-                  <div className="image-preview-thumb">
-                    <img src={imagePreview} alt="Preview" />
-                    <div className="image-preview-overlay">
-                      <button
-                        className="btn btn-danger btn-sm"
-                        onClick={() => { setSelectedImage(null); setImagePreview(''); setUploadedUrl(''); setUploadService(''); setQrDataURL(''); }}
-                      >Remove</button>
-                    </div>
-                    {selectedImage && (
-                      <div className="image-preview-meta">
-                        {selectedImage.name} · {formatFileSize(selectedImage.size)}
-                        {uploadService && <span style={{ color: 'var(--color-success)', marginLeft: '0.4rem' }}>✓ {uploadService}</span>}
-                        {isUploading && <span style={{ color: 'var(--color-warning)', marginLeft: '0.4rem' }}>Uploading…</span>}
-                      </div>
-                    )}
-                    {isUploading && (
-                      <div className="upload-progress-bar"><div className="upload-progress-fill" /></div>
-                    )}
-                  </div>
-                )}
-                {uploadError && <div className="alert alert-error" style={{ marginTop: '0.5rem', fontSize: '0.75rem' }}>{uploadError}</div>}
+            {/* QR Type selector */}
+            <div className="panel-section">
+              <div className="panel-section-header">
+                <div className="panel-section-title">QR Type</div>
+                <span className="panel-section-badge">{template.name}</span>
               </div>
-            ) : (
-              /* Regular template fields */
-              <div className="fields-stack">
-                {template.fields.map(field => (
-                  <TemplateField
-                    key={field.id}
-                    field={field}
-                    value={fields[field.id] || (field.type === 'checkbox' ? false : '')}
-                    onChange={val => updateField(field.id, val)}
-                  />
+              <div className="type-grid">
+                {TEMPLATES.map(t => (
+                  <button
+                    key={t.id}
+                    className={`type-btn ${templateId === t.id ? 'active' : ''}`}
+                    onClick={() => handleTemplateChange(t.id)}
+                    title={t.name}
+                  >
+                    <span className="type-btn-icon">{t.icon}</span>
+                    <span className="type-btn-name">{t.name}</span>
+                  </button>
                 ))}
               </div>
-            )}
+            </div>
 
-            {genError && <div className="alert alert-error" style={{ marginTop: '0.75rem', fontSize: '0.75rem' }}>{genError}</div>}
-          </div>
+            {/* Template description + fields */}
+            <div className="panel-section">
+              <div className="template-desc-row">
+                <span className="template-desc-icon">{template.icon}</span>
+                <span className="template-desc-text">{template.description}</span>
+              </div>
 
-          {/* Customization */}
-          <div className="config-section">
-            <button
-              className="btn btn-ghost btn-sm"
-              style={{ width: '100%', justifyContent: 'space-between', marginBottom: showCustomize ? '0.75rem' : 0 }}
-              onClick={() => setShowCustomize(v => !v)}
-            >
-              <span style={{ fontWeight: 700, fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--color-text-muted)' }}>
-                Customize
-              </span>
-              <span style={{ color: 'var(--color-text-muted)' }}>{showCustomize ? '▲' : '▼'}</span>
-            </button>
-
-            {showCustomize && (
-              <div>
-                {/* Style presets */}
-                <div style={{ marginBottom: '1rem' }}>
-                  <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--color-text-secondary)', marginBottom: '0.5rem' }}>Style Preset</div>
-                  <div className="color-swatch-row">
-                    {STYLE_PRESETS.map(preset => (
-                      <div
-                        key={preset.id}
-                        className={`color-swatch ${custom.fgColor === preset.fgColor && custom.bgColor === preset.bgColor ? 'active' : ''}`}
-                        style={{ background: preset.fgColor }}
-                        title={preset.name}
-                        onClick={() => setCustom(p => ({ ...p, fgColor: preset.fgColor, bgColor: preset.bgColor }))}
-                      />
-                    ))}
-                  </div>
-                </div>
-
-                {/* Colors */}
-                <div className="customize-row">
-                  <span className="customize-label">Foreground</span>
-                  <input type="color" className="field-input" value={custom.fgColor} onChange={e => updateCustom('fgColor', e.target.value)} style={{ width: 50, height: 32, padding: 2 }} />
-                </div>
-                <div className="customize-row">
-                  <span className="customize-label">Background</span>
-                  <input type="color" className="field-input" value={custom.bgColor} onChange={e => updateCustom('bgColor', e.target.value)} style={{ width: 50, height: 32, padding: 2 }} />
-                </div>
-
-                {/* Size */}
-                <div className="customize-row" style={{ flexWrap: 'wrap', gap: '0.4rem' }}>
-                  <span className="customize-label">Size</span>
-                  <span className="customize-value">{custom.width}px</span>
-                </div>
-                <input type="range" className="field-input" min="150" max="600" step="25" value={custom.width}
-                  onChange={e => updateCustom('width', Number(e.target.value))}
-                  style={{ width: '100%', marginBottom: '0.75rem' }}
-                />
-
-                {/* Margin */}
-                <div className="customize-row" style={{ flexWrap: 'wrap', gap: '0.4rem' }}>
-                  <span className="customize-label">Quiet Zone</span>
-                  <span className="customize-value">{custom.margin}</span>
-                </div>
-                <input type="range" className="field-input" min="0" max="10" step="1" value={custom.margin}
-                  onChange={e => updateCustom('margin', Number(e.target.value))}
-                  style={{ width: '100%', marginBottom: '0.75rem' }}
-                />
-
-                {/* ECL */}
-                <div style={{ marginBottom: '0.75rem' }}>
-                  <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--color-text-secondary)', marginBottom: '0.35rem' }}>Error Correction</div>
-                  <select className="field-select" value={custom.ecl} onChange={e => updateCustom('ecl', e.target.value)}>
-                    {ECL_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-                  </select>
-                </div>
-
-                {/* Logo */}
+              {/* Image template upload */}
+              {templateId === 'image' ? (
                 <div>
-                  <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--color-text-secondary)', marginBottom: '0.35rem' }}>Logo (optional)</div>
-                  {logoDataURL ? (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
-                      <img src={logoDataURL} alt="Logo" style={{ width: 36, height: 36, objectFit: 'contain', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-sm)' }} />
-                      <div style={{ flex: 1 }}>
-                        <input type="range" min="10" max="35" value={custom.logoSizePercent} onChange={e => updateCustom('logoSizePercent', Number(e.target.value))}
-                          style={{ width: '100%' }} />
-                        <div style={{ fontSize: '0.7rem', color: 'var(--color-text-muted)' }}>Size: {custom.logoSizePercent}%</div>
-                      </div>
-                      <button className="btn btn-ghost btn-sm" onClick={() => setLogoDataURL(null)}>✕</button>
+                  {!imagePreview ? (
+                    <div
+                      className={`upload-zone ${isDragOver ? 'drag-over' : ''}`}
+                      onDragOver={e => { e.preventDefault(); setIsDragOver(true); }}
+                      onDragLeave={() => setIsDragOver(false)}
+                      onDrop={handleImageDrop}
+                      onClick={() => document.getElementById('studio-image-input').click()}
+                    >
+                      <div className="upload-icon">🖼️</div>
+                      <div className="upload-text"><strong>Click or drag</strong> to upload</div>
+                      <div className="upload-sub">JPG, PNG, GIF, WebP · max {FILE_SIZE_LIMITS.IMAGE_MAX_SIZE_MB}MB</div>
+                      <input
+                        id="studio-image-input"
+                        type="file"
+                        accept="image/*"
+                        style={{ display: 'none' }}
+                        onChange={e => handleImageFile(e.target.files[0])}
+                      />
                     </div>
                   ) : (
-                    <button className="btn btn-secondary btn-sm btn-full" onClick={() => logoInputRef.current?.click()}>
-                      + Add Logo
-                    </button>
-                  )}
-                  <input ref={logoInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleLogoFile} />
-                  {logoDataURL && (custom.ecl === 'L' || custom.ecl === 'M') && (
-                    <div className="alert alert-warning" style={{ marginTop: '0.4rem', fontSize: '0.72rem' }}>
-                      Use ECL Q or H with a logo for reliable scanning.
+                    <div className="image-preview-thumb">
+                      <img src={imagePreview} alt="Preview" />
+                      <div className="image-preview-overlay">
+                        <button
+                          className="btn btn-danger btn-sm"
+                          onClick={() => {
+                            setSelectedImage(null); setImagePreview('');
+                            setUploadedUrl(''); setUploadService(''); setQrDataURL('');
+                          }}
+                        >
+                          Remove
+                        </button>
+                      </div>
+                      {selectedImage && (
+                        <div className="image-preview-meta">
+                          {selectedImage.name} · {formatFileSize(selectedImage.size)}
+                          {uploadService && <span style={{ color: 'var(--success)', marginLeft: '0.4rem' }}>✓ {uploadService}</span>}
+                          {isUploading && <span style={{ color: 'var(--warning)', marginLeft: '0.4rem' }}>Uploading…</span>}
+                        </div>
+                      )}
+                      {isUploading && (
+                        <div className="upload-progress-bar"><div className="upload-progress-fill" /></div>
+                      )}
                     </div>
+                  )}
+                  {uploadError && (
+                    <div className="alert alert-error" style={{ marginTop: 8, fontSize: '0.75rem' }}>{uploadError}</div>
                   )}
                 </div>
-              </div>
-            )}
-          </div>
-        </div>
+              ) : (
+                /* Regular fields */
+                <div className="fields-stack">
+                  {template.fields.map(field => (
+                    <TemplateField
+                      key={field.id}
+                      field={field}
+                      value={fields[field.id] || (field.type === 'checkbox' ? false : '')}
+                      onChange={val => updateField(field.id, val)}
+                    />
+                  ))}
+                </div>
+              )}
 
-        {/* CENTER: Preview */}
-        <div className={`studio-preview ${mobileTab !== 1 ? 'tab-hidden' : ''}`}>
-          {/* QR name */}
-          <div className="qr-name-input-wrapper">
-            <input
-              className="qr-name-input"
-              placeholder={`${template.name} QR Code`}
-              value={qrName}
-              onChange={e => setQrName(e.target.value)}
-            />
-          </div>
-
-          {/* Preview card */}
-          <div className="preview-card">
-            {/* View toggle */}
-            <div className="preview-view-toggle">
-              <button className={`preview-view-btn ${previewView === 'qr' ? 'active' : ''}`} onClick={() => setPreviewView('qr')}>QR Code</button>
-              <button className={`preview-view-btn ${previewView === 'phone' ? 'active' : ''}`} onClick={() => setPreviewView('phone')}>Phone</button>
+              {genError && (
+                <div className="alert alert-error" style={{ marginTop: 8, fontSize: '0.75rem' }}>{genError}</div>
+              )}
             </div>
 
-            {previewView === 'qr' ? (
-              <div className="qr-display-area">
-                {isGenerating || isUploading ? (
-                  <div className="qr-generating">
-                    <div className="spinner" />
-                    <span style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>
-                      {isUploading ? 'Uploading image…' : 'Generating…'}
-                    </span>
-                  </div>
-                ) : qrDataURL ? (
-                  <img
-                    src={qrDataURL}
-                    alt="Generated QR Code"
-                    style={{ width: Math.min(custom.width, 260), height: Math.min(custom.width, 260) }}
-                  />
-                ) : (
-                  <div className="qr-placeholder">
-                    <div className="qr-placeholder-icon">
-                      <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round">
-                        <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>
-                        <rect x="3" y="14" width="7" height="7" rx="1"/><path d="M17 17h.01M14 17h.01M17 14h.01M14 14h.01"/>
-                      </svg>
-                    </div>
-                    <p className="qr-placeholder-text">Fill in the fields to see your QR code</p>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <PhonePreview content={qrContent} templateId={templateId} template={template} fields={fields} />
-            )}
-          </div>
-
-          {/* Content snippet */}
-          {qrContent && (
-            <div style={{ width: '100%', maxWidth: 380 }}>
-              <div style={{ fontSize: '0.72rem', fontWeight: 600, color: 'var(--color-text-muted)', marginBottom: '0.3rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                Encoded Content
-              </div>
-              <div className="content-preview-box">{displayContent}</div>
-            </div>
-          )}
-        </div>
-
-        {/* RIGHT: Actions + Quality */}
-        <div className={`studio-actions ${mobileTab !== 2 ? 'tab-hidden' : ''}`}>
-
-          {/* Actions */}
-          <div className="actions-section">
-            <div className="actions-section-title">Actions</div>
-            <div className="actions-stack">
-              <button className="btn btn-primary btn-full btn-lg" onClick={handleDownload} disabled={!qrDataURL}>
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                Download PNG
+            {/* Customization */}
+            <div className="panel-section">
+              <button className="customize-toggle" onClick={() => setShowCustomize(v => !v)}>
+                <span>Design</span>
+                <span className={`customize-toggle-arrow ${showCustomize ? 'open' : ''}`}>▼</span>
               </button>
-              <div className="action-row">
-                <button className="btn btn-secondary btn-full" onClick={handleSave} disabled={!qrDataURL}>
-                  {justSaved ? '✓ Saved to Library' : 'Save to Library'}
-                </button>
-              </div>
-              <div className="action-row">
-                <button className="btn btn-secondary" onClick={handleTest} disabled={!qrContent} style={{ flex: 1 }}>
-                  Test / Preview
-                </button>
-                <button className="btn btn-ghost btn-icon" onClick={handleCopy} disabled={!qrContent} title="Copy QR content to clipboard">
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-                </button>
-              </div>
-            </div>
-          </div>
 
-          {/* Quality Score */}
-          <div className="quality-section">
-            <div className="quality-header">
-              <div className="quality-title">Scannability</div>
-              {quality && (
-                <div className="quality-score-badge">
-                  <span className={`quality-score-number ${quality.ratingClass}`}>{quality.score}</span>
-                  <span className={`quality-rating ${quality.ratingClass}`}>{quality.rating}</span>
+              {showCustomize && (
+                <div className="customize-body">
+                  {/* Style presets */}
+                  <div>
+                    <div className="field-label" style={{ marginBottom: 6 }}>Color Preset</div>
+                    <div className="preset-row">
+                      {STYLE_PRESETS.map(preset => (
+                        <div
+                          key={preset.id}
+                          className={`preset-swatch ${custom.fgColor === preset.fgColor && custom.bgColor === preset.bgColor ? 'active' : ''}`}
+                          style={{ background: preset.fgColor, border: preset.bgColor === '#ffffff' ? '2px solid var(--border-strong)' : undefined }}
+                          title={preset.name}
+                          onClick={() => {
+                            setCustom(p => ({ ...p, fgColor: preset.fgColor, bgColor: preset.bgColor }));
+                            addTimelineEvent('styled', `Preset: ${preset.name}`);
+                          }}
+                        />
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Colors */}
+                  <div className="customize-colors">
+                    <div className="color-picker-group">
+                      <label className="color-picker-label">FG</label>
+                      <input type="color" value={custom.fgColor} onChange={e => updateCustom('fgColor', e.target.value)} style={{ width: 40, height: 28 }} />
+                      <span className="customize-value">{custom.fgColor}</span>
+                    </div>
+                    <div className="color-picker-group">
+                      <label className="color-picker-label">BG</label>
+                      <input type="color" value={custom.bgColor} onChange={e => updateCustom('bgColor', e.target.value)} style={{ width: 40, height: 28 }} />
+                      <span className="customize-value">{custom.bgColor}</span>
+                    </div>
+                  </div>
+
+                  {/* Size */}
+                  <div>
+                    <div className="customize-row">
+                      <span className="customize-label">Output size</span>
+                      <span className="customize-value">{custom.width}px</span>
+                    </div>
+                    <input type="range" min="150" max="600" step="25" value={custom.width}
+                      onChange={e => updateCustom('width', Number(e.target.value))} />
+                  </div>
+
+                  {/* Margin */}
+                  <div>
+                    <div className="customize-row">
+                      <span className="customize-label">Quiet zone</span>
+                      <span className="customize-value">{custom.margin} modules</span>
+                    </div>
+                    <input type="range" min="0" max="10" step="1" value={custom.margin}
+                      onChange={e => updateCustom('margin', Number(e.target.value))} />
+                  </div>
+
+                  {/* ECL */}
+                  <div className="field">
+                    <label className="field-label">Error Correction</label>
+                    <select className="field-select" value={custom.ecl} onChange={e => updateCustom('ecl', e.target.value)}>
+                      {ECL_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                    </select>
+                  </div>
+
+                  {/* Logo */}
+                  <div className="field">
+                    <label className="field-label">Logo (optional)</label>
+                    {logoDataURL ? (
+                      <div className="logo-preview-row">
+                        <img src={logoDataURL} alt="Logo" className="logo-thumb" />
+                        <div style={{ flex: 1 }}>
+                          <div className="customize-row">
+                            <span className="customize-label">Size</span>
+                            <span className="customize-value">{custom.logoSizePercent}%</span>
+                          </div>
+                          <input type="range" min="10" max="35" value={custom.logoSizePercent}
+                            onChange={e => updateCustom('logoSizePercent', Number(e.target.value))} />
+                        </div>
+                        <button className="btn btn-ghost btn-sm btn-icon" onClick={() => setLogoDataURL(null)}>✕</button>
+                      </div>
+                    ) : (
+                      <button className="btn btn-secondary btn-sm btn-full" onClick={() => logoInputRef.current?.click()}>
+                        + Add Logo
+                      </button>
+                    )}
+                    <input ref={logoInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleLogoFile} />
+                    {logoDataURL && (custom.ecl === 'L' || custom.ecl === 'M') && (
+                      <div className="alert alert-warning" style={{ marginTop: 6, fontSize: '0.72rem' }}>
+                        Use ECL Q or H with a logo for reliable scanning.
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
             </div>
 
-            {quality ? (
-              <>
-                <div className="quality-bar-track">
-                  <div className="quality-bar-fill" style={{ width: `${quality.score}%`, background: qualityBarColor }} />
+            {/* Upload info */}
+            {uploadService && (
+              <div className="panel-section">
+                <div className="alert alert-success" style={{ fontSize: '0.75rem' }}>
+                  Image hosted via <strong>{uploadService}</strong>. Do not upload sensitive content to third-party APIs.
                 </div>
-                <div className="quality-issues">
-                  {quality.issues.length === 0 ? (
-                    <div className="quality-ok">
-                      <span>✓</span> Likely to scan reliably
-                    </div>
-                  ) : (
-                    quality.issues.map((issue, i) => (
-                      <div key={i} className={`quality-issue ${issue.level}`}>
-                        <div className="quality-issue-dot" />
-                        <span>{issue.text}</span>
-                      </div>
-                    ))
-                  )}
-                </div>
-              </>
-            ) : (
-              <div style={{ fontSize: '0.78rem', color: 'var(--color-text-muted)', textAlign: 'center', padding: '1.5rem 0' }}>
-                Generate a QR code to see quality analysis
               </div>
             )}
+
+          </div>
+        </div>
+
+        {/* ─── CENTER: Experience Panel ─── */}
+        <div className={`panel-center ${mobileStep !== 2 ? 'step-hidden' : ''}`}>
+          {/* Tab bar — desktop only (CSS hides on mobile) */}
+          <div className="center-tab-bar">
+            {CENTER_TABS.map((tab, i) => (
+              <button
+                key={tab}
+                className={`center-tab ${centerTab === i ? 'active' : ''}`}
+                onClick={() => setCenterTab(i)}
+              >
+                {tab}
+              </button>
+            ))}
           </div>
 
-          {/* Upload service info */}
-          {uploadService && (
-            <div className="actions-section" style={{ borderBottom: 'none' }}>
-              <div className="alert alert-success" style={{ fontSize: '0.75rem' }}>
-                Image uploaded via <strong>{uploadService}</strong>
+          {/* Tab 0: QR Code */}
+          {centerTab === 0 && (
+            <div className="center-tab-content">
+              <div className="qr-stage">
+                {qrName && <div className="qr-name-display">{qrName}</div>}
+
+                <div className="qr-artifact-wrap">
+                  {isGenerating || isUploading ? (
+                    <div className="qr-generating-state">
+                      <div className="spinner" />
+                      <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                        {isUploading ? 'Uploading image…' : 'Generating…'}
+                      </span>
+                    </div>
+                  ) : qrDataURL ? (
+                    <img
+                      src={qrDataURL}
+                      alt="Generated QR Code"
+                      className="qr-artifact"
+                      style={{ width: Math.min(custom.width, 300), height: Math.min(custom.width, 300) }}
+                    />
+                  ) : (
+                    <div className="qr-empty-state">
+                      <EmptyQRGrid />
+                      <div className="qr-empty-title">No QR code yet</div>
+                      <div className="qr-empty-sub">Fill in the fields in the Build panel to generate your QR code</div>
+                    </div>
+                  )}
+                </div>
+
+                {qrContent && (
+                  <div className="qr-content-snippet">
+                    <div className="qr-content-label">Encoded content</div>
+                    <div className="qr-content-value" title={qrContent}>{displayContent}</div>
+                  </div>
+                )}
               </div>
             </div>
           )}
 
-          {/* View Library link */}
-          {savedId && (
-            <div className="actions-section" style={{ borderBottom: 'none' }}>
-              <button className="btn btn-ghost btn-full btn-sm" onClick={() => navigate('/library')}>
-                View in Library →
-              </button>
+          {/* Tab 1: Scan Journey */}
+          {centerTab === 1 && (
+            <div className="center-tab-content" style={{ padding: 0 }}>
+              <ScanJourneySimulator qrDataURL={qrDataURL} qrContent={qrContent} />
             </div>
           )}
 
-          {/* Security note (always honest) */}
-          <div style={{ padding: '1rem 1.25rem', marginTop: 'auto' }}>
-            <div style={{ fontSize: '0.68rem', color: 'var(--color-text-muted)', lineHeight: 1.5 }}>
-              <strong style={{ color: 'var(--color-text-secondary)' }}>Security note:</strong>{' '}
-              Auth is client-side only (SHA-256, sessionStorage). Suitable for demos; use server-side auth for production.
-              Image uploads via third-party APIs (ImgBB / PostImages) — do not upload sensitive content.
+          {/* Tab 2: Physical Preview */}
+          {centerTab === 2 && (
+            <div className="center-tab-content" style={{ padding: 0 }}>
+              <PhysicalPreviewLab qrDataURL={qrDataURL} />
             </div>
+          )}
+
+          {/* Tab 3: Destination */}
+          {centerTab === 3 && (
+            <div className="center-tab-content" style={{ padding: 0 }}>
+              <DestinationBuilder
+                templateId={templateId}
+                fields={fields}
+                qrContent={qrContent}
+              />
+            </div>
+          )}
+        </div>
+
+        {/* ─── RIGHT: Inspect Panel ─── */}
+        <div className={`panel-right ${mobileStep !== 3 ? 'step-hidden' : ''}`}>
+          <div className="panel-right-scroll">
+
+            {/* QR Health Center */}
+            <QRHealthCenter
+              customization={qualityCustom}
+              qrContent={qrContent}
+              hasQR={!!qrDataURL}
+            />
+
+            {/* Timeline */}
+            <div className="timeline-section">
+              <div className="panel-section-header" style={{ padding: '0 0 8px' }}>
+                <div className="panel-section-title">Project Timeline</div>
+              </div>
+
+              {timeline.length === 0 ? (
+                <div className="timeline-empty">No events yet — start building your QR code</div>
+              ) : (
+                <div className="timeline-events">
+                  {timeline.map((event, i) => (
+                    <div key={i} className="timeline-event">
+                      <div className={`timeline-dot dot-${event.type}`}>
+                        {event.type === 'saved' && '💾'}
+                        {event.type === 'created' && '✦'}
+                        {event.type === 'updated' && '↻'}
+                        {event.type === 'styled' && '🎨'}
+                        {event.type === 'tested' && '✓'}
+                        {event.type === 'downloaded' && '↓'}
+                      </div>
+                      <div className="timeline-body">
+                        <div className="timeline-label">
+                          {event.type.charAt(0).toUpperCase() + event.type.slice(1)}
+                        </div>
+                        <div className="timeline-time">{event.detail} · {timeAgo(event.ts)}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Security note */}
+            <div className="panel-section" style={{ marginTop: 'auto' }}>
+              <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)', lineHeight: 1.55 }}>
+                <strong style={{ color: 'var(--text-secondary)' }}>Security note:</strong>{' '}
+                Auth uses client-side SHA-256 + sessionStorage — demo-grade only, not production security.
+                Images uploaded via third-party APIs (ImgBB/PostImages) — do not upload sensitive content.
+              </div>
+            </div>
+
           </div>
         </div>
       </div>
+
+      {/* ─── STICKY ACTION BAR ─── */}
+      <div className={`studio-actionbar ${mobileStep !== 4 ? 'step-hidden' : ''}`}>
+        <div className="actionbar-name-wrap">
+          <input
+            className="actionbar-name"
+            placeholder={`${template.name} QR Code`}
+            value={qrName}
+            onChange={e => setQrName(e.target.value)}
+          />
+        </div>
+
+        <div className="actionbar-actions">
+          <button className="btn btn-secondary btn-sm" onClick={handleTest} disabled={!qrContent} title="Test QR in new tab">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+              <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+              <polyline points="15 3 21 3 21 9"/>
+              <line x1="10" y1="14" x2="21" y2="3"/>
+            </svg>
+            Test
+          </button>
+
+          <button className="btn btn-secondary btn-sm" onClick={handleCopy} disabled={!qrContent} title="Copy QR content">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+              <rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+            </svg>
+            Copy
+          </button>
+
+          <div className="actionbar-divider" />
+
+          <button className="btn btn-secondary btn-sm" onClick={handleDownload} disabled={!qrDataURL}>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="7 10 12 15 17 10"/>
+              <line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+            Download
+          </button>
+
+          <button
+            className={`btn btn-sm ${justSaved ? 'btn-success' : 'btn-primary'}`}
+            onClick={handleSave}
+            disabled={!qrDataURL}
+          >
+            {justSaved ? '✓ Saved!' : 'Save'}
+          </button>
+
+          {savedId && (
+            <button className="btn btn-ghost btn-sm" onClick={handleShowcase} title="Open in Showcase mode">
+              Showcase ↗
+            </button>
+          )}
+        </div>
+      </div>
+
     </div>
   );
 }
 
-/* Template field renderer */
+/* ── Template field renderer ── */
 function TemplateField({ field, value, onChange }) {
   const id = `field-${field.id}`;
 
@@ -640,8 +758,8 @@ function TemplateField({ field, value, onChange }) {
     return (
       <div className="field">
         <div className="field-row">
-          <input id={id} type="checkbox" className="field-input" checked={!!value} onChange={e => onChange(e.target.checked)}
-            style={{ width: 16, height: 16 }} />
+          <input id={id} type="checkbox" checked={!!value} onChange={e => onChange(e.target.checked)}
+            style={{ width: 15, height: 15, cursor: 'pointer', accentColor: 'var(--accent)' }} />
           <label htmlFor={id} className="field-label" style={{ marginBottom: 0, cursor: 'pointer' }}>
             {field.label}
           </label>
@@ -699,80 +817,20 @@ function TemplateField({ field, value, onChange }) {
   );
 }
 
-/* Phone preview component */
-function PhonePreview({ content, templateId, template, fields }) {
-  const getPhoneContent = () => {
-    if (!content) return <p style={{ fontSize: '0.55rem', color: '#94a3b8', textAlign: 'center' }}>Fill in fields to preview</p>;
-
-    if (templateId === 'wifi') {
-      return (
-        <div style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: '1.5rem', marginBottom: '4px' }}>📶</div>
-          <div style={{ fontSize: '0.55rem', fontWeight: 700, color: '#1e293b' }}>{fields.ssid || 'Wi-Fi Network'}</div>
-          <div style={{ fontSize: '0.5rem', color: '#64748b', marginTop: '2px' }}>Tap to connect</div>
-        </div>
-      );
-    }
-    if (templateId === 'contact') {
-      const name = `${fields.firstName || ''} ${fields.lastName || ''}`.trim() || 'Contact';
-      return (
-        <div style={{ textAlign: 'center' }}>
-          <div style={{ width: 32, height: 32, borderRadius: '50%', background: '#6366f1', color: 'white', fontSize: '0.9rem', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 4px' }}>
-            {name[0] || '?'}
-          </div>
-          <div style={{ fontSize: '0.55rem', fontWeight: 700, color: '#1e293b' }}>{name}</div>
-          {fields.org && <div style={{ fontSize: '0.48rem', color: '#64748b' }}>{fields.org}</div>}
-          {fields.phone && <div style={{ fontSize: '0.48rem', color: '#3b82f6', marginTop: '2px' }}>{fields.phone}</div>}
-        </div>
-      );
-    }
-    if (templateId === 'email') {
-      return (
-        <div style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: '1.2rem', marginBottom: '4px' }}>✉️</div>
-          <div style={{ fontSize: '0.5rem', fontWeight: 700, color: '#1e293b' }}>Email</div>
-          <div style={{ fontSize: '0.48rem', color: '#64748b', marginTop: '2px', wordBreak: 'break-all' }}>{fields.to}</div>
-          {fields.subject && <div style={{ fontSize: '0.46rem', color: '#475569', marginTop: '2px', fontStyle: 'italic' }}>{fields.subject}</div>}
-        </div>
-      );
-    }
-    if (templateId === 'phone' || templateId === 'sms') {
-      return (
-        <div style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: '1.2rem', marginBottom: '4px' }}>{templateId === 'phone' ? '📞' : '💬'}</div>
-          <div style={{ fontSize: '0.55rem', fontWeight: 700, color: '#1e293b' }}>{fields.phone || 'Phone'}</div>
-          {fields.message && <div style={{ fontSize: '0.46rem', color: '#64748b', marginTop: '2px' }}>{fields.message}</div>}
-        </div>
-      );
-    }
-    if (content.startsWith('http')) {
-      const host = (() => { try { return new URL(content).hostname; } catch { return content.slice(0, 20); } })();
-      return (
-        <div style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: '1.2rem', marginBottom: '4px' }}>🌐</div>
-          <div style={{ fontSize: '0.55rem', fontWeight: 600, color: '#1e293b' }}>{host}</div>
-          <div style={{ fontSize: '0.46rem', color: '#64748b', marginTop: '2px' }}>Opening website…</div>
-        </div>
-      );
-    }
-    // Text
-    return (
-      <div className="phone-content-text">{content.slice(0, 120)}</div>
-    );
-  };
-
-  const urlBarText = content
-    ? (content.startsWith('http') ? (() => { try { return new URL(content).hostname; } catch { return 'qr-content'; } })() : 'qr-studio.app/view')
-    : 'Fill in fields above';
-
+/* ── Empty QR grid placeholder ── */
+function EmptyQRGrid() {
+  const PATTERN = [
+    1,1,1,0,0,
+    1,0,1,0,1,
+    1,1,1,1,0,
+    0,0,0,1,1,
+    0,1,0,0,1
+  ];
   return (
-    <div className="phone-frame">
-      <div className="phone-notch" />
-      <div className="phone-screen">
-        <div className="phone-url-bar">{urlBarText}</div>
-        <div className="phone-content">{getPhoneContent()}</div>
-      </div>
-      <div className="phone-bottom-bar" />
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 10px)', gap: 3, opacity: 0.08 }}>
+      {PATTERN.map((on, i) => (
+        <div key={i} style={{ width: 10, height: 10, background: on ? 'var(--text-primary)' : 'transparent', borderRadius: 2 }} />
+      ))}
     </div>
   );
 }
