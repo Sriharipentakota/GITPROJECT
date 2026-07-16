@@ -1,0 +1,12 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "QR Studio Serve",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["serve", "-s", "build", "-l", "3008"],
+      "port": 3008,
+      "autoPort": false
+    }
+  ]
+}

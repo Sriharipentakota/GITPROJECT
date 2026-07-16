@@ -1,42 +1,35 @@
-/**
- * Main App component with routing configuration
- * Handles navigation between QR code generator and view pages
- */
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
+import React, { useState } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import Navigation from './components/Navigation';
-import QRCodeGenerator from './components/QRCodeGenerator';
-import ViewPage from './components/ViewPage';
 import Login from './components/Login';
+import ViewPage from './components/ViewPage';
 import ProtectedRoute from './components/ProtectedRoute';
+import CreatePage from './pages/CreatePage';
+import LibraryPage from './pages/LibraryPage';
+import TemplatesPage from './pages/TemplatesPage';
+import SettingsPage from './pages/SettingsPage';
 import './App.css';
 
-/**
- * App content component that handles routing logic
- * Determines whether to show navigation based on current route
- */
 function AppContent() {
-  // Get current location to determine route
   const location = useLocation();
-  const isViewPage = location.pathname === '/view';
-  const isLoginPage = location.pathname === '/login';
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  // Render login page without navigation
-  if (isLoginPage) {
+  const isStandalone = location.pathname === '/view' || location.pathname === '/login';
+
+  if (location.pathname === '/login') {
     return (
-      <div className="app standalone-app">
+      <div className="standalone-wrapper">
         <Routes>
           <Route path="/login" element={<Login />} />
         </Routes>
       </div>
-    )
+    );
   }
 
-  // Render view page without navigation (standalone mode)
-  if (isViewPage) {
+  if (location.pathname === '/view') {
     return (
-      <div className="app standalone-app">
+      <div className="standalone-wrapper">
         <Routes>
           <Route path="/view" element={<ViewPage />} />
         </Routes>
@@ -44,29 +37,37 @@ function AppContent() {
     );
   }
 
-  // Render other pages with navigation (protected)
   return (
-    <div className="app">
-      <Navigation />
-      <div className="main-content">
+    <div className={`app-shell ${sidebarOpen ? 'sidebar-open' : ''}`}>
+      {/* Mobile overlay */}
+      {sidebarOpen && (
+        <div className="sidebar-overlay" onClick={() => setSidebarOpen(false)} />
+      )}
+
+      <Navigation sidebarOpen={sidebarOpen} onToggleSidebar={() => setSidebarOpen(o => !o)} />
+
+      <div className="app-main">
         <Routes>
-          <Route 
-            path="/" 
-            element={
-              <ProtectedRoute>
-                <QRCodeGenerator />
-              </ProtectedRoute>
-            } 
-          />
+          <Route path="/" element={<Navigate to="/create" replace />} />
+          <Route path="/create" element={
+            <ProtectedRoute><CreatePage /></ProtectedRoute>
+          } />
+          <Route path="/library" element={
+            <ProtectedRoute><LibraryPage /></ProtectedRoute>
+          } />
+          <Route path="/templates" element={
+            <ProtectedRoute><TemplatesPage /></ProtectedRoute>
+          } />
+          <Route path="/settings" element={
+            <ProtectedRoute><SettingsPage /></ProtectedRoute>
+          } />
+          <Route path="*" element={<Navigate to="/create" replace />} />
         </Routes>
       </div>
     </div>
   );
 }
 
-/**
- * Main App component with router wrapper
- */
 function App() {
   return (
     <Router>
