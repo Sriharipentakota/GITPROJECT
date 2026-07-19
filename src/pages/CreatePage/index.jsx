@@ -14,7 +14,12 @@ import PhysicalPreviewLab from '../../components/Studio/PhysicalPreviewLab';
 import DestinationBuilder from '../../components/Studio/DestinationBuilder';
 
 const CENTER_TABS = ['QR Code', 'Journey', 'Physical', 'Destination'];
-const MOBILE_STEPS = ['Intent', 'Build', 'Preview', 'Inspect', 'Save'];
+const MOBILE_STEPS = [
+  { label: 'Home',    icon: '⊞' },
+  { label: 'Build',   icon: '✏' },
+  { label: 'Preview', icon: '◉' },
+  { label: 'Inspect', icon: '✦' },
+];
 
 function timeAgo(ts) {
   if (!ts) return '';
@@ -336,17 +341,100 @@ function CreatePage() {
       <div className="mobile-step-nav">
         {MOBILE_STEPS.map((step, i) => (
           <button
-            key={step}
+            key={step.label}
             className={`mobile-step-btn ${mobileStep === i ? 'active' : ''}`}
             onClick={() => setMobileStep(i)}
           >
-            {step}
+            <span className="mobile-step-icon">{step.icon}</span>
+            <span className="mobile-step-label">{step.label}</span>
           </button>
         ))}
       </div>
 
       {/* 3-panel workspace */}
       <div className="studio-workspace">
+
+        {/* ─── MOBILE HOME (step 0 on mobile only) ─── */}
+        <div className={`panel-mobile-home ${mobileStep !== 0 ? 'step-hidden' : ''}`}>
+          <div className="mobile-home-scroll">
+
+            {/* Intent card */}
+            <div className="mobile-home-card">
+              <div className="mobile-home-card-label">Your Goal</div>
+              {intent ? (
+                <div className="mobile-intent-display">
+                  <div className="mobile-intent-icon" style={{ background: intent.accentColor + '20', border: `1px solid ${intent.accentColor}30` }}>
+                    {intent.icon}
+                  </div>
+                  <div className="mobile-intent-info">
+                    <div className="mobile-intent-name">{intent.label}</div>
+                    <div className="mobile-intent-desc">{intent.description}</div>
+                  </div>
+                  <button className="btn btn-ghost btn-sm" onClick={() => setShowIntentScreen(true)}>Change</button>
+                </div>
+              ) : (
+                <button className="mobile-set-intent-btn" onClick={() => setShowIntentScreen(true)}>
+                  <span>🎯</span>
+                  <span>Set a goal — auto-configure the studio for your use case</span>
+                  <span className="mobile-set-intent-arrow">→</span>
+                </button>
+              )}
+            </div>
+
+            {/* Template quick-pick */}
+            <div className="mobile-home-card">
+              <div className="mobile-home-card-label">QR Type</div>
+              <div className="mobile-template-display">
+                <span className="mobile-template-icon">{template.icon}</span>
+                <div className="mobile-template-info">
+                  <div className="mobile-template-name">{template.name}</div>
+                  <div className="mobile-template-desc">{template.description}</div>
+                </div>
+                <button className="btn btn-ghost btn-sm" onClick={() => setMobileStep(1)}>Change →</button>
+              </div>
+            </div>
+
+            {/* QR preview or empty state */}
+            {qrDataURL ? (
+              <div className="mobile-home-card mobile-home-qr-card">
+                <div className="mobile-home-card-label">Generated QR Code</div>
+                <div className="mobile-home-qr-row">
+                  <img src={qrDataURL} alt="Generated QR Code" className="mobile-home-qr-thumb" />
+                  <div className="mobile-home-qr-actions">
+                    <div className="mobile-home-qr-name">{qrName || `${template.name} QR`}</div>
+                    {qrContent && (
+                      <div className="mobile-home-qr-content" title={qrContent}>{displayContent}</div>
+                    )}
+                    <button className="btn btn-primary btn-sm btn-full" onClick={handleDownload} style={{ marginTop: 6 }}>
+                      ↓ Download PNG
+                    </button>
+                    <button className="btn btn-secondary btn-sm btn-full" onClick={handleTest} disabled={!qrContent} style={{ marginTop: 4 }}>
+                      Test QR ↗
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="mobile-home-empty">
+                <div className="mobile-home-empty-icon"><EmptyQRGrid /></div>
+                <div className="mobile-home-empty-title">No QR code yet</div>
+                <div className="mobile-home-empty-sub">Go to Build, fill in your content, and your QR will appear here</div>
+              </div>
+            )}
+
+            {/* Primary CTA */}
+            <button className="mobile-home-cta" onClick={() => setMobileStep(1)}>
+              {qrDataURL ? '✏ Edit QR Code' : '✏ Build QR Code'} →
+            </button>
+
+            {savedId && (
+              <button className="btn btn-ghost btn-sm btn-full" onClick={handleShowcase} style={{ marginTop: 4 }}>
+                Showcase ↗
+              </button>
+            )}
+
+          </div>
+        </div>
 
         {/* ─── LEFT: Build Panel ─── */}
         <div className={`panel-left ${mobileStep !== 1 ? 'step-hidden' : ''}`}>
@@ -580,6 +668,19 @@ function CreatePage() {
             ))}
           </div>
 
+          {/* Mobile sub-tabs — replaces the hidden desktop tab bar on mobile */}
+          <div className="mobile-center-tabs">
+            {CENTER_TABS.map((tab, i) => (
+              <button
+                key={tab}
+                className={`mobile-center-tab-btn ${centerTab === i ? 'active' : ''}`}
+                onClick={() => setCenterTab(i)}
+              >
+                {tab}
+              </button>
+            ))}
+          </div>
+
           {/* Tab 0: QR Code */}
           {centerTab === 0 && (
             <div className="center-tab-content">
@@ -605,7 +706,7 @@ function CreatePage() {
                     <div className="qr-empty-state">
                       <EmptyQRGrid />
                       <div className="qr-empty-title">No QR code yet</div>
-                      <div className="qr-empty-sub">Fill in the fields in the Build panel to generate your QR code</div>
+                      <div className="qr-empty-sub">Fill in the Build tab to generate your QR code</div>
                     </div>
                   )}
                 </div>
@@ -616,6 +717,19 @@ function CreatePage() {
                     <div className="qr-content-value" title={qrContent}>{displayContent}</div>
                   </div>
                 )}
+
+                {/* Mobile quick actions — shown below QR on mobile only */}
+                <div className="mobile-qr-quick-actions">
+                  <button className="btn btn-secondary btn-sm" onClick={handleTest} disabled={!qrContent}>
+                    Test ↗
+                  </button>
+                  <button className="btn btn-secondary btn-sm" onClick={handleCopy} disabled={!qrContent}>
+                    Copy
+                  </button>
+                  <button className="btn btn-primary btn-sm" onClick={handleDownload} disabled={!qrDataURL}>
+                    ↓ Download
+                  </button>
+                </div>
               </div>
             </div>
           )}
@@ -702,8 +816,8 @@ function CreatePage() {
         </div>
       </div>
 
-      {/* ─── STICKY ACTION BAR ─── */}
-      <div className={`studio-actionbar ${mobileStep !== 4 ? 'step-hidden' : ''}`}>
+      {/* ─── STICKY ACTION BAR — always visible, provides save/download from any step ─── */}
+      <div className="studio-actionbar">
         <div className="actionbar-name-wrap">
           <input
             className="actionbar-name"
