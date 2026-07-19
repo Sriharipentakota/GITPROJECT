@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { TEMPLATES, STYLE_PRESETS, ECL_OPTIONS, DEFAULT_CUSTOMIZATION, FILE_SIZE_LIMITS } from '../../constants';
 import { generateQRCodeWithLogo, calculateQualityScore } from '../../utils/qrUtils';
 import { uploadToCloudStorage } from '../../services/imageUploadService';
-import { generateViewUrl, triggerFileDownload } from '../../utils/urlUtils';
+import { generateViewUrl, triggerFileDownload, openUrlInNewTab } from '../../utils/urlUtils';
 import { useQRLibrary } from '../../hooks/useQRLibrary';
 import { isValidImageFile, isValidFileSize } from '../../utils/validation';
 import { formatFileSize } from '../../utils/fileUtils';
@@ -261,18 +261,29 @@ function CreatePage() {
 
   function handleTest() {
     if (!qrContent) return;
-    if (qrContent.startsWith('http') || qrContent.startsWith('mailto:') || qrContent.startsWith('tel:') || qrContent.startsWith('smsto:')) {
-      window.open(qrContent, '_blank', 'noopener,noreferrer');
-    } else {
-      const viewUrl = generateViewUrl(qrContent);
-      window.open(viewUrl, '_blank', 'noopener,noreferrer');
-    }
-    addTimelineEvent('tested', 'Opened in new tab');
+    const isDirectUrl =
+      qrContent.startsWith('http') ||
+      qrContent.startsWith('mailto:') ||
+      qrContent.startsWith('tel:') ||
+      qrContent.startsWith('smsto:');
+    const url = isDirectUrl ? qrContent : generateViewUrl(qrContent);
+    openUrlInNewTab(url);
+    addTimelineEvent('tested', 'Opened in browser');
   }
 
   function handleCopy() {
     if (!qrContent) return;
-    navigator.clipboard.writeText(qrContent).catch(() => {});
+    navigator.clipboard.writeText(qrContent).catch(() => {
+      // Fallback for WebView environments where clipboard API may be blocked
+      const el = document.createElement('textarea');
+      el.value = qrContent;
+      el.style.cssText = 'position:fixed;opacity:0;pointer-events:none';
+      document.body.appendChild(el);
+      el.focus();
+      el.select();
+      try { document.execCommand('copy'); } catch {}
+      document.body.removeChild(el);
+    });
   }
 
   function handleShowcase() {

@@ -1,98 +1,95 @@
-/**
- * URL utility functions for handling URL generation and manipulation
- */
+import { Capacitor } from '@capacitor/core';
+import { Browser } from '@capacitor/browser';
+import { Filesystem, Directory } from '@capacitor/filesystem';
+import { Share } from '@capacitor/share';
 
 /**
- * Gets the deployed URL based on environment configuration
- * @returns {string} - The appropriate base URL for the application
+ * Gets the deployed URL for generating QR content.
+ * In the APK the QR codes still point to the hosted web viewer so they work
+ * when scanned by any camera — not just inside the app.
  */
 export const getDeployedUrl = () => {
-  // Check if REACT_APP_DEPLOYED_URL is set in environment
   if (process.env.REACT_APP_DEPLOYED_URL) {
     return process.env.REACT_APP_DEPLOYED_URL;
   }
-  
-  // Use production URL if in production or not on localhost
-  if (process.env.NODE_ENV === 'production' || window.location.hostname !== 'localhost') {
-    return 'https://hari-qrgenerator.netlify.app';
-  }
-  
-  // Use current origin for development
-  return window.location.origin;
+  return 'https://hari-qrgenerator.netlify.app';
 };
 
 /**
- * Generates a view URL for text content
- * @param {string} text - The text content to encode in URL
- * @returns {string} - Complete URL for viewing the text content
+ * Generates a view URL for plain-text QR content.
  */
 export const generateViewUrl = (text) => {
-  // Get the base deployed URL
   const baseUrl = getDeployedUrl();
-  
-  // Encode the text content for URL parameter
-  const encodedContent = encodeURIComponent(text);
-  
-  // Return complete URL with encoded content parameter
-  return `${baseUrl}/view?content=${encodedContent}`;
+  return `${baseUrl}/view?content=${encodeURIComponent(text)}`;
 };
 
 /**
- * Opens a URL in a new browser tab with focus
- * @param {string} url - The URL to open
- * @returns {boolean} - True if window was opened successfully, false otherwise
+ * Opens a URL externally.
+ * On Android (APK) uses Capacitor Browser plugin so the system browser opens.
+ * On web falls back to window.open.
  */
-export const openUrlInNewTab = (url) => {
-  // Check if URL is provided
-  if (!url) {
-    return false;
-  }
-  
+export const openUrlInNewTab = async (url) => {
+  if (!url) return false;
   try {
-    // Open URL in new window/tab
-    const newWindow = window.open(url, '_blank');
-    
-    // Focus the new window if it was created successfully
-    if (newWindow) {
-      newWindow.focus();
+    if (Capacitor.isNativePlatform()) {
+      await Browser.open({ url });
       return true;
     }
-    
+    const w = window.open(url, '_blank', 'noopener,noreferrer');
+    if (w) { w.focus(); return true; }
     return false;
   } catch (error) {
-    // Handle popup blocker or other errors
-    console.error('Failed to open URL in new tab:', error);
+    console.error('Failed to open URL:', error);
     return false;
   }
 };
 
 /**
- * Triggers a file download with specified data URL and filename
- * @param {string} dataURL - The data URL of the file to download
- * @param {string} filename - The name for the downloaded file
+ * Downloads or saves a QR code PNG.
+ *
+ * - Native (APK): writes to the device's cache directory then opens the
+ *   system share sheet so the user can save it to Photos/Files/Drive/etc.
+ *   No WRITE_EXTERNAL_STORAGE permission needed on Android 10+.
+ * - Web: triggers the browser's built-in <a download> flow.
  */
-export const triggerFileDownload = (dataURL, filename) => {
-  // Check if required parameters are provided
+export const triggerFileDownload = async (dataURL, filename) => {
   if (!dataURL || !filename) {
     console.error('Data URL and filename are required for download');
     return;
   }
-  
+
+  if (Capacitor.isNativePlatform()) {
+    try {
+      // Strip the data URI header to get raw base64
+      const base64Data = dataURL.includes(',') ? dataURL.split(',')[1] : dataURL;
+
+      // Write to cache (no storage permission required)
+      const result = await Filesystem.writeFile({
+        path: filename,
+        data: base64Data,
+        directory: Directory.Cache,
+        recursive: true,
+      });
+
+      // Open the system share sheet so the user can save where they want
+      await Share.share({
+        title: filename,
+        url: result.uri,
+        dialogTitle: 'Save or share your QR code',
+      });
+    } catch (err) {
+      console.error('Native save failed:', err);
+    }
+    return;
+  }
+
+  // Web fallback — standard <a download> click
   try {
-    // Create a temporary anchor element
     const link = document.createElement('a');
-    
-    // Set download attributes
     link.href = dataURL;
     link.download = filename;
-    
-    // Temporarily add to DOM
     document.body.appendChild(link);
-    
-    // Trigger the download
     link.click();
-    
-    // Clean up by removing the element
     document.body.removeChild(link);
   } catch (error) {
     console.error('Failed to trigger file download:', error);
