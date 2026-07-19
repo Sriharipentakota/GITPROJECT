@@ -49,7 +49,8 @@ export const openUrlInNewTab = async (url) => {
  *
  * - Native (APK): writes to the device's cache directory then opens the
  *   system share sheet so the user can save it to Photos/Files/Drive/etc.
- *   No WRITE_EXTERNAL_STORAGE permission needed on Android 10+.
+ *   Uses `files` (not `url`) in Share.share — `url` is for web URLs only;
+ *   local file URIs must go through the `files` array.
  * - Web: triggers the browser's built-in <a download> flow.
  */
 export const triggerFileDownload = async (dataURL, filename) => {
@@ -63,22 +64,28 @@ export const triggerFileDownload = async (dataURL, filename) => {
       // Strip the data URI header to get raw base64
       const base64Data = dataURL.includes(',') ? dataURL.split(',')[1] : dataURL;
 
-      // Write to cache (no storage permission required)
+      // Sanitize filename — spaces and special chars break Android file paths
+      const safeFilename = filename.replace(/[^a-zA-Z0-9._-]/g, '_');
+
+      // Write to cache — no WRITE_EXTERNAL_STORAGE permission needed on Android 10+
       const result = await Filesystem.writeFile({
-        path: filename,
+        path: safeFilename,
         data: base64Data,
         directory: Directory.Cache,
         recursive: true,
       });
 
-      // Open the system share sheet so the user can save where they want
+      // `files` (not `url`) is required for sharing local file:// URIs.
+      // The Share plugin converts them to content:// via FileProvider automatically.
       await Share.share({
-        title: filename,
-        url: result.uri,
-        dialogTitle: 'Save or share your QR code',
+        title: safeFilename,
+        files: [result.uri],
+        dialogTitle: 'Save your QR code',
       });
     } catch (err) {
       console.error('Native save failed:', err);
+      // Surface the error visibly — console is invisible to the user on a real device
+      window.alert('Could not save QR code: ' + (err.message || 'unknown error'));
     }
     return;
   }
