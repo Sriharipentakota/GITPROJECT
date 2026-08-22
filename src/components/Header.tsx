@@ -1,5 +1,6 @@
 import { PATHS } from '../data/paths';
 import type { Progress, SaveStatus, AppView } from '../types';
+import { useSoundEnabled, setSoundEnabled } from '../hooks/useImmersiveFeedback';
 
 interface Props {
   theme: string;
@@ -24,6 +25,7 @@ export default function Header({
   const learned   = Object.values(progress).filter(p => p.learned).length;
   const practiced = Object.values(progress).filter(p => p.total > 0).length;
   const currentPath = PATHS.find(p => p.id === pathId);
+  const soundEnabled = useSoundEnabled();
 
   return (
     <header className="header">
@@ -78,6 +80,14 @@ export default function Header({
             <span className="save-indicator saved">✓ Saved</span>
           )}
         </div>
+        <button
+          className={`sound-toggle-btn${soundEnabled ? '' : ' muted'}`}
+          onClick={() => setSoundEnabled(!soundEnabled)}
+          title={soundEnabled ? 'Mute UI sounds' : 'Unmute UI sounds'}
+          aria-pressed={soundEnabled}
+        >
+          {soundEnabled ? '🔊' : '🔇'}
+        </button>
         <button className="theme-btn" onClick={onToggleTheme} title="Toggle light / dark theme">
           {theme === 'dark' ? '☀️' : '🌙'}
         </button>

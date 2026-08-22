@@ -1,5 +1,22 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 
+/* Registering --ac/--ac2 as typed <color> custom properties is what makes them
+   *animatable* — without @property, a custom property is just an opaque string
+   swap (instant, no transition possible) even if something using it has a
+   `transition: background-color` etc. With it registered, the browser
+   interpolates the color itself frame-by-frame, so switching learning tracks
+   produces a genuine smooth color morph everywhere --ac is used at once. */
+@property --ac {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #f59e0b;
+}
+@property --ac2 {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #d97706;
+}
+
 html, body {
   width: 100%;
   overflow-x: hidden;
@@ -37,11 +54,14 @@ a, button, input, textarea, select, [role="button"] {
   --bd:  #222640;
   --bd2: #2c3154;
 
-  /* Accent — electric amber */
+  /* Accent — dynamic per learning track (default: JavaScript's electric amber).
+     --ac-glow/--ac-ring derive from --ac via color-mix() so every track
+     automatically gets correctly-tinted glows/rings with zero duplication —
+     changing --ac is the single source of truth for the whole accent system. */
   --ac:      #f59e0b;
   --ac2:     #d97706;
-  --ac-glow: rgba(245,158,11,0.10);
-  --ac-ring: rgba(245,158,11,0.22);
+  --ac-glow: color-mix(in srgb, var(--ac) 10%, transparent);
+  --ac-ring: color-mix(in srgb, var(--ac) 22%, transparent);
 
   /* Text */
   --tx: #edf0fa;
@@ -91,8 +111,6 @@ a, button, input, textarea, select, [role="button"] {
   --dm:  #8b93b0;
   --ac:  #d97706;
   --ac2: #b45309;
-  --ac-glow: rgba(217,119,6,0.08);
-  --ac-ring: rgba(217,119,6,0.18);
   --gn-glow: rgba(34,197,94,0.09);
   --rd-glow: rgba(239,68,68,0.09);
   --shadow-xs:   0 1px 3px rgba(0,0,0,0.08);
@@ -100,6 +118,23 @@ a, button, input, textarea, select, [role="button"] {
   --shadow-md:   0 6px 24px rgba(0,0,0,0.10);
   --shadow-glow: 0 0 20px rgba(217,119,6,0.08);
 }
+
+/* ── Dynamic per-track theme ──────────────────────────────────────────────
+   The active learning path re-tints the whole app's accent color (JS=amber,
+   Playwright=green, Tosca=blue) via a `data-track` attribute on the app root.
+   Because --ac/--ac2 are registered above with @property, and .app declares
+   `transition: --ac .5s, --ac2 .5s` (see App.css), switching tracks produces
+   a genuine animated color morph across every element using var(--ac) —
+   buttons, active nav states, progress bars, glows — all at once, with zero
+   per-component code. --ac-glow/--ac-ring above already derive from --ac via
+   color-mix(), so they follow automatically without being restated here. */
+[data-track="javascript"] { --ac: #f59e0b; --ac2: #d97706; }
+[data-track="playwright"] { --ac: #22c55e; --ac2: #16a34a; }
+[data-track="tosca"]      { --ac: #3b82f6; --ac2: #2563eb; }
+
+[data-theme="light"][data-track="javascript"] { --ac: #d97706; --ac2: #b45309; }
+[data-theme="light"][data-track="playwright"] { --ac: #15803d; --ac2: #166534; }
+[data-theme="light"][data-track="tosca"]      { --ac: #1d4ed8; --ac2: #1e40af; }
 
 body {
   font-family: var(--fn);
@@ -145,4 +180,38 @@ p code, li code {
   border-radius: var(--r4);
   font-size: 13px;
   border: 1px solid var(--bd);
+}
+
+/* ── View Transitions ─────────────────────────────────────────────────────
+   `.main` (see App.css) is given `view-transition-name: main-content`, which
+   splits the page into two independently-animated snapshot groups: the
+   named "main-content" region (the actual view being switched — Dashboard,
+   Learn, Skill Map, etc.) and the implicit "root" group covering everything
+   else (header, sidebar), which stays static since it didn't change. Only
+   the content region gets this soft fade + scale morph — a fully native,
+   GPU-composited transition with no JS animation loop at all.
+   Deliberately NOT using filter: blur() here — combined with transform+opacity
+   during a live snapshot capture, blur is a known source of compositing
+   artifacts (tiling/flicker) on some GPU/browser combinations. Fade+scale
+   alone is materially safer while still reading as a deliberate morph. */
+@media (prefers-reduced-motion: no-preference) {
+  ::view-transition-old(main-content),
+  ::view-transition-new(main-content) {
+    animation-duration: 0.32s;
+    animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  ::view-transition-old(main-content) {
+    animation-name: vt-content-out;
+  }
+  ::view-transition-new(main-content) {
+    animation-name: vt-content-in;
+  }
+}
+@keyframes vt-content-out {
+  from { opacity: 1; transform: scale(1) translateY(0); }
+  to   { opacity: 0; transform: scale(0.985) translateY(6px); }
+}
+@keyframes vt-content-in {
+  from { opacity: 0; transform: scale(1.015) translateY(-6px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
 }

@@ -9,8 +9,13 @@ import type { Question, Task, SaveStatus, InProgressState, Progress, AppView } f
 import { useProgress } from './hooks/useProgress';
 import { useSession } from './hooks/useSession';
 import useMissions from './hooks/useMissions';
+import { useImmersiveFeedback } from './hooks/useImmersiveFeedback';
+import { useConfetti } from './hooks/useConfetti';
+import { withViewTransition } from './utils/viewTransition';
+import { recordReviewed } from './utils/reviewClock';
 import Header from './components/Header';
 import Sidebar from './components/Sidebar';
+import ConfettiOverlay from './components/ConfettiOverlay';
 import './App.css';
 
 type Mode = 'learn' | 'quiz' | 'tasks';
@@ -61,6 +66,8 @@ export default function App() {
   const session = useSession(pathId);
   const { progress, markLearned, saveQuiz } = useProgress(pathId);
   const { missionProgress, startMission, completeTask: completeMissionTask, completeMission } = useMissions();
+  const feedback = useImmersiveFeedback();
+  const confetti = useConfetti();
 
   const [appView, setAppView] = useState<AppView>('dashboard');
   const [selectedMissionId, setSelectedMissionId] = useState<string | null>(null);
@@ -143,43 +150,57 @@ export default function App() {
   );
 
   const handleSwitchPath = useCallback((newPathId: string) => {
-    localStorage.setItem('jml_path', newPathId);
-    setQuestionsRaw({});
-    setIsQuestionsLoaded(false);
-    setPathId(newPathId);
-    const newConcepts = newPathId === 'playwright' ? PLAYWRIGHT_CONCEPTS : newPathId === 'tosca' ? TOSCA_CONCEPTS : CONCEPTS;
-    setConceptId(newConcepts[0].id);
-    setMode('learn');
-    setAppView('learn');
-    setSidebarOpen(false);
-  }, []);
-
-  const handleSelectConcept = useCallback((id: string) => {
-    setConceptId(id);
-    setMode('learn');
-    setAppView('learn');
-    setSidebarOpen(false);
-    session.setLastConcept(id, 'learn');
-  }, [session]);
-
-  const handleGoToLearn = useCallback((cId: string, pId: string) => {
-    if (pId !== pathId) {
-      localStorage.setItem('jml_path', pId);
+    feedback.playTick();
+    withViewTransition(() => {
+      localStorage.setItem('jml_path', newPathId);
       setQuestionsRaw({});
       setIsQuestionsLoaded(false);
-      setPathId(pId);
-    }
-    setConceptId(cId);
-    setMode('learn');
-    setAppView('learn');
-    setSidebarOpen(false);
-  }, [pathId]);
+      setPathId(newPathId);
+      const newConcepts = newPathId === 'playwright' ? PLAYWRIGHT_CONCEPTS : newPathId === 'tosca' ? TOSCA_CONCEPTS : CONCEPTS;
+      setConceptId(newConcepts[0].id);
+      setMode('learn');
+      setAppView('learn');
+      setSidebarOpen(false);
+    }, 'switch-path');
+  }, [feedback]);
+
+  const handleSelectConcept = useCallback((id: string) => {
+    feedback.playTick();
+    recordReviewed(pathId, id);
+    withViewTransition(() => {
+      setConceptId(id);
+      setMode('learn');
+      setAppView('learn');
+      setSidebarOpen(false);
+      session.setLastConcept(id, 'learn');
+    }, 'select-concept');
+  }, [session, pathId, feedback]);
+
+  const handleGoToLearn = useCallback((cId: string, pId: string) => {
+    feedback.playTick();
+    recordReviewed(pId, cId);
+    withViewTransition(() => {
+      if (pId !== pathId) {
+        localStorage.setItem('jml_path', pId);
+        setQuestionsRaw({});
+        setIsQuestionsLoaded(false);
+        setPathId(pId);
+      }
+      setConceptId(cId);
+      setMode('learn');
+      setAppView('learn');
+      setSidebarOpen(false);
+    }, 'go-to-learn');
+  }, [pathId, feedback]);
 
   const handleSetAppView = useCallback((view: AppView) => {
-    setAppView(view);
-    if (view !== 'missions') setSelectedMissionId(null);
-    setSidebarOpen(false);
-  }, []);
+    feedback.playTick();
+    withViewTransition(() => {
+      setAppView(view);
+      if (view !== 'missions') setSelectedMissionId(null);
+      setSidebarOpen(false);
+    }, 'app-view');
+  }, [feedback]);
 
   const handleSearchNavigate = useCallback((type: string, id: string, pId?: string) => {
     setSearchOpen(false);
@@ -211,7 +232,16 @@ export default function App() {
   const handleComplete = useCallback((answers: (number | null)[], score: number) => {
     saveQuiz(conceptId, answers, score);
     session.clearInProgress(conceptId);
-  }, [conceptId, saveQuiz, session]);
+    recordReviewed(pathId, conceptId);
+    const pct = answers.length > 0 ? score / answers.length : 0;
+    if (pct >= 0.6) feedback.playSuccess(); else feedback.playError();
+  }, [conceptId, saveQuiz, session, pathId, feedback]);
+
+  const handleCompleteMission = useCallback((missionId: string, score: number) => {
+    completeMission(missionId, score);
+    feedback.playSuccess();
+    confetti.fire();
+  }, [completeMission, feedback, confetti]);
 
   const handleSaveInProgress = useCallback((state: InProgressState) => {
     setSaveStatus('saving');
@@ -237,19 +267,19 @@ export default function App() {
   const showContent = mode !== 'quiz' || isQuestionsLoaded;
 
   return (
-    <div className="app" data-theme={theme}>
+    <div className="app" data-theme={theme} data-track={pathId}>
       <Header
         theme={theme}
-        onToggleTheme={() => setTheme(t => t === 'dark' ? 'light' : 'dark')}
+        onToggleTheme={() => { feedback.playTick(); setTheme(t => t === 'dark' ? 'light' : 'dark'); }}
         progress={progress}
         conceptCount={concepts.length}
         saveStatus={saveStatus}
         pathId={pathId}
         totalQs={totalQs}
         onSwitchPath={handleSwitchPath}
-        onMenuToggle={() => setSidebarOpen(o => !o)}
+        onMenuToggle={() => { feedback.playSwoosh(); setSidebarOpen(o => !o); }}
         sidebarOpen={sidebarOpen}
-        onOpenSearch={() => setSearchOpen(true)}
+        onOpenSearch={() => { feedback.playTick(); setSearchOpen(true); }}
         appView={appView}
       />
       <div className="layout">
@@ -301,7 +331,7 @@ export default function App() {
                 onBack={() => setSelectedMissionId(null)}
                 onStartMission={startMission}
                 onCompleteTask={completeMissionTask}
-                onCompleteMission={completeMission}
+                onCompleteMission={handleCompleteMission}
               />
             )}
             {appView === 'analytics' && (
@@ -323,7 +353,7 @@ export default function App() {
                   onStartQuiz={handleStartQuiz}
                   onStartTasks={tasks.length > 0 ? handleStartTasks : undefined}
                   isLearned={progress[conceptId]?.learned ?? false}
-                  onMarkLearned={() => markLearned(conceptId)}
+                  onMarkLearned={() => { feedback.playChime(); markLearned(conceptId); }}
                   questionCount={questions.length}
                   taskCount={tasks.length}
                   hasInProgress={!!session.inProgress[conceptId]}
@@ -388,6 +418,9 @@ export default function App() {
           />
         </Suspense>
       )}
+
+      {/* Fixed-position canvas for mission-complete confetti bursts */}
+      <ConfettiOverlay canvasRef={confetti.canvasRef} active={confetti.active} />
     </div>
   );
 }

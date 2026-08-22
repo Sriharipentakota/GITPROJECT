@@ -68,7 +68,8 @@ export default function Sidebar({
                 aria-current={pathId === p.id ? 'page' : undefined}
                 title={p.desc}
               >
-                {p.icon} {p.label}
+                <span className="sidebar-path-icon">{p.icon}</span>
+                <span className="sidebar-path-label">{p.label}</span>
               </button>
             ))}
           </div>

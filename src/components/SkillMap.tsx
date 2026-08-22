@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { SKILLS } from '../data/skillMap';
 import type { Skill } from '../data/skillMap';
 import type { Progress } from '../types';
+import SkillGraphCanvas, { type GraphNode, type GraphEdge } from './SkillGraphCanvas';
 
 interface Props {
   allProgress: Record<string, Progress>;
@@ -52,11 +53,35 @@ function getProgInfo(skill: Skill, allProgress: Record<string, Progress>) {
 export default function SkillMap({ allProgress, onNavigateToLearn }: Props) {
   const [filter, setFilter] = useState<FilterPath>('all');
   const [expanded, setExpanded] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<'cards' | 'graph'>('cards');
 
   const activePaths = filter === 'all' ? PATHS : [filter as typeof PATHS[number]];
   const allStatuses = SKILLS.map(s => getStatus(s, allProgress));
   const mastered = allStatuses.filter(s => s === 'mastered').length;
   const active = allStatuses.filter(s => s === 'in-progress' || s === 'practicing').length;
+
+  // Graph data is derived, not stored — the existing card view above remains
+  // the source of truth for status/progress logic; the graph just visualizes
+  // the same `SKILLS` + `prerequisites` data as a force-directed layout.
+  const visibleSkills = useMemo(
+    () => SKILLS.filter(s => filter === 'all' || s.path === filter),
+    [filter]
+  );
+  const graphNodes: GraphNode[] = useMemo(
+    () => visibleSkills.map(s => ({ id: s.id, label: s.label, color: STATUS_COLORS[getStatus(s, allProgress)] })),
+    [visibleSkills, allProgress]
+  );
+  const graphEdges: GraphEdge[] = useMemo(() => {
+    const visibleIds = new Set(visibleSkills.map(s => s.id));
+    const edges: GraphEdge[] = [];
+    for (const s of visibleSkills) {
+      for (const pre of s.prerequisites) {
+        if (visibleIds.has(pre)) edges.push({ from: pre, to: s.id });
+      }
+    }
+    return edges;
+  }, [visibleSkills]);
+  const selectedSkill = expanded ? SKILLS.find(s => s.id === expanded) ?? null : null;
 
   const pathCompletion = (path: string) => {
     const ps = SKILLS.filter(s => s.path === path);
@@ -109,6 +134,13 @@ export default function SkillMap({ allProgress, onNavigateToLearn }: Props) {
         .skill-tag-concept:hover{background:rgba(59,130,246,.12)}
         .skill-recommended{display:flex;flex-direction:column;gap:4px}
         .skill-rec-text{font-size:12px;color:var(--ac);font-style:italic}
+        .skill-view-toggle{display:flex;gap:4px;margin-left:auto;background:var(--s2);border:1px solid var(--bd);border-radius:var(--r-full);padding:3px}
+        .skill-view-btn{padding:5px 14px;border-radius:var(--r-full);border:none;background:transparent;color:var(--mt);font-size:12px;cursor:pointer;transition:all .15s;font-family:inherit;min-height:32px}
+        .skill-view-btn.active{background:var(--ac);color:#000;font-weight:600}
+        .skill-graph-wrap{display:flex;flex-direction:column;gap:12px}
+        .skill-graph-hint{font-size:12px;color:var(--dm)}
+        .skill-graph-canvas-box{background:var(--s1);border:1px solid var(--bd);border-radius:var(--r16);padding:8px;overflow:hidden}
+        .skill-graph-detail{background:var(--s2);border:1px solid var(--bd);border-radius:var(--r12);padding:16px;border-top-width:1px}
       `}</style>
 
       {/* Summary row */}
@@ -142,10 +174,71 @@ export default function SkillMap({ allProgress, onNavigateToLearn }: Props) {
             {f === 'all' ? 'All Paths' : PATH_LABELS[f]}
           </button>
         ))}
+        <div className="skill-view-toggle">
+          <button
+            className={`skill-view-btn${viewMode === 'cards' ? ' active' : ''}`}
+            onClick={() => setViewMode('cards')}
+          >
+            ▦ Cards
+          </button>
+          <button
+            className={`skill-view-btn${viewMode === 'graph' ? ' active' : ''}`}
+            onClick={() => setViewMode('graph')}
+          >
+            ⚙ Graph
+          </button>
+        </div>
       </div>
 
-      {/* Path groups */}
-      {activePaths.map(path => {
+      {/* Graph view — draggable force-directed dependency graph (pure canvas) */}
+      {viewMode === 'graph' && (
+        <div className="skill-graph-wrap">
+          <p className="skill-graph-hint">Drag nodes to rearrange · click a node to see its details · arrows point from prerequisite → skill</p>
+          <div className="skill-graph-canvas-box">
+            <SkillGraphCanvas nodes={graphNodes} edges={graphEdges} selectedId={expanded} onSelect={setExpanded} />
+          </div>
+          {selectedSkill && (
+            <div className="skill-detail skill-graph-detail">
+              <div className="skill-card-top">
+                <div className="skill-card-labels">
+                  <span className="skill-label">{selectedSkill.label}</span>
+                  <span className="skill-category-badge">{selectedSkill.category}</span>
+                </div>
+                <span
+                  className="skill-status-chip"
+                  style={{ color: STATUS_COLORS[getStatus(selectedSkill, allProgress)], borderColor: STATUS_COLORS[getStatus(selectedSkill, allProgress)] }}
+                >
+                  {STATUS_LABELS[getStatus(selectedSkill, allProgress)]}
+                </span>
+              </div>
+              <p className="skill-description">{selectedSkill.description}</p>
+              {selectedSkill.relatedConceptIds.length > 0 && (
+                <div className="skill-detail-row">
+                  <span className="skill-detail-lbl">Related Concepts</span>
+                  <div className="skill-tags">
+                    {selectedSkill.relatedConceptIds.map(cid => (
+                      <button
+                        key={cid}
+                        className="skill-tag skill-tag-concept"
+                        onClick={() => onNavigateToLearn(cid, selectedSkill.path)}
+                      >
+                        {cid}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+              <div className="skill-recommended">
+                <span className="skill-detail-lbl">Recommended Action</span>
+                <span className="skill-rec-text">{RECOMMENDED[getStatus(selectedSkill, allProgress)]}</span>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Path groups (card view) */}
+      {viewMode === 'cards' && activePaths.map(path => {
         const pathSkills = SKILLS.filter(s => s.path === path);
         const pct = pathCompletion(path);
         return (

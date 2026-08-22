@@ -5,6 +5,8 @@ import { TOSCA_CONCEPTS } from '../data/toscaConcepts';
 import { PATHS } from '../data/paths';
 import { MISSIONS } from '../data/missions';
 import type { Progress } from '../types';
+import { loadQuestionAnalytics } from '../utils/questionAnalytics';
+import { recommendNextConcept } from '../utils/recommendationEngine';
 
 interface Props {
   pathId: string;
@@ -68,10 +70,19 @@ export default function Dashboard({
     return next ?? currentConcepts[0] ?? null;
   }, [currentConcepts, currentPathProgress]);
 
-  // Recommended: first unlearned concept in current path
-  const recommendedConcept = useMemo(() => {
-    return currentConcepts.find(c => !currentPathProgress[c.id]?.learned) ?? null;
-  }, [currentConcepts, currentPathProgress]);
+  // Recommended: adaptive spaced-repetition heuristic — see recommendationEngine.ts.
+  // Weighs completion, quiz accuracy, per-question struggle signals (skip/wrong
+  // rate), and a forgetting-curve-style "days since last review" decay, so the
+  // pick isn't just "next concept in list order" but genuinely reflects where
+  // attention is most needed right now.
+  const recommendation = useMemo(() => {
+    const analytics = loadQuestionAnalytics()[pathId];
+    return recommendNextConcept(currentConcepts, currentPathProgress, analytics, pathId);
+  }, [currentConcepts, currentPathProgress, pathId]);
+  const recommendedConcept = useMemo(
+    () => (recommendation ? currentConcepts.find(c => c.id === recommendation.conceptId) ?? null : null),
+    [recommendation, currentConcepts]
+  );
 
   // Per-path stats for the three path cards
   const allPathStats = useMemo(
@@ -189,6 +200,13 @@ export default function Dashboard({
               <h3 className="dash-recommended-title">
                 {recommendedConcept.icon} {recommendedConcept.title}
               </h3>
+              {recommendation && recommendation.reasons.length > 0 && (
+                <ul className="dash-recommended-reasons">
+                  {recommendation.reasons.map((reason, i) => (
+                    <li key={i}>{reason}</li>
+                  ))}
+                </ul>
+              )}
             </div>
             <button
               className="btn btn-primary"

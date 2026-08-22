@@ -3,6 +3,10 @@
   display: flex; flex-direction: column; height: 100vh; overflow: hidden;
   width: 100%; max-width: 100%;
   padding-bottom: 58px; /* room for the fixed mobile bottom nav bar */
+  /* Registered as <color> via @property in index.css — this transition is what
+     makes switching learning tracks (data-track) morph the accent smoothly
+     instead of snapping instantly. */
+  transition: --ac 0.5s ease, --ac2 0.5s ease;
 }
 .layout { display: flex; flex: 1; overflow: hidden; width: 100%; min-width: 0; }
 
@@ -52,17 +56,22 @@
 /* Center path switcher — hidden on mobile (the bottom nav bar covers path switching) */
 .path-tabs {
   display: none; align-items: center; gap: 2px;
-  padding: 0 20px; flex: 1; justify-content: center;
+  padding: 0 clamp(6px, 1.5vw, 20px); flex: 1 1 0; min-width: 0; justify-content: center;
+  overflow: hidden; /* last-resort clip if the header is ever squeezed narrower than all three tabs' minimum */
 }
 @media (min-width: 769px) {
   .path-tabs { display: flex; }
 }
 .path-tab {
-  display: inline-flex; align-items: center; gap: 6px;
+  display: inline-flex; align-items: center; gap: 6px; min-width: 0;
   background: transparent; border: none; border-radius: var(--r8);
-  padding: 6px 16px; font-size: 13px; font-weight: 500;
+  /* Fluid padding: comfortable at wide widths, tightens automatically right
+     around the header-stats breakpoint (1024px) where the header is
+     otherwise 13px too tight for all three full labels — no hard jump. */
+  padding: 6px clamp(9px, 1.2vw, 16px); font-size: 13px; font-weight: 500;
   cursor: pointer; color: var(--mt); transition: all 0.18s;
-  white-space: nowrap; min-height: 36px; position: relative;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  min-height: 36px; position: relative;
 }
 .path-tab:hover:not(.active) { background: var(--s2); color: var(--tx); }
 .path-tab.active {
@@ -128,6 +137,19 @@
   .theme-btn { width: 34px; height: 34px; }
 }
 
+.sound-toggle-btn {
+  background: var(--s2); border: 1px solid var(--bd); border-radius: var(--r8);
+  width: var(--tap-min); height: var(--tap-min); font-size: 14px; color: var(--mt);
+  display: flex; align-items: center; justify-content: center;
+  transition: background 0.15s, border-color 0.15s, color 0.15s; cursor: pointer;
+  flex-shrink: 0;
+}
+.sound-toggle-btn:hover { background: var(--s3); border-color: var(--bd2); color: var(--tx); }
+.sound-toggle-btn.muted { color: var(--dm); opacity: 0.7; }
+@media (min-width: 769px) {
+  .sound-toggle-btn { width: 34px; height: 34px; }
+}
+
 /* ─── Sidebar Toggle (mobile-only, lives inside .header-brand) ── */
 .sidebar-toggle {
   display: flex;
@@ -143,8 +165,12 @@
 
 /* ─── Sidebar (mobile-first: off-canvas drawer; desktop: static column) ── */
 .sidebar-wrap {
-  position: fixed; left: -85vw; top: 60px; bottom: 0; z-index: 50;
-  width: min(248px, 82vw); flex-shrink: 0; overflow-y: auto;
+  position: fixed; left: -340px; top: 60px; bottom: 0; z-index: 50;
+  /* The temporary overlay drawer can afford to be roomier than the permanent
+     desktop column below (it covers content instead of permanently taking
+     space from it) — wide enough on larger phones/tablets for the path
+     switcher's @container query to show full labels, not just icons. */
+  width: min(300px, 82vw); flex-shrink: 0; overflow-y: auto;
   transition: left 0.25s ease;
 }
 .sidebar-wrap.open { left: 0; }
@@ -217,7 +243,11 @@
 }
 
 /* ─── Main ────────────────────────────────────────────────────── */
-.main { flex: 1; overflow-y: auto; overflow-x: hidden; width: 100%; min-width: 0; padding: var(--sp-4); background: var(--bg); }
+.main {
+  flex: 1; overflow-y: auto; overflow-x: hidden; width: 100%; min-width: 0; padding: var(--sp-4); background: var(--bg);
+  /* Named transition group for the View Transitions API — see index.css. */
+  view-transition-name: main-content;
+}
 @media (min-width: 769px) and (max-width: 1023px) { .main { padding: 20px 22px; } }
 @media (min-width: 1024px) { .main { padding: 28px 32px; } }
 
@@ -672,16 +702,33 @@
 
 .sidebar-path-switch {
   display: flex; gap: 4px; padding: 8px 10px;
+  /* Establishes a size query context so the buttons respond to the SIDEBAR's
+     actual available width (which differs between the fixed desktop column
+     and the fluid mobile drawer) rather than the viewport width. */
+  container-type: inline-size;
+  container-name: path-switch;
 }
 .sidebar-path-btn {
-  flex: 1; display: flex; align-items: center; justify-content: center; gap: 4px;
-  padding: 6px 4px; border-radius: var(--r6);
+  flex: 1; min-width: 0; display: flex; align-items: center; justify-content: center; gap: 4px;
+  padding: 6px 4px; min-height: var(--tap-min); border-radius: var(--r6);
   background: transparent; border: 1px solid var(--bd);
   font-size: 11px; font-weight: 600; color: var(--mt);
-  cursor: pointer; transition: all 0.12s; white-space: nowrap;
+  cursor: pointer; transition: all 0.12s;
 }
 .sidebar-path-btn:hover { background: var(--s2); color: var(--tx); }
 .sidebar-path-btn.active { background: var(--ac-ring); color: var(--ac); border-color: rgba(245,158,11,0.22); }
+.sidebar-path-icon { flex-shrink: 0; }
+.sidebar-path-label {
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0;
+}
+/* Three full "⚡ JavaScript / 🎭 Playwright / 🔬 TOSCA" labels need ~230px+ to
+   avoid crowding or truncation — narrower than that (the fixed desktop
+   sidebar column is only 200-248px), so default to icon-only and let the
+   accessible `title` attribute carry the full name via native tooltip. */
+.sidebar-path-label { display: none; }
+@container path-switch (min-width: 260px) {
+  .sidebar-path-label { display: inline; }
+}
 
 /* ─── Header additions ─────────────────────────────────────────── */
 .header-search-btn {
@@ -764,6 +811,16 @@
 }
 .dash-recommended-label { font-size: 12px; color: var(--dm); margin: 0; }
 .dash-recommended-title { font-size: var(--fs-sub); font-weight: 700; color: var(--tx); margin: 4px 0 0; }
+.dash-recommended-reasons {
+  list-style: none; display: flex; flex-direction: column; gap: 3px;
+  margin: 10px 0 0; padding: 0;
+}
+.dash-recommended-reasons li {
+  font-size: 12px; color: var(--mt); line-height: 1.5; padding-left: 14px; position: relative;
+}
+.dash-recommended-reasons li::before {
+  content: '›'; position: absolute; left: 0; color: var(--ac); font-weight: 700;
+}
 
 .dash-missions-card {
   background: var(--s1); border: 1px solid var(--bd); border-radius: var(--r12);
