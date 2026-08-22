@@ -1,8 +1,10 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import type { Question, Concept, InProgressState } from '../types';
 import { TYPE_LABELS, DIFF_LABELS } from '../types';
+import { recordQuestionEvent } from '../utils/questionAnalytics';
 
 interface Props {
+  pathId: string;
   concept: Concept;
   questions: Question[];
   onBack: () => void;
@@ -13,7 +15,7 @@ interface Props {
 }
 
 export default function QuizView({
-  concept, questions, onBack, onComplete,
+  pathId, concept, questions, onBack, onComplete,
   inProgress, onSaveInProgress, onClearInProgress,
 }: Props) {
   const [idx, setIdx] = useState(() => inProgress?.idx ?? 0);
@@ -38,6 +40,12 @@ export default function QuizView({
   const isAnswered = answers[idx] !== null;
   const isCorrect = isAnswered && answers[idx] === q.ans;
   const isSkipped = skipped.has(idx);
+
+  // Track time-on-question for analytics (resets whenever the visible question changes)
+  const questionStartRef = useRef(Date.now());
+  useEffect(() => {
+    questionStartRef.current = Date.now();
+  }, [idx]);
 
   // Auto-save: persist in-progress state on every meaningful change
   const mountedRef = useRef(false);
@@ -103,13 +111,19 @@ export default function QuizView({
     setAnswers(next);
     setSkipped(s => { const ns = new Set(s); ns.delete(idx); return ns; });
     setRevealed(true);
-  }, [selected, answers, idx]);
+    recordQuestionEvent(
+      pathId, concept.id, idx,
+      selected === questions[idx].ans ? 'correct' : 'wrong',
+      Date.now() - questionStartRef.current
+    );
+  }, [selected, answers, idx, pathId, concept.id, questions]);
 
   /* ── Skip ── */
   const skip = useCallback(() => {
     setSkipped(s => new Set(s).add(idx));
+    recordQuestionEvent(pathId, concept.id, idx, 'skipped', Date.now() - questionStartRef.current);
     goNext(answers);
-  }, [idx, answers, goNext]);
+  }, [idx, answers, goNext, pathId, concept.id]);
 
   /* ── After revealing, move on ── */
   const advance = useCallback(() => {

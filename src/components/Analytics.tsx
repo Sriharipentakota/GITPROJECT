@@ -1,9 +1,86 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { CONCEPTS } from '../data/concepts';
 import { PLAYWRIGHT_CONCEPTS } from '../data/playwrightConcepts';
 import { TOSCA_CONCEPTS } from '../data/toscaConcepts';
 import { MISSIONS } from '../data/missions';
+import { loadQuestionAnalytics, type AllAnalytics } from '../utils/questionAnalytics';
 import type { Progress } from '../types';
+
+const PATH_META = [
+  { pathId: 'javascript', label: 'JavaScript', icon: '⚡', concepts: CONCEPTS },
+  { pathId: 'playwright', label: 'Playwright', icon: '🎭', concepts: PLAYWRIGHT_CONCEPTS },
+  { pathId: 'tosca', label: 'TOSCA', icon: '🔬', concepts: TOSCA_CONCEPTS },
+] as const;
+
+interface StruggleQuestion {
+  conceptId: string;
+  conceptTitle: string;
+  index: number;
+  question: string;
+  wrongRate: number;
+  attempts: number;
+  avgTimeSec: number | null;
+}
+
+interface PathQuestionInsights {
+  pathId: string;
+  totalAnswered: number;
+  totalSkipped: number;
+  skipRatePct: number | null;
+  avgTimeSec: number | null;
+  struggleQuestions: StruggleQuestion[];
+}
+
+function computeQuestionInsights(
+  analytics: AllAnalytics,
+  rawByPath: Record<string, Record<string, unknown[][]>> | null
+): PathQuestionInsights[] {
+  return PATH_META.map(({ pathId, concepts }) => {
+    const pathData = analytics[pathId] ?? {};
+    let totalCorrect = 0, totalWrong = 0, totalSkipped = 0, totalTimeMs = 0, totalTimedCount = 0;
+    const rows: StruggleQuestion[] = [];
+
+    for (const [key, stat] of Object.entries(pathData)) {
+      const [conceptId, idxStr] = key.split(':');
+      const index = Number(idxStr);
+      totalCorrect += stat.correct;
+      totalWrong += stat.wrong;
+      totalSkipped += stat.skipped;
+      totalTimeMs += stat.totalTimeMs;
+      totalTimedCount += stat.timedCount;
+
+      const attempts = stat.correct + stat.wrong;
+      if (attempts >= 2) {
+        const raw = rawByPath?.[pathId]?.[conceptId]?.[index] as unknown[] | undefined;
+        const questionText = raw && typeof raw[2] === 'string' ? raw[2] : null;
+        if (questionText) {
+          rows.push({
+            conceptId,
+            conceptTitle: concepts.find(c => c.id === conceptId)?.title ?? conceptId,
+            index,
+            question: questionText,
+            wrongRate: stat.wrong / attempts,
+            attempts,
+            avgTimeSec: stat.timedCount > 0 ? stat.totalTimeMs / stat.timedCount / 1000 : null,
+          });
+        }
+      }
+    }
+
+    const totalAnswered = totalCorrect + totalWrong;
+    const skipRatePct = (totalAnswered + totalSkipped) > 0
+      ? Math.round((totalSkipped / (totalAnswered + totalSkipped)) * 100)
+      : null;
+    const avgTimeSec = totalTimedCount > 0 ? totalTimeMs / totalTimedCount / 1000 : null;
+
+    rows.sort((a, b) => b.wrongRate - a.wrongRate || b.attempts - a.attempts);
+
+    return {
+      pathId, totalAnswered, totalSkipped, skipRatePct, avgTimeSec,
+      struggleQuestions: rows.slice(0, 3),
+    };
+  });
+}
 
 interface Props {
   allProgress: Record<string, Progress>;
@@ -77,6 +154,34 @@ function computePathStats(
 }
 
 export default function Analytics({ allProgress, missionProgress }: Props) {
+  const [rawByPath, setRawByPath] = useState<Record<string, Record<string, unknown[][]>> | null>(null);
+  const [questionAnalytics, setQuestionAnalytics] = useState<AllAnalytics>(() => loadQuestionAnalytics());
+
+  // Question text is only needed to label struggle points — load the (large) per-path
+  // question banks lazily so visiting Analytics never forces all three into the main bundle.
+  useEffect(() => {
+    let active = true;
+    setQuestionAnalytics(loadQuestionAnalytics());
+    Promise.all([
+      import('../data/questions'),
+      import('../data/playwrightQuestions'),
+      import('../data/toscaQuestions'),
+    ]).then(([js, pw, tosca]) => {
+      if (!active) return;
+      setRawByPath({
+        javascript: js.QUESTIONS_RAW,
+        playwright: pw.PLAYWRIGHT_QUESTIONS_RAW,
+        tosca: tosca.TOSCA_QUESTIONS_RAW,
+      });
+    });
+    return () => { active = false; };
+  }, []);
+
+  const questionInsights = useMemo(
+    () => computeQuestionInsights(questionAnalytics, rawByPath),
+    [questionAnalytics, rawByPath]
+  );
+
   const pathStats = useMemo<PathStats[]>(() => [
     computePathStats('JavaScript', 'JS', 'javascript', CONCEPTS, allProgress['javascript']),
     computePathStats('Playwright', 'PW', 'playwright', PLAYWRIGHT_CONCEPTS, allProgress['playwright']),
@@ -294,6 +399,67 @@ export default function Analytics({ allProgress, missionProgress }: Props) {
             <div className="analytics-dist-num">{distribution.mastered}</div>
             <div className="analytics-dist-label">Mastered</div>
           </div>
+        </div>
+      </div>
+
+      {/* Question Insights */}
+      <div className="analytics-section">
+        <div className="analytics-section-title">
+          📊 Question Insights
+          <span style={{ fontSize: '0.78rem', fontWeight: 400, opacity: 0.6 }}>
+            struggle points · time per question · skip rate
+          </span>
+        </div>
+        <div className="analytics-paths-row">
+          {questionInsights.map(insight => {
+            const meta = PATH_META.find(p => p.pathId === insight.pathId)!;
+            return (
+              <div className="analytics-path-card" key={insight.pathId}>
+                <div className="analytics-path-header">
+                  <span className="analytics-path-badge">{meta.icon}</span>
+                  <span className="analytics-path-title">{meta.label}</span>
+                </div>
+                {insight.totalAnswered === 0 && insight.totalSkipped === 0 ? (
+                  <p style={{ opacity: 0.55, fontSize: '0.82rem' }}>No quiz activity recorded yet.</p>
+                ) : (
+                  <>
+                    <div className="analytics-chips" style={{ marginBottom: 12 }}>
+                      {insight.skipRatePct !== null && (
+                        <span className="analytics-chip attention">{insight.skipRatePct}% skip rate</span>
+                      )}
+                      {insight.avgTimeSec !== null && (
+                        <span className="analytics-chip avg">~{insight.avgTimeSec.toFixed(1)}s / question</span>
+                      )}
+                    </div>
+                    {insight.struggleQuestions.length === 0 ? (
+                      <p style={{ opacity: 0.55, fontSize: '0.8rem' }}>No repeat-attempt struggle points yet.</p>
+                    ) : (
+                      <div>
+                        <div style={{ fontSize: '0.75rem', fontWeight: 700, opacity: 0.7, marginBottom: 6 }}>Top struggle points</div>
+                        {insight.struggleQuestions.map(sq => (
+                          <div
+                            key={`${sq.conceptId}-${sq.index}`}
+                            style={{ fontSize: '0.78rem', padding: '6px 0', borderBottom: '1px solid var(--kpi-border, #e2e6ef)' }}
+                            title={sq.question}
+                          >
+                            <div style={{ opacity: 0.85, marginBottom: 2 }}>
+                              {sq.question.length > 70 ? sq.question.slice(0, 70) + '…' : sq.question}
+                            </div>
+                            <div style={{ opacity: 0.55, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                              <span>{sq.conceptTitle}</span>
+                              <span style={{ color: '#ef4444', fontWeight: 700 }}>{Math.round(sq.wrongRate * 100)}% wrong</span>
+                              <span>{sq.attempts} attempts</span>
+                              {sq.avgTimeSec !== null && <span>~{sq.avgTimeSec.toFixed(1)}s avg</span>}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+            );
+          })}
         </div>
       </div>
 

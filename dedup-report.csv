@@ -1,0 +1,98 @@
+"type","topic","kept","kept_question","removed","removed_question","reason"
+"EXACT","javascript","javascript/variables#35","What does typeof ""hello"" return?","javascript/datatypes#0","What does typeof ""hello"" return?","Identical question text and code"
+"EXACT","javascript","javascript/variables#39","What is the Temporal Dead Zone (TDZ)?","javascript/scope#38","What is the Temporal Dead Zone (TDZ)?","Identical question text and code"
+"EXACT","javascript","javascript/variables#58","What is logged?","javascript/scope#60","What is logged?","Identical question text and code"
+"EXACT","javascript","javascript/datatypes#5","What does typeof [] return?","javascript/datatypes#11","What does typeof {} return?","Identical question text and code"
+"EXACT","javascript","javascript/datatypes#5","What does typeof [] return?","javascript/datatypes#61","What does typeof [] return?","Identical question text and code"
+"EXACT","javascript","javascript/datatypes#6","What is the result?","javascript/datatypes#7","What is the result?","Identical question text and code"
+"EXACT","javascript","javascript/datatypes#9","What does typeof function(){} return?","javascript/datatypes#53","What does typeof function(){} return?","Identical question text and code"
+"EXACT","javascript","javascript/datatypes#19","What is wrong?","javascript/conditionals#22","What is wrong?","Identical question text and code"
+"EXACT","javascript","javascript/operators#0","What is logged?","javascript/operators#1","What is logged?","Identical question text and code"
+"EXACT","javascript","javascript/operators#0","What is logged?","javascript/operators#60","What is logged?","Identical question text and code"
+"EXACT","javascript","javascript/operators#4","What is logged?","javascript/operators#5","What is logged?","Identical question text and code"
+"EXACT","javascript","javascript/operators#8","What is logged?","javascript/operators#56","What is logged?","Identical question text and code"
+"EXACT","javascript","javascript/operators#9","What is logged?","javascript/operators#10","What is logged?","Identical question text and code"
+"EXACT","javascript","javascript/loops#11","What is logged?","javascript/scope#7","What is logged?","Identical question text and code"
+"EXACT","javascript","javascript/functions#23","What is wrong with this object method?","javascript/objects#22","What is wrong with this object method?","Identical question text and code"
+"EXACT","javascript","javascript/closures#9","What is logged?","javascript/closures#59","What is logged?","Identical question text and code"
+"EXACT","javascript","javascript/events#38","What is the difference between event.target and event.currentTarget?","javascript/events#86","What is the difference between event.target and event.currentTarget?","Identical question text and code"
+"EXACT","javascript","javascript/errorhandling#11","What is the difference between TypeError and ReferenceError?","javascript/errorhandling#36","What is the difference between TypeError and ReferenceError?","Identical question text and code"
+"EXACT","playwright","playwright/setup#10","What does `npx playwright show-report` do?","playwright/setup#58","What does `npx playwright show-report` do?","Identical question text and code"
+"EXACT","playwright","playwright/navigation#6","What does `page.goBack()` do?","playwright/navigation#50","What does `page.goBack()` do?","Identical question text and code"
+"EXACT","playwright","playwright/actions#3","What does `locator.hover()` do?","playwright/actions#60","What does `locator.hover()` do?","Identical question text and code"
+"EXACT","playwright","playwright/assertions#2","What is the difference between `toHaveText()` and `toContainText()`?","playwright/assertions#61","What is the difference between `toHaveText()` and `toContainText()`?","Identical question text and code"
+"EXACT","playwright","playwright/assertions#9","What does `await expect(response).toBeOK()` assert?","playwright/api#8","What does `await expect(response).toBeOK()` assert?","Identical question text and code"
+"EXACT","playwright","playwright/config#1","What does the `use` block in playwright.config.ts configure?","playwright/config#50","What does the `use` block in playwright.config.ts configure?","Identical question text and code"
+"EXACT","playwright","playwright/config#3","What does `retries: 2` in the config do?","playwright/config#58","What does `retries: 2` in the config do?","Identical question text and code"
+"EXACT","playwright","playwright/config#4","What does `fullyParallel: true` change compared to the default?","playwright/parallel#2","What does `fullyParallel: true` change compared to the default?","Identical question text and code"
+"EXACT","playwright","playwright/api#1","What does `response.ok()` return?","playwright/api#53","What does `response.ok()` return?","Identical question text and code"
+"EXACT","playwright","playwright/visual#31","Complete to take a full-page screenshot.
+```ts
+await page.screenshot({ path: 'full.png', ______: true });
+```","playwright/visual#62","Complete to take a full-page screenshot.
+```ts
+await page.screenshot({ path: ""full.png"", ______: true });
+```","Identical question text and code"
+"EXACT","tosca","tosca/intro#22","What is a PCD (Parameter Container Definition)?","tosca/config#4","What is a PCD (Parameter Container Definition)?","Identical question text and code"
+"EXACT","tosca","tosca/intro#57","What is a ""Repository Profile"" in TOSCA?","tosca/workspace#47","What is a ""Repository Profile"" in TOSCA?","Identical question text and code"
+"EXACT","tosca","tosca/scanning#13","Which TBox engine is used for SAP GUI automation?","tosca/scanning#50","Which TBox engine is used for SAP GUI automation?","Identical question text and code"
+"EXACT","tosca","tosca/testcases#1","What is a Test Step in TOSCA?","tosca/testcases#48","What is a ""Test Step"" in TOSCA?","Identical question text and code"
+"EXACT","tosca","tosca/config#2","What is a Global Parameter in TOSCA?","tosca/config#43","What is a ""Global Parameter"" in TOSCA?","Identical question text and code"
+"EXACT","tosca","tosca/api#1","How is an API endpoint represented in TOSCA?","tosca/api#44","How is an API endpoint represented in TOSCA?","Identical question text and code"
+"EXACT","tosca","tosca/api#2","What HTTP methods can TOSCA's ServiceV Engine test?","tosca/api#45","What HTTP methods can TOSCA's ServiceV Engine test?","Identical question text and code"
+"EXACT","tosca","tosca/dex#1","What is a DEX Server?","tosca/dex#44","What is a DEX Server?","Identical question text and code"
+"EXACT","tosca","tosca/dex#2","What is a DEX Agent?","tosca/dex#45","What is a DEX Agent?","Identical question text and code"
+"EXACT","tosca","tosca/cicd#1","What exit code does ToscaCI return when all tests pass?","tosca/cicd#44","What exit code does ToscaCI return when all tests pass?","Identical question text and code"
+"EXACT","tosca","tosca/cicd#2","What exit code does ToscaCI return when one or more tests fail?","tosca/cicd#45","What exit code does ToscaCI return when one or more tests fail?","Identical question text and code"
+"EXACT","tosca","tosca/requirements#2","What is Test Optimisation (TO) in TOSCA?","tosca/requirements#45","What is ""Test Optimisation"" (TO) in TOSCA?","Identical question text and code"
+"EXACT","tosca","tosca/workspace#0","What is the Common Repository in TOSCA?","tosca/workspace#44","What is the ""Common Repository"" in TOSCA?","Identical question text and code"
+"EXACT","tosca","tosca/workspace#1","What is the purpose of checking out a test asset in TOSCA?","tosca/workspace#45","What is the purpose of ""checking out"" a test asset in TOSCA?","Identical question text and code"
+"SEMANTIC","tosca","tosca/mobile#1","Which framework does TOSCA use under the hood for iOS automation?","tosca/mobile#44","Which native framework does TOSCA use under the hood for iOS automation?","Same fact as mobile#1 (iOS framework), reworded with ""native"""
+"SEMANTIC","tosca","tosca/mobile#2","Which framework does TOSCA use for Android automation?","tosca/mobile#45","Which framework does TOSCA use for Android native automation?","Same fact as mobile#2 (Android framework), reworded with ""native"""
+"SEMANTIC","tosca","tosca/intro#39","The central TOSCA database used by all team members is called the ___ Repository.","tosca/intro#85","The central SQL/Oracle database shared by all team members in TOSCA is called the ___ Repository.","Same ""central Repository"" fact as intro#39, reworded"
+"SEMANTIC","tosca","tosca/intro#39","The central TOSCA database used by all team members is called the ___ Repository.","tosca/workspace#28","The central SQL/Oracle database shared by all TOSCA team members is called the ___ Repository.","Same ""central Repository"" fact as intro#39, reworded"
+"SEMANTIC","tosca","tosca/cicd#0","What is ToscaCI?","tosca/cicd#43","What is ToscaCI, in one sentence?","""...in one sentence"" restatement of cicd#0"
+"SEMANTIC","tosca","tosca/dex#0","What does DEX stand for in TOSCA?","tosca/dex#43","What does DEX stand for in TOSCA, in one sentence?","""...in one sentence"" restatement of dex#0"
+"SEMANTIC","tosca","tosca/workspace#2","What is a Workspace in TOSCA?","tosca/workspace#43","What is a ""Workspace"" in TOSCA, in one sentence?","""...in one sentence"" restatement of workspace#2"
+"SEMANTIC","tosca","tosca/api#0","What is the ServiceV Engine in TOSCA?","tosca/api#43","What is the ServiceV Engine in TOSCA, in one sentence?","""...in one sentence"" restatement of api#0"
+"SEMANTIC","tosca","tosca/steering#0","What is ""Steering"" in TOSCA?","tosca/steering#43","What is ""Steering"" in TOSCA, in one sentence?","""...in one sentence"" restatement of steering#0"
+"SEMANTIC","tosca","tosca/recovery#0","What is a Recovery Scenario in TOSCA?","tosca/recovery#43","What is a ""Recovery Scenario"" in TOSCA, in one sentence?","""...in one sentence"" restatement of recovery#0"
+"SEMANTIC","tosca","tosca/mobile#0","What is TOSCA's Mobile Engine used for?","tosca/mobile#43","What is TOSCA's Mobile Engine, in one sentence?","""...in one sentence"" restatement of mobile#0"
+"SEMANTIC","tosca","tosca/requirements#0","What is the Requirements section in TOSCA TCM used for?","tosca/requirements#43","What is the Requirements section in TOSCA TCM, in one sentence?","""...in one sentence"" restatement of requirements#0"
+"SEMANTIC","tosca","tosca/workspace#63","Complete: Acquiring an exclusive edit lock on a TOSCA test asset is called ___ out the asset.","tosca/workspace#68","Acquiring an exclusive edit lock on a TOSCA asset is called ___ the asset.","Same ""checking out an asset"" fact as workspace#63"
+"SEMANTIC","tosca","tosca/config#23","Complete: The syntax to reference a Configuration Parameter named ""AppURL"" in a test step is ___.","tosca/config#63","Complete: The syntax to reference a Configuration Parameter named ""BaseUrl"" in a test step is ___.","Same Configuration Parameter syntax fact as config#23, different example var name only"
+"SEMANTIC","tosca","tosca/intro#41","The feature that automatically selects the minimum set of test cases covering all high-risk requirements is called Test ___.","tosca/requirements#24","Complete: The feature that automatically selects the minimum test set covering all high-risk requirements is called Test ___.","Same ""Test Optimisation"" fact as intro#41"
+"SEMANTIC","tosca","tosca/intro#41","The feature that automatically selects the minimum set of test cases covering all high-risk requirements is called Test ___.","tosca/requirements#60","Complete: The TOSCA feature that automatically selects the minimum test cases covering all high-risk requirements is called Test ___.","Same ""Test Optimisation"" fact as intro#41"
+"SEMANTIC","tosca","tosca/intro#41","The feature that automatically selects the minimum set of test cases covering all high-risk requirements is called Test ___.","tosca/requirements#65","The TOSCA feature that selects the minimum test cases covering all high-risk requirements is called Test ___.","Same ""Test Optimisation"" fact as intro#41"
+"SEMANTIC","playwright","playwright/visual#17","Complete: `npx playwright ______-trace trace.zip` to open the viewer","playwright/visual#85","Complete to open the trace viewer.
+```sh
+npx playwright ______ trace.zip
+```","Same ""show-trace"" command fact as visual#17"
+"SEMANTIC","playwright","playwright/parallel#68","Complete to configure the blob reporter.
+```ts
+// playwright.config.ts
+reporter: process.env.CI ? [[""______"", { outputDir: ""blob-report"" }]] : [[""html""]],
+```","playwright/parallel#81","Complete to configure the blob reporter for CI.
+```ts
+reporter: process.env.CI
+  ? [[______, { outputDir: ""blob-report"" }]]
+  : [[""html""]],
+```","Same blob-reporter config fact as parallel#68"
+"SEMANTIC","playwright","playwright/setup#62","Complete to set the base URL for all tests.
+```ts
+export default defineConfig({
+  use: {
+    ______: 'http://localhost:3000',
+  },
+});
+```","playwright/config#62","Complete to set the base URL globally.
+```ts
+export default defineConfig({
+  use: { ______: ""http://localhost:3000"" },
+});
+```","Same baseURL config fact as setup#62"
+"SEMANTIC","javascript","javascript/variables#3","What is logged?","javascript/variables#54","What is logged?","Identical code pattern to variables#3, only the variable name differs"
+"SEMANTIC","javascript","javascript/variables#4","What is logged?","javascript/scope#2","What is logged?","Identical hoisting example as variables#4, only the variable name differs"
+"SEMANTIC","javascript","javascript/asyncawait#6","What is logged?","javascript/asyncawait#51","What is logged?","Identical code as asyncawait#6, only the function name differs"
+"SEMANTIC","javascript","javascript/operators#25","Fix: should compare not assign","javascript/conditionals#25","Fix: should compare, not assign","Same assignment-vs-comparison bug as operators#25"
+"SEMANTIC","javascript","javascript/promises#41","Fetch data from an API and log it, with error handling:","javascript/promises#91","Fetch JSON from an API and log it, handling errors:","Same open-ended fetch/error-handling prompt as promises#41"

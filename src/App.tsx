@@ -339,6 +339,7 @@ export default function App() {
               ) : (
                 <QuizView
                   key={conceptId}
+                  pathId={pathId}
                   concept={concept}
                   questions={questions}
                   onBack={handleBackToLearn}
