@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JavaScript Promises: Complete Guide</title>
+    <link rel="stylesheet" href="/guides/guide-base.css">
+</head>
+<body>
+    <div class="container">
+        <h1>🤝 JavaScript Promises: Complete Guide</h1>
+        <p style="font-size: 1.1em; color: #7f8c8d; margin-bottom: 20px;">
+            A comprehensive journey from fundamental concepts to advanced techniques
+        </p>
+
+        <div class="toc">
+            <h3>📚 Table of Contents</h3>
+            <ul>
+                <li><a href="#section1">1. What is a Promise?</a></li>
+                <li><a href="#section2">2. Creating a Promise</a></li>
+                <li><a href="#section3">3. Consuming Promises: then, catch, finally</a></li>
+                <li><a href="#section4">4. Chaining Promises</a></li>
+                <li><a href="#section5">5. Error Propagation in Chains</a></li>
+                <li><a href="#section6">6. Promise.all</a></li>
+                <li><a href="#section7">7. Promise.allSettled, race, any</a></li>
+                <li><a href="#section8">8. The Microtask Queue</a></li>
+                <li><a href="#section9">9. Common Pitfalls</a></li>
+                <li><a href="#section10">10. Best Practices</a></li>
+            </ul>
+        </div>
+
+        <!-- SECTION 1 -->
+        <h2 id="section1"><span class="level beginner">BEGINNER</span>1. What is a Promise?</h2>
+
+        <p>A <strong>Promise</strong> is an object representing the eventual result of an asynchronous operation — like a network request or a timer. It has exactly three states: <strong>pending</strong>, <strong>fulfilled</strong>, or <strong>rejected</strong>. Once it settles (fulfilled or rejected), it never changes state again.</p>
+
+        <div class="example">
+            <strong>Real-world analogy:</strong> A Promise is like a restaurant order ticket. You place your order and get a ticket — it's pending. While the kitchen works, you can do other things. When the food is ready, the kitchen delivers it (resolve) or a waiter apologizes it's unavailable (reject).
+        </div>
+
+        <pre>// A Promise represents "a value that will exist later"
+const promise = fetch("/api/data"); // pending immediately
+console.log(promise); // Promise { <pending> }</pre>
+
+        <!-- SECTION 2 -->
+        <h2 id="section2"><span class="level beginner">BEGINNER</span>2. Creating a Promise</h2>
+
+        <p>Use <code>new Promise((resolve, reject) => { ... })</code>. The function you pass in (the "executor") runs immediately and synchronously; call <code>resolve(value)</code> to fulfill it or <code>reject(reason)</code> to reject it.</p>
+
+        <pre>const p1 = new Promise((resolve, reject) => {
+    const success = true;
+    if (success) {
+        resolve(42);              // moves to "fulfilled" with value 42
+    } else {
+        reject(new Error("failed")); // moves to "rejected" with this error
+    }
+});
+
+// Simulating a delayed async operation
+function wait(ms) {
+    return new Promise(resolve => {
+        setTimeout(() => resolve(`waited ${ms}ms`), ms);
+    });
+}
+wait(1000).then(msg => console.log(msg)); // "waited 1000ms" (after 1 second)</pre>
+
+        <div class="note">
+            <strong>💡 Tip:</strong> You rarely construct promises with <code>new Promise()</code> yourself in everyday code — most of the time you're consuming promises already returned by APIs like <code>fetch()</code> or wrapping a callback-based API to "promisify" it.
+        </div>
+
+        <!-- SECTION 3 -->
+        <h2 id="section3"><span class="level beginner">BEGINNER</span>3. Consuming Promises: then, catch, finally</h2>
+
+        <pre>const p = new Promise((resolve) => resolve(10));
+
+p.then(value => {
+    console.log(value); // 10
+});
+
+const failing = new Promise((_, reject) => reject(new Error("oops")));
+
+failing.catch(err => {
+    console.log(err.message); // "oops"
+});
+
+// .finally() runs regardless of success or failure — great for cleanup
+p.finally(() => console.log("done")); // "done" — always runs
+
+// .then() actually accepts TWO callbacks: onFulfilled and onRejected
+p.then(
+    value => console.log("success:", value),
+    err   => console.log("failure:", err)
+);</pre>
+
+        <!-- SECTION 4 -->
+        <h2 id="section4"><span class="level intermediate">INTERMEDIATE</span>4. Chaining Promises</h2>
+
+        <p>Each <code>.then()</code> returns a NEW Promise, which lets you chain asynchronous steps in sequence, reading top-to-bottom instead of nesting callbacks.</p>
+
+        <pre>fetch("/api/user/1")
+    .then(response => response.json())     // parse JSON — returns a new promise
+    .then(user => fetch(`/api/posts/${user.id}`)) // fetch related data
+    .then(response => response.json())
+    .then(posts => console.log(posts))
+    .catch(err => console.log("Something failed:", err));
+
+// Returning a PLAIN VALUE from .then() auto-wraps it in a resolved promise
+Promise.resolve(10)
+    .then(n => n * 2)        // returns 20, auto-wrapped
+    .then(n => n + 5)        // receives 20, returns 25
+    .then(n => console.log(n)); // 25</pre>
+
+        <div class="comparison">
+            <div>
+                <strong>❌ Callback hell (pre-Promise style):</strong>
+                <pre>getUser(1, function(user) {
+    getPosts(user.id, function(posts) {
+        getComments(posts[0].id, function(comments) {
+            console.log(comments);
+        });
+    });
+});</pre>
+            </div>
+            <div>
+                <strong>✅ Flat promise chain:</strong>
+                <pre>getUser(1)
+    .then(user => getPosts(user.id))
+    .then(posts => getComments(posts[0].id))
+    .then(comments => console.log(comments))
+    .catch(err => console.log(err));</pre>
+            </div>
+        </div>
+
+        <!-- SECTION 5 -->
+        <h2 id="section5"><span class="level intermediate">INTERMEDIATE</span>5. Error Propagation in Chains</h2>
+
+        <p>When a promise rejects (or a <code>.then()</code> callback throws), the error SKIPS every subsequent <code>.then()</code> and jumps straight to the nearest <code>.catch()</code> down the chain.</p>
+
+        <pre>Promise.resolve()
+    .then(() => {
+        throw new Error("step 1 failed");
+    })
+    .then(() => {
+        console.log("this NEVER runs"); // skipped entirely
+    })
+    .then(() => {
+        console.log("this NEVER runs either"); // skipped too
+    })
+    .catch(err => {
+        console.log("Caught:", err.message); // "Caught: step 1 failed"
+    })
+    .then(() => {
+        console.log("chain continues normally after catch"); // this DOES run
+    });</pre>
+
+        <div class="warning">
+            <strong>⚠️ Common Pitfall:</strong> A <code>.catch()</code> only catches errors from steps ABOVE it in the chain. If you add more <code>.then()</code> calls after the <code>.catch()</code>, errors in THOSE need their own <code>.catch()</code> — the chain "recovers" after a catch and continues as normal.
+        </div>
+
+        <!-- SECTION 6 -->
+        <h2 id="section6"><span class="level intermediate">INTERMEDIATE</span>6. Promise.all</h2>
+
+        <p><code>Promise.all()</code> runs multiple promises CONCURRENTLY and waits for all of them. If ANY of them rejects, the whole thing rejects immediately with that error — "all or nothing."</p>
+
+        <pre>const p1 = Promise.resolve("first");
+const p2 = new Promise(resolve => setTimeout(() => resolve("second"), 100));
+const p3 = Promise.resolve("third");
+
+Promise.all([p1, p2, p3]).then(results => {
+    console.log(results); // ["first", "second", "third"] — same order as input, not completion order
+});
+
+// If ANY promise rejects, Promise.all rejects immediately
+const willFail = Promise.reject(new Error("boom"));
+Promise.all([p1, willFail, p3])
+    .then(results => console.log(results))     // never runs
+    .catch(err => console.log(err.message));    // "boom" — fails fast</pre>
+
+        <!-- SECTION 7 -->
+        <h2 id="section7"><span class="level advanced">ADVANCED</span>7. Promise.allSettled, race, any</h2>
+
+        <div class="table-wrap">
+        <table class="table-compact">
+            <tr>
+                <th>Method</th>
+                <th>Resolves When</th>
+                <th>Use Case</th>
+            </tr>
+            <tr><td><code>Promise.all()</code></td><td>All fulfill (rejects if any reject)</td><td>Need every result, all-or-nothing</td></tr>
+            <tr><td><code>Promise.allSettled()</code></td><td>All settle (fulfilled OR rejected)</td><td>Want every outcome, failures included</td></tr>
+            <tr><td><code>Promise.race()</code></td><td>First one to settle (fulfill or reject)</td><td>Timeout patterns, "fastest wins"</td></tr>
+            <tr><td><code>Promise.any()</code></td><td>First one to FULFILL (ignores rejections)</td><td>Try multiple sources, need just one success</td></tr>
+        </table>
+        </div>
+
+        <pre>const p1 = Promise.resolve("a");
+const p2 = Promise.reject("b failed");
+const p3 = Promise.resolve("c");
+
+// allSettled — always resolves, gives status + value/reason for each
+Promise.allSettled([p1, p2, p3]).then(results => {
+    console.log(results);
+    // [{status:"fulfilled", value:"a"}, {status:"rejected", reason:"b failed"}, {status:"fulfilled", value:"c"}]
+});
+
+// race — settles as soon as the FIRST promise settles (win OR lose)
+Promise.race([p1, p2]).then(v => console.log(v)).catch(e => console.log(e));
+// "a" — p1 resolves first (both are already-resolved, p1 was passed first)
+
+// any — settles as soon as the first promise FULFILLS, ignoring rejections
+Promise.any([p2, p1, p3]).then(v => console.log(v)); // "a" — first fulfillment, p2's rejection is ignored</pre>
+
+        <h3>Timeout Pattern with race</h3>
+        <pre>function withTimeout(promise, ms) {
+    const timeout = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error("Timed out")), ms)
+    );
+    return Promise.race([promise, timeout]);
+}
+// Whichever settles first wins — the real request, or the timeout</pre>
+
+        <!-- SECTION 8 -->
+        <h2 id="section8"><span class="level advanced">ADVANCED</span>8. The Microtask Queue</h2>
+
+        <p>Promise callbacks (<code>.then</code>, <code>.catch</code>, <code>.finally</code>) run in the <strong>microtask queue</strong>, which is processed AFTER all synchronous code finishes, but BEFORE the browser moves on to macrotasks like <code>setTimeout</code>.</p>
+
+        <pre>console.log("1: sync start");
+
+setTimeout(() => console.log("2: setTimeout (macrotask)"), 0);
+
+Promise.resolve().then(() => console.log("3: promise .then (microtask)"));
+
+console.log("4: sync end");
+
+// Actual output order:
+// "1: sync start"
+// "4: sync end"
+// "3: promise .then (microtask)"   ← runs before setTimeout, even with 0ms delay!
+// "2: setTimeout (macrotask)"</pre>
+
+        <div class="note">
+            <strong>💡 Tip:</strong> This is why a <code>Promise.resolve().then(...)</code> ALWAYS runs before a <code>setTimeout(..., 0)</code>, no matter how the code is arranged — the microtask queue is always fully drained before the next macrotask runs.
+        </div>
+
+        <!-- SECTION 9 -->
+        <h2 id="section9"><span class="level advanced">ADVANCED</span>9. Common Pitfalls</h2>
+
+        <h3>1. Forgetting to Return Inside a .then()</h3>
+        <pre>// ❌ Missing return breaks the chain — next .then() gets undefined immediately
+fetchUser(1)
+    .then(user => {
+        fetchPosts(user.id); // forgot "return" here!
+    })
+    .then(posts => {
+        console.log(posts); // undefined — didn't actually wait for fetchPosts
+    });
+
+// ✅ Correct
+fetchUser(1)
+    .then(user => {
+        return fetchPosts(user.id); // properly chains
+    })
+    .then(posts => console.log(posts));</pre>
+
+        <h3>2. Not Handling Rejections (Unhandled Promise Rejection)</h3>
+        <pre>// ❌ No .catch() — if this rejects, it becomes an "unhandled promise rejection"
+fetchData().then(data => console.log(data));
+
+// ✅ Always handle failure paths
+fetchData()
+    .then(data => console.log(data))
+    .catch(err => console.error("Failed:", err));</pre>
+
+        <h3>3. Nesting Promises Instead of Chaining</h3>
+        <pre>// ❌ Defeats the purpose of promises — back to callback-style nesting
+fetchUser(1).then(user => {
+    fetchPosts(user.id).then(posts => {
+        console.log(posts);
+    });
+});
+
+// ✅ Flatten with proper chaining
+fetchUser(1)
+    .then(user => fetchPosts(user.id))
+    .then(posts => console.log(posts));</pre>
+
+        <h3>4. Promise.all Failing Fast Hides Other Results</h3>
+        <pre>// If you need ALL outcomes even when some fail, use allSettled instead of all
+Promise.all([fetchA(), fetchB()]) // if fetchB rejects, you never see fetchA's result
+    .catch(err => console.log("Lost visibility into which one succeeded"));</pre>
+
+        <!-- SECTION 10 -->
+        <h2 id="section10"><span class="level intermediate">INTERMEDIATE</span>10. Best Practices</h2>
+
+        <h3>1. Always Add a .catch() (or try/catch with async/await)</h3>
+        <pre>// ✅ Every promise chain should handle failure
+doSomethingAsync()
+    .then(handleSuccess)
+    .catch(handleError);</pre>
+
+        <h3>2. Return Promises From .then() to Keep Chains Flat</h3>
+        <pre>// ✅ Flat, readable
+step1().then(result => step2(result)).then(result => step3(result));</pre>
+
+        <h3>3. Use Promise.all for Independent Parallel Work</h3>
+        <pre>// ✅ Faster — runs concurrently instead of one after another
+const [user, settings] = await Promise.all([fetchUser(), fetchSettings()]);</pre>
+
+        <h3>4. Use allSettled When Partial Failure Is Acceptable</h3>
+        <pre>// ✅ Get every outcome, don't lose successful results to one failure
+const results = await Promise.allSettled([fetchA(), fetchB(), fetchC()]);
+const succeeded = results.filter(r => r.status === "fulfilled").map(r => r.value);</pre>
+
+        <h3>5. Prefer async/await for Complex Chains (See the Async/Await Guide)</h3>
+        <pre>// ✅ Often more readable than long .then() chains
+async function loadData() {
+    const user = await fetchUser();
+    const posts = await fetchPosts(user.id);
+    return posts;
+}</pre>
+
+        <!-- SUMMARY -->
+        <h2 style="margin-top: 40px;">📋 Quick Reference Summary</h2>
+
+        <div class="table-wrap">
+        <table>
+            <tr>
+                <th>Concept</th>
+                <th>Key Points</th>
+            </tr>
+            <tr>
+                <td><strong>States</strong></td>
+                <td>Pending → Fulfilled or Rejected. Settles exactly once, permanently.</td>
+            </tr>
+            <tr>
+                <td><strong>then/catch/finally</strong></td>
+                <td>Consume results, handle errors, always-run cleanup respectively.</td>
+            </tr>
+            <tr>
+                <td><strong>Chaining</strong></td>
+                <td>Each <code>.then()</code> returns a new promise — return values/promises to keep chaining.</td>
+            </tr>
+            <tr>
+                <td><strong>Error propagation</strong></td>
+                <td>Rejections skip <code>.then()</code> handlers until the next <code>.catch()</code>.</td>
+            </tr>
+            <tr>
+                <td><strong>Promise.all</strong></td>
+                <td>All-or-nothing — fails fast if any promise rejects.</td>
+            </tr>
+            <tr>
+                <td><strong>allSettled/race/any</strong></td>
+                <td>allSettled = every outcome; race = first to settle; any = first to succeed.</td>
+            </tr>
+            <tr>
+                <td><strong>Microtasks</strong></td>
+                <td>Promise callbacks run before <code>setTimeout</code>, after synchronous code.</td>
+            </tr>
+        </table>
+        </div>
+
+        <div style="margin-top: 40px; padding: 20px; background: #ecf0f1; border-radius: 5px;">
+            <h3>🎓 Learning Path</h3>
+            <p><strong>Beginner:</strong> Master sections 1, 2, 3</p>
+            <p><strong>Intermediate:</strong> Understand sections 4, 5, 6, 10</p>
+            <p><strong>Advanced:</strong> Deep dive into sections 7, 8, 9</p>
+        </div>
+
+    </div>
+</body>
+</html>

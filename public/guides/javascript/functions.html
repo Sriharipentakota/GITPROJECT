@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JavaScript Functions: Complete Guide</title>
+    <link rel="stylesheet" href="/guides/guide-base.css">
+</head>
+<body>
+    <div class="container">
+        <h1>⚙️ JavaScript Functions: Complete Guide</h1>
+        <p style="font-size: 1.1em; color: #7f8c8d; margin-bottom: 20px;">
+            A comprehensive journey from fundamental concepts to advanced techniques
+        </p>
+
+        <div class="toc">
+            <h3>📚 Table of Contents</h3>
+            <ul>
+                <li><a href="#section1">1. What is a Function?</a></li>
+                <li><a href="#section2">2. Function Declarations</a></li>
+                <li><a href="#section3">3. Function Expressions</a></li>
+                <li><a href="#section4">4. Arrow Functions</a></li>
+                <li><a href="#section5">5. Default & Rest Parameters</a></li>
+                <li><a href="#section6">6. First-Class & Higher-Order Functions</a></li>
+                <li><a href="#section7">7. The this Keyword in Functions</a></li>
+                <li><a href="#section8">8. IIFE (Immediately Invoked Function Expression)</a></li>
+                <li><a href="#section9">9. Common Pitfalls</a></li>
+                <li><a href="#section10">10. Best Practices</a></li>
+            </ul>
+        </div>
+
+        <!-- SECTION 1 -->
+        <h2 id="section1"><span class="level beginner">BEGINNER</span>1. What is a Function?</h2>
+
+        <p>A <strong>function</strong> is a reusable block of code that takes inputs (parameters), does some work, and optionally returns an output. Functions let you write logic once and run it as many times as needed.</p>
+
+        <div class="example">
+            <strong>Real-world analogy:</strong> A function is like an ATM machine. You insert your card and PIN (arguments), the machine processes your request (the function body), and hands you cash (the return value). You don't need to know the internal wiring.
+        </div>
+
+        <h3>Why Functions Matter</h3>
+        <ul style="margin: 15px 0; margin-left: 20px;">
+            <li><strong>Reusability:</strong> Write the logic once, call it everywhere</li>
+            <li><strong>Abstraction:</strong> Hide complex details behind a simple name</li>
+            <li><strong>Testability:</strong> Isolated logic is easier to test</li>
+            <li><strong>Composability:</strong> Small functions combine into bigger behavior</li>
+        </ul>
+
+        <pre>function add(a, b) {
+    return a + b;
+}
+
+console.log(add(3, 4)); // 7</pre>
+
+        <!-- SECTION 2 -->
+        <h2 id="section2"><span class="level beginner">BEGINNER</span>2. Function Declarations</h2>
+
+        <p>A <strong>function declaration</strong> uses the <code>function</code> keyword with a name. Declarations are <strong>hoisted</strong> — fully available before their line in the code runs.</p>
+
+        <pre>console.log(square(4)); // 16 — works even though called BEFORE the definition below!
+
+function square(n) {
+    return n * n;
+}</pre>
+
+        <h3>Anatomy of a Function</h3>
+        <pre>function greet(name) {   // "greet" = name, "(name)" = parameter
+    return "Hi " + name;  // function body + return value
+}
+
+const message = greet("Alice"); // "Alice" = argument passed in
+console.log(message);           // "Hi Alice"</pre>
+
+        <div class="note">
+            <strong>💡 Tip:</strong> A <em>parameter</em> is the name in the function's definition (<code>name</code>). An <em>argument</em> is the actual value you pass when calling it (<code>"Alice"</code>). People often use the words interchangeably, but technically they're different.
+        </div>
+
+        <!-- SECTION 3 -->
+        <h2 id="section3"><span class="level beginner">BEGINNER</span>3. Function Expressions</h2>
+
+        <p>A <strong>function expression</strong> stores an (often anonymous) function inside a variable. Unlike declarations, expressions are NOT hoisted — you can't call them before the line that defines them.</p>
+
+        <pre>const cube = function(n) {
+    return n ** 3;
+};
+
+console.log(cube(3)); // 27
+
+// console.log(square2(3));  // ❌ ReferenceError — cannot access before initialization
+const square2 = function(n) { return n * n; };</pre>
+
+        <h3>Named Function Expressions</h3>
+        <p>You can optionally give a function expression an internal name — useful for recursion and clearer stack traces.</p>
+        <pre>const factorial = function fact(n) {
+    return n <= 1 ? 1 : n * fact(n - 1); // "fact" is only visible INSIDE the function
+};
+console.log(factorial(5)); // 120
+// console.log(fact(5));   // ❌ ReferenceError — fact isn't visible outside</pre>
+
+        <!-- SECTION 4 -->
+        <h2 id="section4"><span class="level beginner">BEGINNER</span>4. Arrow Functions</h2>
+
+        <p><strong>Arrow functions</strong> (<code>=></code>) are a concise syntax introduced in ES6. They have no own <code>this</code>, no <code>arguments</code> object, and cannot be used as constructors.</p>
+
+        <pre>// Full form
+const add = (a, b) => {
+    return a + b;
+};
+
+// Implicit return — single expression, no braces needed
+const double = n => n * 2;
+
+// No parameters need empty parens
+const sayHi = () => console.log("Hi!");
+
+// Returning an object literal needs parentheses (braces would be a function body)
+const makePoint = (x, y) => ({ x, y });
+console.log(makePoint(1, 2)); // { x: 1, y: 2 }</pre>
+
+        <div class="comparison">
+            <div>
+                <strong>Regular function — own this:</strong>
+                <pre>const obj = {
+    value: 10,
+    regular: function() {
+        return this.value; // 'this' = obj
+    }
+};
+console.log(obj.regular()); // 10</pre>
+            </div>
+            <div>
+                <strong>Arrow function — inherits this:</strong>
+                <pre>const obj2 = {
+    value: 10,
+    arrow: () => {
+        return this.value; // 'this' is NOT obj2
+    }
+};
+console.log(obj2.arrow()); // undefined</pre>
+            </div>
+        </div>
+
+        <!-- SECTION 5 -->
+        <h2 id="section5"><span class="level intermediate">INTERMEDIATE</span>5. Default & Rest Parameters</h2>
+
+        <h3>Default Parameters</h3>
+        <p>A default value is used only when the argument is <code>undefined</code> or omitted entirely — NOT for other falsy values like <code>0</code> or <code>""</code>.</p>
+        <pre>function greet(name = "World") {
+    return "Hi " + name;
+}
+console.log(greet());          // "Hi World"
+console.log(greet("Alice"));   // "Hi Alice"
+console.log(greet(undefined)); // "Hi World" — default kicks in
+console.log(greet(""));        // "Hi "      — "" is NOT undefined, default does NOT kick in
+console.log(greet(null));      // "Hi null"  — null is NOT undefined either!</pre>
+
+        <h3>Rest Parameters</h3>
+        <p><code>...args</code> collects any number of remaining arguments into a real array — replacing the old, array-like <code>arguments</code> object.</p>
+        <pre>function sum(...nums) {
+    return nums.reduce((acc, n) => acc + n, 0);
+}
+console.log(sum(1, 2, 3, 4)); // 10
+console.log(sum());           // 0 — nums is just an empty array
+
+// Rest must be the LAST parameter
+function logFirst(first, ...rest) {
+    console.log(first, rest);
+}
+logFirst(1, 2, 3, 4); // 1  [2, 3, 4]</pre>
+
+        <!-- SECTION 6 -->
+        <h2 id="section6"><span class="level intermediate">INTERMEDIATE</span>6. First-Class & Higher-Order Functions</h2>
+
+        <p>In JavaScript, functions are <strong>first-class values</strong> — they can be stored in variables, passed as arguments, and returned from other functions, just like numbers or strings.</p>
+
+        <h3>Functions as Values</h3>
+        <pre>const fn = Math.max;
+console.log(fn(3, 7)); // 7 — a function reference stored in a variable</pre>
+
+        <h3>Higher-Order Functions</h3>
+        <p>A <strong>higher-order function</strong> either takes a function as an argument, returns a function, or both.</p>
+        <pre>// Takes a function as an argument (a callback)
+[1, 2, 3].map(x => x * 2); // [2, 4, 6]
+
+// Returns a function
+function makeAdder(x) {
+    return function(y) {
+        return x + y;
+    };
+}
+const add10 = makeAdder(10);
+console.log(add10(5)); // 15</pre>
+
+        <h3>Callbacks</h3>
+        <pre>function fetchData(callback) {
+    setTimeout(() => {
+        callback("data loaded");
+    }, 1000);
+}
+fetchData(result => console.log(result)); // "data loaded" (after 1s)</pre>
+
+        <!-- SECTION 7 -->
+        <h2 id="section7"><span class="level advanced">ADVANCED</span>7. The this Keyword in Functions</h2>
+
+        <p>The value of <code>this</code> depends on HOW a function is called, not where it's defined — except for arrow functions, which capture <code>this</code> from their surrounding (lexical) scope.</p>
+
+        <pre>const obj = {
+    name: "Alice",
+    regularMethod: function() {
+        console.log(this.name); // "Alice" — called as obj.regularMethod()
+    },
+    delayedArrow: function() {
+        setTimeout(() => {
+            console.log(this.name); // "Alice" — arrow inherits 'this' from delayedArrow
+        }, 100);
+    },
+    delayedRegular: function() {
+        setTimeout(function() {
+            console.log(this.name); // undefined — regular function loses 'this' inside setTimeout
+        }, 100);
+    }
+};
+obj.regularMethod();
+obj.delayedArrow();
+obj.delayedRegular();</pre>
+
+        <div class="warning">
+            <strong>⚠️ Common Pitfall:</strong> Passing a regular method as a standalone callback (e.g. to <code>setTimeout</code> or an event listener) detaches it from its object — <code>this</code> is lost. Use an arrow function wrapper, or <code>.bind(obj)</code>, to preserve it.
+        </div>
+
+        <pre>class Counter {
+    constructor() { this.count = 0; }
+    increment() { this.count++; }
+}
+const c = new Counter();
+const inc = c.increment;
+// inc();          // ❌ TypeError-ish — 'this' is undefined/wrong here
+const boundInc = c.increment.bind(c);
+boundInc();        // ✅ works — 'this' is explicitly locked to c</pre>
+
+        <!-- SECTION 8 -->
+        <h2 id="section8"><span class="level advanced">ADVANCED</span>8. IIFE (Immediately Invoked Function Expression)</h2>
+
+        <p>An <strong>IIFE</strong> is a function that runs the instant it's defined — useful for creating an isolated scope that doesn't pollute the surrounding namespace.</p>
+
+        <pre>(function() {
+    console.log("runs immediately");
+})();
+// Output: "runs immediately"
+
+// Arrow function IIFE
+(() => {
+    console.log("also runs immediately");
+})();
+
+// IIFE with a return value — classic private-state (module) pattern
+const counterModule = (function() {
+    let count = 0; // private — invisible from outside
+    return {
+        increment() { count++; return count; },
+        get() { return count; }
+    };
+})();
+
+console.log(counterModule.increment()); // 1
+console.log(counterModule.increment()); // 2
+// console.log(counterModule.count);    // undefined — count is private</pre>
+
+        <div class="note">
+            <strong>💡 Tip:</strong> IIFEs were essential before ES6 modules existed — they were the main way to avoid leaking variables into the global scope. Today, ES modules (<code>import</code>/<code>export</code>) handle most of that need, but the pattern still appears in bundler output and one-off setup scripts.
+        </div>
+
+        <!-- SECTION 9 -->
+        <h2 id="section9"><span class="level advanced">ADVANCED</span>9. Common Pitfalls</h2>
+
+        <h3>1. Forgetting return</h3>
+        <pre>function add(a, b) {
+    a + b; // ⚠️ computes the value but never returns it
+}
+console.log(add(2, 3)); // undefined</pre>
+
+        <h3>2. Arrow Functions as Object Methods</h3>
+        <pre>const obj = {
+    value: 42,
+    getValue: () => this.value // ❌ arrow has no own 'this' — not obj
+};
+console.log(obj.getValue()); // undefined, not 42
+
+// ✅ Use a regular function (or shorthand method syntax) instead
+const obj2 = {
+    value: 42,
+    getValue() { return this.value; }
+};
+console.log(obj2.getValue()); // 42</pre>
+
+        <h3>3. Default Parameters Only Trigger on undefined</h3>
+        <pre>function setVolume(v = 50) {
+    return v;
+}
+console.log(setVolume(0));    // 0 — NOT replaced by default, 0 !== undefined
+console.log(setVolume());     // 50 — default applies here</pre>
+
+        <h3>4. Mutating Objects Passed as Arguments</h3>
+        <pre>function addRole(user) {
+    user.role = "admin"; // mutates the ORIGINAL object — objects are passed by reference
+}
+const person = { name: "Bob" };
+addRole(person);
+console.log(person); // { name: "Bob", role: "admin" } — original changed!</pre>
+
+        <!-- SECTION 10 -->
+        <h2 id="section10"><span class="level intermediate">INTERMEDIATE</span>10. Best Practices</h2>
+
+        <h3>1. Prefer const for Function Expressions</h3>
+        <pre>// ✅ Prevents accidental reassignment
+const calculateTotal = (items) => items.reduce((sum, i) => sum + i.price, 0);</pre>
+
+        <h3>2. Keep Functions Small and Single-Purpose</h3>
+        <pre>// ✅ Each function does ONE thing
+function validateEmail(email) { /* ... */ }
+function sendWelcomeEmail(email) { /* ... */ }
+
+// ❌ One giant function doing everything is hard to test and reuse</pre>
+
+        <h3>3. Use Arrow Functions for Callbacks, Regular for Methods</h3>
+        <pre>// ✅ Arrow — no 'this' confusion in a callback
+[1,2,3].map(n => n * 2);
+
+// ✅ Regular/shorthand — correct 'this' binding for object methods
+const obj = {
+    data: [1,2,3],
+    sum() { return this.data.reduce((a,b) => a+b, 0); }
+};</pre>
+
+        <h3>4. Name Your Functions for Better Stack Traces</h3>
+        <pre>// ✅ Named — shows up clearly in error stack traces and debuggers
+const processOrder = function processOrder(order) { /* ... */ };
+
+// Anonymous — harder to spot in a stack trace
+const processOrder2 = function(order) { /* ... */ };</pre>
+
+        <h3>5. Document Parameters for Non-Obvious Functions</h3>
+        <pre>/**
+ * Calculates compound interest.
+ * @param {number} principal - initial amount
+ * @param {number} rate - annual interest rate (e.g. 0.05 for 5%)
+ * @param {number} years - number of years
+ */
+function compoundInterest(principal, rate, years) {
+    return principal * Math.pow(1 + rate, years);
+}</pre>
+
+        <!-- SUMMARY -->
+        <h2 style="margin-top: 40px;">📋 Quick Reference Summary</h2>
+
+        <div class="table-wrap">
+        <table>
+            <tr>
+                <th>Concept</th>
+                <th>Key Points</th>
+            </tr>
+            <tr>
+                <td><strong>Declaration</strong></td>
+                <td><code>function name(){}</code> — hoisted, callable before its definition line.</td>
+            </tr>
+            <tr>
+                <td><strong>Expression</strong></td>
+                <td><code>const f = function(){}</code> — not hoisted.</td>
+            </tr>
+            <tr>
+                <td><strong>Arrow function</strong></td>
+                <td><code>const f = () => {}</code> — concise, no own <code>this</code>/<code>arguments</code>.</td>
+            </tr>
+            <tr>
+                <td><strong>Default params</strong></td>
+                <td>Apply only when the argument is <code>undefined</code>.</td>
+            </tr>
+            <tr>
+                <td><strong>Rest params</strong></td>
+                <td><code>...args</code> collects remaining arguments into a real array.</td>
+            </tr>
+            <tr>
+                <td><strong>Higher-order</strong></td>
+                <td>Takes and/or returns functions — the basis of callbacks and functional patterns.</td>
+            </tr>
+            <tr>
+                <td><strong>IIFE</strong></td>
+                <td><code>(function(){})()</code> — runs immediately, creates a private scope.</td>
+            </tr>
+        </table>
+        </div>
+
+        <div style="margin-top: 40px; padding: 20px; background: #ecf0f1; border-radius: 5px;">
+            <h3>🎓 Learning Path</h3>
+            <p><strong>Beginner:</strong> Master sections 1, 2, 3, 4</p>
+            <p><strong>Intermediate:</strong> Understand sections 5, 6, 10</p>
+            <p><strong>Advanced:</strong> Deep dive into sections 7, 8, 9</p>
+        </div>
+
+    </div>
+</body>
+</html>

@@ -1,0 +1,216 @@
+/*
+ * Shared stylesheet for every "Detailed Guide" HTML page under public/guides/.
+ * One file, linked from every guide, so a layout/responsiveness fix (like the
+ * mobile pass this went through) applies everywhere at once instead of having
+ * to be repeated across dozens of self-contained files.
+ *
+ * Structure every guide is expected to reuse:
+ *   .container              — the centered card
+ *   .toc                    — table of contents box
+ *   h2 with a leading <span class="level beginner|intermediate|advanced">
+ *   .example / .note / .warning callout boxes
+ *   .comparison + .comparison > div   — side-by-side code panels (1 col on
+ *                                       mobile, 2 cols from 640px)
+ *   .table-wrap > table              — horizontally scrollable table;
+ *                                       add class="table-compact" on any
+ *                                       table with many/long columns so it
+ *                                       gets a sane min-width instead of
+ *                                       crushing its cells on phones
+ */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+html {
+    /* Fluid base size: shrinks a touch on very narrow phones so rem-based
+       spacing/type below eases down with it, without ever going below a
+       comfortable reading size. */
+    font-size: clamp(15px, 3.6vw, 16px);
+}
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    line-height: 1.6;
+    color: #333;
+    background: #f5f5f5;
+    /* Mobile browsers box-shadow/scroll oddities are avoided by never
+       letting anything (long code lines included) push past 100%. */
+    overflow-x: hidden;
+}
+.container {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: clamp(14px, 4vw, 20px);
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+@media (max-width: 480px) {
+    /* Edge-to-edge on phones — the card shadow/radius reads as a floating
+       panel with room on both sides on desktop, but just wastes width and
+       adds unnecessary visual clutter on a narrow screen. */
+    .container {
+        border-radius: 0;
+        box-shadow: none;
+    }
+}
+h1 {
+    font-size: clamp(1.5rem, 6vw, 2rem);
+    color: #2c3e50;
+    margin-bottom: 10px;
+    border-bottom: 3px solid #3498db;
+    padding-bottom: 10px;
+    text-wrap: balance;
+}
+h2 {
+    font-size: clamp(1.15rem, 4.5vw, 1.5rem);
+    color: #34495e;
+    margin-top: 30px;
+    margin-bottom: 15px;
+    border-left: 4px solid #3498db;
+    padding-left: 15px;
+    /* Section headings are "<span class="level">BADGE</span>Title" in the
+       markup — flex lets the badge and title wrap onto their own line
+       together with even spacing instead of the badge running straight
+       into the title text with no gap. */
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 10px;
+}
+h3 {
+    font-size: clamp(1.02rem, 3.6vw, 1.17rem);
+    color: #7f8c8d;
+    margin-top: 20px;
+    margin-bottom: 10px;
+}
+h4 {
+    font-size: clamp(0.95rem, 3.2vw, 1rem);
+    color: #2c3e50;
+    margin-top: 16px;
+    margin-bottom: 8px;
+}
+code {
+    background: #ecf0f1;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-family: 'Courier New', monospace;
+    color: #c7254e;
+    word-break: break-word;
+}
+pre {
+    background: #2c3e50;
+    color: #ecf0f1;
+    padding: clamp(10px, 3vw, 15px);
+    border-radius: 5px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    margin: 15px 0;
+    border-left: 4px solid #3498db;
+    font-size: clamp(0.78rem, 2.6vw, 1rem);
+    line-height: 1.55;
+}
+.example {
+    background: #f9f9f9;
+    border-left: 4px solid #27ae60;
+    padding: clamp(12px, 3.5vw, 15px);
+    margin: 15px 0;
+    border-radius: 5px;
+}
+.note {
+    background: #ffeaa7;
+    border-left: 4px solid #f39c12;
+    padding: clamp(12px, 3.5vw, 15px);
+    margin: 15px 0;
+    border-radius: 5px;
+}
+.warning {
+    background: #fab1a0;
+    border-left: 4px solid #e17055;
+    padding: clamp(12px, 3.5vw, 15px);
+    margin: 15px 0;
+    border-radius: 5px;
+}
+.comparison {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 15px;
+    margin: 15px 0;
+}
+@media (min-width: 640px) {
+    /* Side-by-side comparison panels only once there's actually room for two
+       code blocks without each one squeezing to near-unreadable. */
+    .comparison {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+.comparison > div {
+    background: #f9f9f9;
+    padding: clamp(12px, 3.5vw, 15px);
+    border-radius: 5px;
+    border: 1px solid #ddd;
+    min-width: 0;
+}
+/* Tables keep their real column layout at every width — rather than cramming
+   or stacking cells — and simply scroll horizontally inside their own
+   wrapper on narrow screens, so a phone never forces the whole page to
+   scroll sideways. */
+.table-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    margin: 15px 0;
+}
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 0;
+}
+/* Tables with several columns or long cell text need a floor, or they turn
+   into an unreadably narrow, tall stack of wrapped words on a phone. Add
+   class="table-compact" to any table like that; a simple 2-column table
+   reads fine without it and is left free to reflow naturally. */
+table.table-compact {
+    min-width: 480px;
+}
+th, td {
+    border: 1px solid #ddd;
+    padding: clamp(8px, 2.5vw, 12px);
+    text-align: left;
+    font-size: clamp(0.82rem, 2.6vw, 1rem);
+}
+th {
+    background: #3498db;
+    color: white;
+}
+tr:nth-child(even) {
+    background: #f9f9f9;
+}
+.level {
+    display: inline-block;
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 0.85em;
+    font-weight: bold;
+}
+.beginner { background: #d5f4e6; color: #27ae60; }
+.intermediate { background: #ffeaa7; color: #d63031; }
+.advanced { background: #74b9ff; color: #0652dd; }
+.toc {
+    background: #ecf0f1;
+    padding: clamp(14px, 4vw, 20px);
+    border-radius: 5px;
+    margin: 20px 0;
+}
+.toc ul {
+    margin-left: 20px;
+}
+.toc li {
+    margin: 8px 0;
+}
+.toc a {
+    color: #3498db;
+    text-decoration: none;
+}
+.toc a:hover {
+    text-decoration: underline;
+}

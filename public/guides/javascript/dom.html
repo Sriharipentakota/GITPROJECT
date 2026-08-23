@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JavaScript DOM: Complete Guide</title>
+    <link rel="stylesheet" href="/guides/guide-base.css">
+</head>
+<body>
+    <div class="container">
+        <h1>🌲 JavaScript DOM: Complete Guide</h1>
+        <p style="font-size: 1.1em; color: #7f8c8d; margin-bottom: 20px;">
+            A comprehensive journey from fundamental concepts to advanced techniques
+        </p>
+
+        <div class="toc">
+            <h3>📚 Table of Contents</h3>
+            <ul>
+                <li><a href="#section1">1. What is the DOM?</a></li>
+                <li><a href="#section2">2. Selecting Elements</a></li>
+                <li><a href="#section3">3. Reading & Changing Content</a></li>
+                <li><a href="#section4">4. Classes and Inline Styles</a></li>
+                <li><a href="#section5">5. Attributes</a></li>
+                <li><a href="#section6">6. Creating, Inserting & Removing Elements</a></li>
+                <li><a href="#section7">7. Traversing the DOM Tree</a></li>
+                <li><a href="#section8">8. NodeList vs Array</a></li>
+                <li><a href="#section9">9. Common Pitfalls</a></li>
+                <li><a href="#section10">10. Best Practices</a></li>
+            </ul>
+        </div>
+
+        <!-- SECTION 1 -->
+        <h2 id="section1"><span class="level beginner">BEGINNER</span>1. What is the DOM?</h2>
+
+        <p>The <strong>Document Object Model (DOM)</strong> is a tree-shaped, in-memory representation of an HTML page. Every tag becomes a <em>node</em> that JavaScript can select, read, modify, or delete — and any change to the DOM is reflected instantly in the rendered page.</p>
+
+        <div class="example">
+            <strong>Real-world analogy:</strong> The DOM is like a city map. <code>document</code> is the city itself — every element has an address. <code>querySelector</code> is a GPS that finds the first building matching a description.
+        </div>
+
+        <pre>// The root of the tree
+console.log(document);           // the entire HTML document
+console.log(document.body);      // the <body> element
+console.log(document.title);     // the page's <title> text</pre>
+
+        <!-- SECTION 2 -->
+        <h2 id="section2"><span class="level beginner">BEGINNER</span>2. Selecting Elements</h2>
+
+        <pre>// Modern, most flexible — accepts any CSS selector
+const title = document.querySelector("h1");           // FIRST match, or null
+const items = document.querySelectorAll(".item");      // ALL matches, as a NodeList
+
+// Older, still very fast for a single ID lookup
+const header = document.getElementById("main-header"); // element, or null
+
+// Other classics
+document.getElementsByClassName("card");  // live HTMLCollection
+document.getElementsByTagName("li");      // live HTMLCollection</pre>
+
+        <div class="warning">
+            <strong>⚠️ Always Check for null:</strong> <code>querySelector</code>/<code>getElementById</code> return <code>null</code> when nothing matches — calling a method on that <code>null</code> throws a <code>TypeError</code>. Guard against it before using the result.
+        </div>
+
+        <pre>const el = document.querySelector(".maybe-missing");
+if (el) {
+    el.textContent = "Found it!";
+} else {
+    console.log("Element not found");
+}</pre>
+
+        <!-- SECTION 3 -->
+        <h2 id="section3"><span class="level beginner">BEGINNER</span>3. Reading & Changing Content</h2>
+
+        <pre>const el = document.querySelector("#message");
+
+// textContent — plain text, always SAFE (auto-escapes HTML)
+console.log(el.textContent);
+el.textContent = "Hello, <b>World</b>"; // literally shows the tags as text, not bold
+
+// innerHTML — parses actual HTML markup
+el.innerHTML = "Hello, <b>World</b>"; // renders "World" in bold
+
+// innerText — respects CSS visibility/rendering (slower, layout-aware)
+console.log(el.innerText); // only VISIBLE text, ignoring hidden elements</pre>
+
+        <div class="warning">
+            <strong>⚠️ XSS Risk with innerHTML:</strong> Never assign untrusted user input directly to <code>innerHTML</code> — if the input contains a <code>&lt;script&gt;</code> tag or malicious attributes, it can execute arbitrary code on your page. Use <code>textContent</code> for any content that came from a user.
+        </div>
+
+        <pre>// ❌ Dangerous if userComment came from user input
+el.innerHTML = userComment;
+
+// ✅ Safe — always rendered as plain text, never executed
+el.textContent = userComment;</pre>
+
+        <!-- SECTION 4 -->
+        <h2 id="section4"><span class="level beginner">BEGINNER</span>4. Classes and Inline Styles</h2>
+
+        <p>Prefer toggling CSS classes over setting inline styles directly — it keeps styling in your CSS files and JavaScript only decides WHICH styles apply.</p>
+
+        <pre>const box = document.querySelector(".box");
+
+box.classList.add("highlight");     // add a class
+box.classList.remove("hidden");     // remove a class
+box.classList.toggle("active");     // add if absent, remove if present
+box.classList.contains("active");   // true/false check
+box.classList.replace("old", "new"); // swap one class for another
+
+// Inline styles — use camelCase property names (not kebab-case)
+box.style.backgroundColor = "blue";  // NOT "background-color"
+box.style.fontSize = "18px";
+box.style.display = "none";          // hide the element</pre>
+
+        <!-- SECTION 5 -->
+        <h2 id="section5"><span class="level intermediate">INTERMEDIATE</span>5. Attributes</h2>
+
+        <pre>const link = document.querySelector("a");
+
+link.getAttribute("href");           // reads the raw HTML attribute
+link.setAttribute("href", "/new");   // sets/updates an attribute
+link.removeAttribute("target");      // removes an attribute
+link.hasAttribute("disabled");       // boolean check
+
+// Common properties that mirror attributes directly
+const input = document.querySelector("input");
+input.value;      // current value (property, not getAttribute!)
+input.disabled = true; // boolean property, toggles the disabled state
+input.checked;    // for checkboxes/radios
+
+// data-* attributes — accessible via the .dataset property
+// <div data-user-id="42"></div>
+const div = document.querySelector("div");
+console.log(div.dataset.userId); // "42" — camelCase conversion from data-user-id</pre>
+
+        <!-- SECTION 6 -->
+        <h2 id="section6"><span class="level intermediate">INTERMEDIATE</span>6. Creating, Inserting & Removing Elements</h2>
+
+        <pre>// Create a new element
+const li = document.createElement("li");
+li.textContent = "Buy milk";
+li.classList.add("task");
+
+// Insert into the DOM
+const ul = document.querySelector("ul");
+ul.append(li);              // add at the end
+ul.prepend(li);             // add at the start
+ul.insertBefore(li, ul.firstChild); // insert before a specific reference node
+
+// Insert HTML markup directly (be careful with untrusted data — see Section 3)
+ul.insertAdjacentHTML("beforeend", "<li>Buy eggs</li>");
+
+// Remove an element
+li.remove();                       // modern, simple
+ul.removeChild(li);                // older API, still works
+
+// Clear all children efficiently
+ul.replaceChildren();              // modern way to empty a container</pre>
+
+        <!-- SECTION 7 -->
+        <h2 id="section7"><span class="level intermediate">INTERMEDIATE</span>7. Traversing the DOM Tree</h2>
+
+        <pre>const item = document.querySelector(".item");
+
+item.parentElement;       // the direct parent element
+item.children;            // HTMLCollection of direct child ELEMENTS (not text nodes)
+item.firstElementChild;   // first child element
+item.lastElementChild;    // last child element
+item.nextElementSibling;  // the next sibling element
+item.previousElementSibling; // the previous sibling element
+
+// closest() walks UP the tree looking for a matching ancestor (or itself)
+const card = item.closest(".card"); // finds the nearest ancestor with class "card"</pre>
+
+        <div class="note">
+            <strong>💡 Tip:</strong> Prefer the "Element" versions (<code>children</code>, <code>firstElementChild</code>, <code>nextElementSibling</code>) over their plain "Node" counterparts (<code>childNodes</code>, <code>firstChild</code>, <code>nextSibling</code>) — the Node versions also include whitespace and comment text nodes, which is rarely what you want.
+        </div>
+
+        <!-- SECTION 8 -->
+        <h2 id="section8"><span class="level advanced">ADVANCED</span>8. NodeList vs Array</h2>
+
+        <p>A <code>NodeList</code> (from <code>querySelectorAll</code>) LOOKS like an array but isn't a real one — it's missing methods like <code>map</code> and <code>filter</code>. Convert it first.</p>
+
+        <pre>const items = document.querySelectorAll(".item");
+
+// items.map(el => el.textContent); // ❌ TypeError: items.map is not a function
+
+// ✅ Convert to a real array first
+const asArray = Array.from(items);
+asArray.map(el => el.textContent);
+
+// ✅ Or use spread syntax
+[...items].map(el => el.textContent);
+
+// NodeList DOES support forEach directly (modern browsers)
+items.forEach(el => el.classList.add("loaded"));</pre>
+
+        <div class="warning">
+            <strong>⚠️ Live vs Static Collections:</strong> <code>querySelectorAll</code> returns a STATIC NodeList (a snapshot — won't update if the DOM changes later). <code>getElementsByClassName</code>/<code>getElementsByTagName</code> return a LIVE HTMLCollection that automatically updates as the DOM changes. This difference can cause subtle bugs when looping and modifying the DOM at the same time.
+        </div>
+
+        <!-- SECTION 9 -->
+        <h2 id="section9"><span class="level advanced">ADVANCED</span>9. Common Pitfalls</h2>
+
+        <h3>1. Querying Before the DOM is Ready</h3>
+        <pre>// ❌ If this script runs in <head>, the <body> may not exist yet
+const btn = document.querySelector("#submit"); // null!
+
+// ✅ Wait for the DOM to finish loading
+document.addEventListener("DOMContentLoaded", () => {
+    const btn = document.querySelector("#submit"); // now it exists
+});</pre>
+
+        <h3>2. Forgetting innerHTML Parses (and Re-Renders) Everything</h3>
+        <pre>// ❌ Repeatedly rebuilding innerHTML in a loop is slow and destroys event listeners
+list.innerHTML += "<li>New item</li>"; // re-parses the ENTIRE list every time!
+
+// ✅ Append a real node instead
+const li = document.createElement("li");
+li.textContent = "New item";
+list.append(li);</pre>
+
+        <h3>3. Style Property Name Mismatches</h3>
+        <pre>// ❌ Kebab-case doesn't work as a JS property
+// el.style.background-color = "red"; // SyntaxError!
+
+// ✅ camelCase
+el.style.backgroundColor = "red";</pre>
+
+        <h3>4. Modifying a Live Collection While Iterating</h3>
+        <pre>// ❌ Removing items from a LIVE collection while looping skips elements
+const boxes = document.getElementsByClassName("box"); // live!
+for (let i = 0; i < boxes.length; i++) {
+    boxes[i].remove(); // the collection shrinks as you go — skips every other item!
+}
+
+// ✅ Convert to a static array first
+[...document.getElementsByClassName("box")].forEach(box => box.remove());</pre>
+
+        <!-- SECTION 10 -->
+        <h2 id="section10"><span class="level intermediate">INTERMEDIATE</span>10. Best Practices</h2>
+
+        <h3>1. Use textContent for User-Supplied Data</h3>
+        <pre>// ✅ Safe from injection
+comment.textContent = userInput;</pre>
+
+        <h3>2. Batch DOM Updates to Minimize Reflows</h3>
+        <pre>// ✅ Build off-DOM, then insert once
+const fragment = document.createDocumentFragment();
+items.forEach(item => {
+    const li = document.createElement("li");
+    li.textContent = item;
+    fragment.append(li);
+});
+list.append(fragment); // one single DOM update</pre>
+
+        <h3>3. Cache Selector Results You'll Reuse</h3>
+        <pre>// ✅ Query once, reuse the reference
+const list = document.querySelector("#task-list");
+list.append(newItem1);
+list.append(newItem2);</pre>
+
+        <h3>4. Prefer classList Over Direct style Manipulation</h3>
+        <pre>// ✅ Styling lives in CSS, JS only toggles state
+el.classList.toggle("is-active");
+
+// ❌ Scatters style logic across JS files
+el.style.color = "red";
+el.style.fontWeight = "bold";</pre>
+
+        <h3>5. Always Guard Against null From Selectors</h3>
+        <pre>// ✅ Defensive
+const btn = document.querySelector("#optional-button");
+btn?.addEventListener("click", handleClick);</pre>
+
+        <!-- SUMMARY -->
+        <h2 style="margin-top: 40px;">📋 Quick Reference Summary</h2>
+
+        <div class="table-wrap">
+        <table>
+            <tr>
+                <th>Concept</th>
+                <th>Key Points</th>
+            </tr>
+            <tr>
+                <td><strong>Selecting</strong></td>
+                <td><code>querySelector</code> (first/null), <code>querySelectorAll</code> (NodeList, all matches).</td>
+            </tr>
+            <tr>
+                <td><strong>Content</strong></td>
+                <td><code>textContent</code> is safe plain text; <code>innerHTML</code> parses markup (XSS risk with user data).</td>
+            </tr>
+            <tr>
+                <td><strong>Classes/styles</strong></td>
+                <td>Prefer <code>classList</code>; <code>style.property</code> uses camelCase.</td>
+            </tr>
+            <tr>
+                <td><strong>Create/insert/remove</strong></td>
+                <td><code>createElement</code> → <code>append/prepend</code> → <code>remove()</code>.</td>
+            </tr>
+            <tr>
+                <td><strong>Traversal</strong></td>
+                <td><code>parentElement</code>, <code>children</code>, <code>nextElementSibling</code>, <code>closest()</code>.</td>
+            </tr>
+            <tr>
+                <td><strong>NodeList</strong></td>
+                <td>Not a real array — use <code>Array.from()</code> or spread for <code>map</code>/<code>filter</code>.</td>
+            </tr>
+        </table>
+        </div>
+
+        <div style="margin-top: 40px; padding: 20px; background: #ecf0f1; border-radius: 5px;">
+            <h3>🎓 Learning Path</h3>
+            <p><strong>Beginner:</strong> Master sections 1, 2, 3, 4</p>
+            <p><strong>Intermediate:</strong> Understand sections 5, 6, 7, 10</p>
+            <p><strong>Advanced:</strong> Deep dive into sections 8, 9</p>
+        </div>
+
+    </div>
+</body>
+</html>

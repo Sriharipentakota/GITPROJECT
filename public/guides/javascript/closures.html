@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JavaScript Closures: Complete Guide</title>
+    <link rel="stylesheet" href="/guides/guide-base.css">
+</head>
+<body>
+    <div class="container">
+        <h1>🔒 JavaScript Closures: Complete Guide</h1>
+        <p style="font-size: 1.1em; color: #7f8c8d; margin-bottom: 20px;">
+            A comprehensive journey from fundamental concepts to advanced techniques
+        </p>
+
+        <div class="toc">
+            <h3>📚 Table of Contents</h3>
+            <ul>
+                <li><a href="#section1">1. What is a Closure?</a></li>
+                <li><a href="#section2">2. How Closures Form</a></li>
+                <li><a href="#section3">3. Practical Use: Private State</a></li>
+                <li><a href="#section4">4. Factory Functions</a></li>
+                <li><a href="#section5">5. The Module Pattern</a></li>
+                <li><a href="#section6">6. Closures Capture by Reference</a></li>
+                <li><a href="#section7">7. The Classic Loop Bug</a></li>
+                <li><a href="#section8">8. Memoization with Closures</a></li>
+                <li><a href="#section9">9. Common Pitfalls</a></li>
+                <li><a href="#section10">10. Best Practices</a></li>
+            </ul>
+        </div>
+
+        <!-- SECTION 1 -->
+        <h2 id="section1"><span class="level beginner">BEGINNER</span>1. What is a Closure?</h2>
+
+        <p>A <strong>closure</strong> is a function that remembers the variables from the scope it was created in, even after that outer scope has finished executing. Closures happen automatically any time you write a function inside another function.</p>
+
+        <div class="example">
+            <strong>Real-world analogy:</strong> A closure is like a backpack you take when leaving a room. When the outer function finishes running (you leave the room), it's gone — but the inner function took a backpack with whatever variables it needed, and still has access to them.
+        </div>
+
+        <pre>function outer() {
+    const message = "Hello from outer";
+
+    function inner() {
+        console.log(message); // inner can see outer's variable
+    }
+
+    return inner;
+}
+
+const myFn = outer(); // outer() has already finished running
+myFn(); // "Hello from outer" — message is STILL accessible!</pre>
+
+        <!-- SECTION 2 -->
+        <h2 id="section2"><span class="level beginner">BEGINNER</span>2. How Closures Form</h2>
+
+        <p>Every function in JavaScript forms a closure over its surrounding (lexical) scope — it's not something you opt into, it just happens as a natural consequence of how scoping works.</p>
+
+        <pre>function makeGreeter(greeting) {
+    // 'greeting' lives in makeGreeter's scope
+    return function(name) {
+        // this inner function "closes over" greeting
+        return `${greeting}, ${name}!`;
+    };
+}
+
+const sayHello = makeGreeter("Hello");
+const sayHi = makeGreeter("Hi");
+
+console.log(sayHello("Alice")); // "Hello, Alice!"
+console.log(sayHi("Bob"));      // "Hi, Bob!"
+// Each returned function remembers its OWN 'greeting' from when it was created</pre>
+
+        <div class="note">
+            <strong>💡 Tip:</strong> The closure captures the VARIABLE, not just a snapshot of its value at creation time. If the outer variable changes later, the closure sees the updated value (see Section 6).
+        </div>
+
+        <!-- SECTION 3 -->
+        <h2 id="section3"><span class="level intermediate">INTERMEDIATE</span>3. Practical Use: Private State</h2>
+
+        <p>Closures are the main way JavaScript achieves "private" variables — data that can only be read or changed through specific functions, not accessed directly from the outside.</p>
+
+        <pre>function createBankAccount(initialBalance) {
+    let balance = initialBalance; // truly private — no way to reach it directly
+
+    return {
+        deposit(amount) {
+            balance += amount;
+            return balance;
+        },
+        withdraw(amount) {
+            if (amount > balance) return "Insufficient funds";
+            balance -= amount;
+            return balance;
+        },
+        getBalance() {
+            return balance;
+        }
+    };
+}
+
+const account = createBankAccount(1000);
+console.log(account.deposit(500));   // 1500
+console.log(account.withdraw(200));  // 1300
+console.log(account.balance);        // undefined — cannot access directly!</pre>
+
+        <!-- SECTION 4 -->
+        <h2 id="section4"><span class="level intermediate">INTERMEDIATE</span>4. Factory Functions</h2>
+
+        <p>A <strong>factory function</strong> returns a new closure each time it's called. Each call produces completely INDEPENDENT state — calling the factory twice does not share variables between the two results.</p>
+
+        <pre>function makeCounter() {
+    let count = 0;
+    return {
+        increment() { return ++count; },
+        reset() { count = 0; }
+    };
+}
+
+const counterA = makeCounter();
+const counterB = makeCounter();
+
+counterA.increment(); // 1
+counterA.increment(); // 2
+counterB.increment(); // 1 — completely independent from counterA!
+
+console.log(counterA.increment()); // 3
+console.log(counterB.increment()); // 2</pre>
+
+        <div class="comparison">
+            <div>
+                <strong>Independent closures (separate calls):</strong>
+                <pre>const add5 = makeAdder(5);
+const add10 = makeAdder(10);
+// Each has its own private 'n'</pre>
+            </div>
+            <div>
+                <strong>Shared closure (same call, multiple functions):</strong>
+                <pre>const acc = createBankAccount(0);
+acc.deposit(100);
+acc.withdraw(30);
+// Both methods share the SAME 'balance'</pre>
+            </div>
+        </div>
+
+        <!-- SECTION 5 -->
+        <h2 id="section5"><span class="level advanced">ADVANCED</span>5. The Module Pattern</h2>
+
+        <p>Combining an <strong>IIFE</strong> (Immediately Invoked Function Expression) with a closure produces the classic <strong>module pattern</strong> — a way to expose a small public API while hiding implementation details, predating ES modules.</p>
+
+        <pre>const ShoppingCart = (function() {
+    let items = []; // private — inaccessible from outside this IIFE
+
+    function calculateTotal() { // private helper function
+        return items.reduce((sum, item) => sum + item.price, 0);
+    }
+
+    return { // public API — only these are exposed
+        addItem(item) {
+            items.push(item);
+        },
+        getTotal() {
+            return calculateTotal();
+        },
+        getItemCount() {
+            return items.length;
+        }
+    };
+})();
+
+ShoppingCart.addItem({ name: "Book", price: 15 });
+ShoppingCart.addItem({ name: "Pen", price: 2 });
+console.log(ShoppingCart.getTotal());      // 17
+console.log(ShoppingCart.getItemCount());  // 2
+// console.log(ShoppingCart.items);        // undefined — fully private</pre>
+
+        <!-- SECTION 6 -->
+        <h2 id="section6"><span class="level advanced">ADVANCED</span>6. Closures Capture by Reference</h2>
+
+        <p>A closure doesn't take a snapshot of a variable's value at the moment it's created — it keeps a live REFERENCE to the variable itself. If the outer variable changes afterward, every closure over it sees the new value.</p>
+
+        <pre>function createLogger() {
+    let logCount = 0;
+
+    function log(message) {
+        logCount++;
+        console.log(`[${logCount}] ${message}`);
+    }
+
+    function getCount() {
+        return logCount; // reads the SAME logCount that log() updates
+    }
+
+    return { log, getCount };
+}
+
+const logger = createLogger();
+logger.log("first");  // "[1] first"
+logger.log("second"); // "[2] second"
+console.log(logger.getCount()); // 2 — sees the live, updated value</pre>
+
+        <!-- SECTION 7 -->
+        <h2 id="section7"><span class="level advanced">ADVANCED</span>7. The Classic Loop Bug</h2>
+
+        <p>The most famous closure gotcha: using <code>var</code> inside a loop when creating callbacks. Because <code>var</code> is function-scoped, all the closures created in the loop share the exact same variable.</p>
+
+        <pre>// ❌ BUG: every callback shares one function-scoped 'i'
+const buttons = [];
+for (var i = 0; i < 3; i++) {
+    buttons.push(function() {
+        console.log("Button", i);
+    });
+}
+buttons[0](); // "Button 3" (not 0!)
+buttons[1](); // "Button 3" (not 1!)
+buttons[2](); // "Button 3" (not 2!)
+// By the time any callback runs, the loop has finished and i is 3 for ALL of them
+
+// ✅ FIX 1: use let — creates a NEW binding for each iteration
+const fixed = [];
+for (let i = 0; i < 3; i++) {
+    fixed.push(function() {
+        console.log("Button", i);
+    });
+}
+fixed[0](); // "Button 0"
+fixed[1](); // "Button 1"
+fixed[2](); // "Button 2"
+
+// ✅ FIX 2 (pre-ES6): IIFE to capture the current value each iteration
+const iifeFixed = [];
+for (var j = 0; j < 3; j++) {
+    iifeFixed.push((function(capturedJ) {
+        return function() { console.log("Button", capturedJ); };
+    })(j));
+}
+iifeFixed[0](); // "Button 0"</pre>
+
+        <!-- SECTION 8 -->
+        <h2 id="section8"><span class="level advanced">ADVANCED</span>8. Memoization with Closures</h2>
+
+        <p><strong>Memoization</strong> caches the results of expensive function calls, using a closure to hold the cache between calls.</p>
+
+        <pre>function memoize(fn) {
+    const cache = new Map(); // private cache, held via closure
+
+    return function(...args) {
+        const key = JSON.stringify(args);
+        if (cache.has(key)) {
+            console.log("Cache hit for", key);
+            return cache.get(key);
+        }
+        const result = fn(...args);
+        cache.set(key, result);
+        return result;
+    };
+}
+
+function slowSquare(n) {
+    console.log("Computing...");
+    return n * n;
+}
+
+const fastSquare = memoize(slowSquare);
+console.log(fastSquare(5)); // "Computing..." then 25
+console.log(fastSquare(5)); // "Cache hit for [5]" then 25 — no recomputation!</pre>
+
+        <!-- SECTION 9 -->
+        <h2 id="section9"><span class="level intermediate">INTERMEDIATE</span>9. Common Pitfalls</h2>
+
+        <h3>1. Memory Retention</h3>
+        <pre>function attachHandler(largeData) {
+    // If the returned function is kept around forever (e.g. a global event
+    // listener), 'largeData' can never be garbage-collected, even if unused.
+    return function handleClick() {
+        console.log("clicked");
+    };
+}
+// Only close over what you actually need to avoid unnecessary retention</pre>
+
+        <h3>2. Expecting a Snapshot Instead of a Live Reference</h3>
+        <pre>function delayedLogs() {
+    let value = "initial";
+    setTimeout(() => console.log(value), 100); // captures the VARIABLE, not "initial"
+    value = "changed";
+}
+delayedLogs(); // logs "changed" after 100ms, not "initial"!</pre>
+
+        <h3>3. Overusing Closures Where a Class Would Be Clearer</h3>
+        <pre>// For simple cases, closures are great. But for many methods and
+// inheritance, a class is often more readable than deeply nested closures:
+class BankAccount {
+    #balance; // truly private field (modern alternative to closures)
+    constructor(initial) { this.#balance = initial; }
+    deposit(amount) { this.#balance += amount; return this.#balance; }
+}</pre>
+
+        <!-- SECTION 10 -->
+        <h2 id="section10"><span class="level intermediate">INTERMEDIATE</span>10. Best Practices</h2>
+
+        <h3>1. Use Closures for Genuine Private State</h3>
+        <pre>// ✅ Good use case — encapsulation without exposing internals
+function createCounter() {
+    let count = 0;
+    return { increment: () => ++count, get: () => count };
+}</pre>
+
+        <h3>2. Prefer let Over var in Loops That Create Closures</h3>
+        <pre>// ✅ Avoids the classic loop bug entirely
+for (let i = 0; i < items.length; i++) {
+    setTimeout(() => console.log(items[i]), 100);
+}</pre>
+
+        <h3>3. Don't Close Over More Than You Need</h3>
+        <pre>// ✅ Only keep what's actually used alive
+function makeHandler(id) {
+    return () => console.log(id); // just holds 'id', not a giant surrounding object
+}</pre>
+
+        <h3>4. Name Returned Functions for Easier Debugging</h3>
+        <pre>// ✅ Named function expression shows up clearly in stack traces
+function createValidator(rules) {
+    return function validate(input) {
+        return rules.every(rule => rule(input));
+    };
+}</pre>
+
+        <!-- SUMMARY -->
+        <h2 style="margin-top: 40px;">📋 Quick Reference Summary</h2>
+
+        <div class="table-wrap">
+        <table>
+            <tr>
+                <th>Concept</th>
+                <th>Key Points</th>
+            </tr>
+            <tr>
+                <td><strong>Closure</strong></td>
+                <td>A function plus the outer variables it remembers, even after the outer function returns.</td>
+            </tr>
+            <tr>
+                <td><strong>Private state</strong></td>
+                <td>Closures are JavaScript's classic mechanism for encapsulation before private class fields.</td>
+            </tr>
+            <tr>
+                <td><strong>Factory functions</strong></td>
+                <td>Each call creates an independent closure with its own private variables.</td>
+            </tr>
+            <tr>
+                <td><strong>Module pattern</strong></td>
+                <td>IIFE + closure = hidden internals, small public API.</td>
+            </tr>
+            <tr>
+                <td><strong>Capture by reference</strong></td>
+                <td>Closures see the LATEST value of a variable, not a snapshot from creation time.</td>
+            </tr>
+            <tr>
+                <td><strong>Loop bug</strong></td>
+                <td><code>var</code> in a loop shares one binding across all closures; <code>let</code> gives each iteration its own.</td>
+            </tr>
+        </table>
+        </div>
+
+        <div style="margin-top: 40px; padding: 20px; background: #ecf0f1; border-radius: 5px;">
+            <h3>🎓 Learning Path</h3>
+            <p><strong>Beginner:</strong> Master sections 1, 2</p>
+            <p><strong>Intermediate:</strong> Understand sections 3, 4, 9, 10</p>
+            <p><strong>Advanced:</strong> Deep dive into sections 5, 6, 7, 8</p>
+        </div>
+
+    </div>
+</body>
+</html>

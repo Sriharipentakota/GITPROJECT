@@ -1,0 +1,871 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JavaScript Variables: Complete Guide</title>
+    <link rel="stylesheet" href="/guides/guide-base.css">
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 JavaScript Variables: Complete Guide</h1>
+        <p style="font-size: 1.1em; color: #7f8c8d; margin-bottom: 20px;">
+            A comprehensive journey from fundamental concepts to advanced techniques
+        </p>
+
+        <div class="toc">
+            <h3>📚 Table of Contents</h3>
+            <ul>
+                <li><a href="#section1">1. What are Variables?</a></li>
+                <li><a href="#section2">2. Declaring Variables (var, let, const)</a></li>
+                <li><a href="#section3">3. Variable Scope</a></li>
+                <li><a href="#section4">4. Hoisting</a></li>
+                <li><a href="#section5">5. Data Types</a></li>
+                <li><a href="#section6">6. Variable Naming Conventions</a></li>
+                <li><a href="#section7">7. Primitive vs Reference Types</a></li>
+                <li><a href="#section8">8. Closures</a></li>
+                <li><a href="#section9">9. Memory and Garbage Collection</a></li>
+                <li><a href="#section10">10. Best Practices</a></li>
+            </ul>
+        </div>
+
+        <!-- SECTION 1 -->
+        <h2 id="section1"><span class="level beginner">BEGINNER</span>1. What are Variables?</h2>
+        
+        <h3>Definition</h3>
+        <p>A variable is a named container that stores a value. Think of it as a labeled box where you can put data and retrieve it later by using the label (variable name).</p>
+
+        <div class="example">
+            <strong>Real-world analogy:</strong> A variable is like a mailbox with a name on it. You can put messages in the mailbox and retrieve them by calling the mailbox by its name.
+        </div>
+
+        <h3>Why do we need variables?</h3>
+        <ul style="margin-left: 20px; margin: 15px 0;">
+            <li><strong>Store data:</strong> Keep information for later use</li>
+            <li><strong>Reusability:</strong> Use the same value multiple times without retyping</li>
+            <li><strong>Maintainability:</strong> Easy to update values in one place</li>
+            <li><strong>Readability:</strong> Give meaningful names to values</li>
+        </ul>
+
+        <h3>Creating Your First Variable</h3>
+        <pre>// Basic variable declaration and initialization
+let age = 25;
+console.log(age);  // Output: 25
+
+// Update the variable
+age = 26;
+console.log(age);  // Output: 26</pre>
+
+        <div class="note">
+            <strong>💡 Tip:</strong> In modern JavaScript, you'll mostly use <code>let</code> and <code>const</code>. We'll explain why later!
+        </div>
+
+        <!-- SECTION 2 -->
+        <h2 id="section2"><span class="level beginner">BEGINNER</span>2. Declaring Variables (var, let, const)</h2>
+
+        <p>JavaScript has three ways to declare variables: <code>var</code>, <code>let</code>, and <code>const</code>. Each has different characteristics.</p>
+
+        <h3>var - The Old Way</h3>
+        <pre>var name = "John";
+console.log(name);  // Output: John
+
+name = "Jane";
+console.log(name);  // Output: Jane</pre>
+
+        <p><code>var</code> is the oldest way to declare variables in JavaScript, but it has some quirks that make it less preferred in modern code.</p>
+
+        <div class="table-wrap">
+        <table class="table-compact">
+            <tr>
+                <th>Feature</th>
+                <th>var</th>
+                <th>let</th>
+                <th>const</th>
+            </tr>
+            <tr>
+                <td>Can be redeclared</td>
+                <td>✅ Yes</td>
+                <td>❌ No</td>
+                <td>❌ No</td>
+            </tr>
+            <tr>
+                <td>Can be reassigned</td>
+                <td>✅ Yes</td>
+                <td>✅ Yes</td>
+                <td>❌ No</td>
+            </tr>
+            <tr>
+                <td>Scope</td>
+                <td>Function scope</td>
+                <td>Block scope</td>
+                <td>Block scope</td>
+            </tr>
+            <tr>
+                <td>Hoisted</td>
+                <td>✅ Yes (with undefined)</td>
+                <td>✅ Yes (Temporal Dead Zone)</td>
+                <td>✅ Yes (Temporal Dead Zone)</td>
+            </tr>
+        </table>
+        </div>
+
+        <h3>let - The Modern Alternative</h3>
+        <pre>let color = "red";
+console.log(color);  // Output: red
+
+color = "blue";      // OK - reassignment is allowed
+console.log(color);  // Output: blue
+
+// let color = "green";  // ❌ ERROR - cannot redeclare</pre>
+
+        <div class="example">
+            <strong>When to use let:</strong> When you need a variable that will change value. This is your default choice in modern JavaScript.
+        </div>
+
+        <h3>const - The Constant</h3>
+        <pre>const PI = 3.14159;
+console.log(PI);     // Output: 3.14159
+
+// PI = 3.14;       // ❌ ERROR - cannot reassign
+// const PI = 3.14; // ❌ ERROR - cannot redeclare</pre>
+
+        <h3>const with Objects (Important!)</h3>
+        <p><code>const</code> prevents reassignment, but NOT mutation of objects:</p>
+
+        <pre>const person = {
+    name: "Alice",
+    age: 30
+};
+
+// ✅ This is ALLOWED - modifying object properties
+person.name = "Bob";
+person.age = 31;
+console.log(person);  // Output: { name: 'Bob', age: 31 }
+
+// ❌ This is NOT ALLOWED - reassigning the entire object
+// person = { name: "Charlie", age: 25 };</pre>
+
+        <div class="example">
+            <strong>When to use const:</strong> By default, use <code>const</code>. Use <code>let</code> only when you know the variable will be reassigned. Avoid <code>var</code>.
+        </div>
+
+        <h3>Comparison Example</h3>
+        <div class="comparison">
+            <div>
+                <strong>var (Outdated):</strong>
+                <pre>var x = 10;
+var x = 20;  // Allowed
+x = 30;      // Allowed
+console.log(x);  // 30</pre>
+            </div>
+            <div>
+                <strong>let (Modern):</strong>
+                <pre>let x = 10;
+// let x = 20;  // Error!
+x = 30;      // Allowed
+console.log(x);  // 30</pre>
+            </div>
+        </div>
+
+        <!-- SECTION 3 -->
+        <h2 id="section3"><span class="level intermediate">INTERMEDIATE</span>3. Variable Scope</h2>
+
+        <p>Scope determines where a variable can be accessed in your code. JavaScript has different types of scopes.</p>
+
+        <h3>Global Scope</h3>
+        <p>Variables declared outside of any function or block are in the global scope and can be accessed anywhere.</p>
+
+        <pre>const globalVar = "I'm global";
+
+function testGlobal() {
+    console.log(globalVar);  // Output: I'm global
+}
+
+testGlobal();
+console.log(globalVar);  // Output: I'm global</pre>
+
+        <h3>Function Scope (with var)</h3>
+        <pre>function myFunction() {
+    var functionVar = "I'm local to this function";
+    console.log(functionVar);  // Works fine
+}
+
+myFunction();
+// console.log(functionVar);  // ❌ Error: functionVar is not defined</pre>
+
+        <h3>Block Scope (with let and const)</h3>
+        <p>A block is any code enclosed in curly braces <code>{}</code>. This includes if statements, loops, etc.</p>
+
+        <pre>if (true) {
+    let blockVar = "I'm inside a block";
+    const blockConst = "Also inside a block";
+    console.log(blockVar);  // Works
+}
+
+// console.log(blockVar);   // ❌ Error: blockVar is not defined
+// console.log(blockConst); // ❌ Error: blockConst is not defined</pre>
+
+        <h3>Lexical Scope (Scope Chain)</h3>
+        <p>Inner scopes can access outer scopes, but not vice versa.</p>
+
+        <pre>const outerVar = "outer";
+
+function outer() {
+    const outerFuncVar = "outer function";
+    
+    function inner() {
+        const innerVar = "inner";
+        
+        console.log(innerVar);      // ✅ Can access inner
+        console.log(outerFuncVar);  // ✅ Can access parent
+        console.log(outerVar);      // ✅ Can access global
+    }
+    
+    inner();
+    // console.log(innerVar);  // ❌ Cannot access inner scope
+}
+
+outer();</pre>
+
+        <h3>var vs let/const Scope - Critical Difference</h3>
+        <pre>// With var - function scope
+function test1() {
+    for (var i = 0; i < 3; i++) {
+        // i is accessible here
+    }
+    console.log(i);  // Output: 3 (i is still accessible!)
+}
+
+// With let - block scope
+function test2() {
+    for (let j = 0; j < 3; j++) {
+        // j is accessible here
+    }
+    // console.log(j);  // ❌ Error: j is not defined
+}
+
+test1();
+test2();</pre>
+
+        <div class="warning">
+            <strong>⚠️ Common Pitfall:</strong> Using <code>var</code> in loops can cause unexpected behavior. This is a major reason to use <code>let</code> instead.
+        </div>
+
+        <!-- SECTION 4 -->
+        <h2 id="section4"><span class="level intermediate">INTERMEDIATE</span>4. Hoisting</h2>
+
+        <p>Hoisting is JavaScript's behavior of moving declarations to the top of their scope before execution.</p>
+
+        <h3>var Hoisting</h3>
+        <p>When <code>var</code> is hoisted, it's initialized with <code>undefined</code>:</p>
+
+        <pre>console.log(x);  // Output: undefined (not an error!)
+var x = 5;
+console.log(x);  // Output: 5
+
+// JavaScript interprets this as:
+// var x;              // Declaration hoisted
+// console.log(x);     // undefined
+// x = 5;              // Assignment stays in place
+// console.log(x);     // 5</pre>
+
+        <h3>let and const Hoisting</h3>
+        <p><code>let</code> and <code>const</code> are hoisted but not initialized. This creates the Temporal Dead Zone (TDZ):</p>
+
+        <pre>// ❌ ReferenceError: Cannot access 'y' before initialization
+console.log(y);
+let y = 5;
+
+// JavaScript's view:
+// TDZ starts here
+// let y;  // Declaration hoisted, but not initialized
+// console.log(y);  // ❌ Still in TDZ
+// y = 5;
+// TDZ ends here</pre>
+
+        <h3>Function Hoisting</h3>
+        <p>Function declarations are completely hoisted (both declaration and definition):</p>
+
+        <pre>// ✅ This works! Function is fully hoisted
+sayHello();  // Output: Hello!
+
+function sayHello() {
+    console.log("Hello!");
+}
+
+// BUT function expressions are NOT hoisted
+// greet();  // ❌ Error: greet is not a function
+const greet = function() {
+    console.log("Hi!");
+};</pre>
+
+        <h3>Hoisting Visualization</h3>
+        <div class="example">
+            <strong>What you write:</strong>
+            <pre>console.log(name);
+var name = "John";</pre>
+
+            <strong>How JavaScript interprets it:</strong>
+            <pre>var name;           // Hoisted declaration
+console.log(name);  // undefined
+name = "John";      // Assignment
+</pre>
+        </div>
+
+        <!-- SECTION 5 -->
+        <h2 id="section5"><span class="level beginner">BEGINNER</span>5. Data Types Stored in Variables</h2>
+
+        <p>JavaScript variables can store different types of data. Let's explore them all.</p>
+
+        <h3>Primitive Data Types</h3>
+        <p>Primitive types are immutable (cannot be changed) and are passed by value.</p>
+
+        <h4>1. String</h4>
+        <pre>const name = "Alice";
+const greeting = 'Hello';
+const template = `Hello, ${name}!`;
+
+console.log(name);       // Alice
+console.log(greeting);   // Hello
+console.log(template);   // Hello, Alice!</pre>
+
+        <h4>2. Number</h4>
+        <pre>const integer = 42;
+const decimal = 3.14;
+const negative = -10;
+const zero = 0;
+
+console.log(typeof 42);  // "number"</pre>
+
+        <h4>3. Boolean</h4>
+        <pre>const isActive = true;
+const isAdmin = false;
+
+console.log(isActive);   // true
+console.log(typeof isActive);  // "boolean"</pre>
+
+        <h4>4. undefined</h4>
+        <pre>let x;
+console.log(x);           // undefined
+console.log(typeof x);    // "undefined"</pre>
+
+        <h4>5. null</h4>
+        <pre>let emptyValue = null;
+console.log(emptyValue);      // null
+console.log(typeof null);     // "object" (quirk of JavaScript)</pre>
+
+        <h4>6. BigInt</h4>
+        <pre>const largeNumber = 9007199254740992n;
+const anotherBigInt = BigInt("12345678901234567890");
+
+console.log(typeof largeNumber);  // "bigint"</pre>
+
+        <h4>7. Symbol (Advanced)</h4>
+        <pre>const sym1 = Symbol("id");
+const sym2 = Symbol("id");
+
+console.log(sym1 === sym2);  // false - each symbol is unique
+console.log(typeof sym1);    // "symbol"</pre>
+
+        <h3>Object Data Types (Reference Types)</h3>
+        <p>Objects are mutable and passed by reference.</p>
+
+        <h4>Object Literal</h4>
+        <pre>const person = {
+    name: "Bob",
+    age: 30,
+    city: "New York"
+};
+
+console.log(person.name);     // Bob
+console.log(person["age"]);   // 30</pre>
+
+        <h4>Array</h4>
+        <pre>const fruits = ["apple", "banana", "cherry"];
+const numbers = [1, 2, 3, 4, 5];
+
+console.log(fruits[0]);    // apple
+console.log(fruits.length);  // 3</pre>
+
+        <h4>Function</h4>
+        <pre>const add = function(a, b) {
+    return a + b;
+};
+
+console.log(add(5, 3));  // 8</pre>
+
+        <!-- SECTION 6 -->
+        <h2 id="section6"><span class="level beginner">BEGINNER</span>6. Variable Naming Conventions</h2>
+
+        <h3>Rules for Naming Variables</h3>
+        <ul style="margin: 15px 0; margin-left: 20px;">
+            <li>Must start with a letter, underscore (_), or dollar sign ($)</li>
+            <li>Can contain letters, numbers, underscores, and dollar signs</li>
+            <li>Cannot be a reserved keyword (if, while, const, etc.)</li>
+            <li>Are case-sensitive (myVar ≠ myvar)</li>
+            <li>Cannot contain spaces</li>
+        </ul>
+
+        <h3>Good vs Bad Naming</h3>
+        <div class="comparison">
+            <div>
+                <strong>❌ Bad:</strong>
+                <pre>let x = 5;
+let n = "John";
+let a = true;
+let $$ = "value";</pre>
+            </div>
+            <div>
+                <strong>✅ Good:</strong>
+                <pre>let userAge = 5;
+let userName = "John";
+let isActive = true;
+let totalPrice = "value";</pre>
+            </div>
+        </div>
+
+        <h3>Naming Conventions</h3>
+
+        <h4>camelCase (Standard for Variables)</h4>
+        <pre>const firstName = "John";
+const userAge = 25;
+const isEmailVerified = true;</pre>
+
+        <h4>PascalCase (for Classes and Constructors)</h4>
+        <pre>class UserAccount {
+    // ...
+}
+
+const user = new UserAccount();</pre>
+
+        <h4>UPPER_SNAKE_CASE (for Constants)</h4>
+        <pre>const MAX_USERS = 100;
+const API_KEY = "abc123xyz";
+const DB_HOST = "localhost";</pre>
+
+        <div class="note">
+            <strong>💡 Tip:</strong> Use descriptive names that explain what the variable contains. Future you (and your team) will thank you!
+        </div>
+
+        <!-- SECTION 7 -->
+        <h2 id="section7"><span class="level intermediate">INTERMEDIATE</span>7. Primitive vs Reference Types</h2>
+
+        <h3>Primitive Types - Pass by Value</h3>
+        <p>When you assign a primitive to another variable, the VALUE is copied.</p>
+
+        <pre>let a = 5;
+let b = a;
+
+a = 10;
+
+console.log(a);  // 10
+console.log(b);  // 5 (unchanged because b got a copy of the value)</pre>
+
+        <h3>Reference Types - Pass by Reference</h3>
+        <p>When you assign an object to another variable, the REFERENCE is copied, not the value.</p>
+
+        <pre>let person1 = { name: "Alice", age: 30 };
+let person2 = person1;
+
+person1.age = 31;
+
+console.log(person1);  // { name: 'Alice', age: 31 }
+console.log(person2);  // { name: 'Alice', age: 31 } - Both point to same object!</pre>
+
+        <h3>Visual Explanation</h3>
+        <div class="example">
+            <strong>Primitive (Value):</strong>
+            <pre>let x = 10;
+let y = x;
+// x and y each have their own copy of 10
+
+x = 20;  // Only x changes
+// y is still 10</pre>
+
+            <strong>Reference (Object):</strong>
+            <pre>let obj1 = { value: 10 };
+let obj2 = obj1;
+// obj1 and obj2 point to the SAME object
+
+obj1.value = 20;  // Affects both
+// obj2.value is also now 20</pre>
+        </div>
+
+        <h3>Creating True Copies</h3>
+        <h4>Shallow Copy of Objects</h4>
+        <pre>const original = { name: "Bob", age: 25 };
+
+// Method 1: Spread operator
+const copy1 = { ...original };
+
+// Method 2: Object.assign()
+const copy2 = Object.assign({}, original);
+
+copy1.name = "Charlie";
+console.log(original.name);  // Bob (unchanged)
+console.log(copy1.name);     // Charlie</pre>
+
+        <h4>Deep Copy</h4>
+        <pre>const nested = {
+    user: { name: "Dave", details: { age: 30 } }
+};
+
+// Shallow copy (nested objects still referenced)
+const shallowCopy = { ...nested };
+
+// Deep copy
+const deepCopy = JSON.parse(JSON.stringify(nested));
+
+deepCopy.user.details.age = 31;
+console.log(nested.user.details.age);  // 30 (unaffected)</pre>
+
+        <!-- SECTION 8 -->
+        <h2 id="section8"><span class="level advanced">ADVANCED</span>8. Closures</h2>
+
+        <p>A closure is a function that has access to variables from its outer function scope, even after the outer function has returned.</p>
+
+        <h3>Understanding Closures</h3>
+        <pre>function outer() {
+    const message = "Hello";  // Outer function variable
+    
+    function inner() {
+        console.log(message);  // Inner function accesses outer variable
+    }
+    
+    return inner;
+}
+
+const myFunction = outer();
+myFunction();  // Output: Hello</pre>
+
+        <h3>Practical Closure Example</h3>
+        <pre>function createCounter() {
+    let count = 0;  // This persists due to closure
+    
+    return {
+        increment: function() {
+            count++;
+            return count;
+        },
+        decrement: function() {
+            count--;
+            return count;
+        },
+        getCount: function() {
+            return count;
+        }
+    };
+}
+
+const counter = createCounter();
+console.log(counter.increment());  // 1
+console.log(counter.increment());  // 2
+console.log(counter.decrement());  // 1
+console.log(counter.getCount());   // 1</pre>
+
+        <h3>Why Closures Matter</h3>
+        <div class="example">
+            <strong>Data Privacy Pattern:</strong>
+            <pre>function createBankAccount(initialBalance) {
+    let balance = initialBalance;  // Private variable
+    
+    return {
+        deposit(amount) {
+            balance += amount;
+            return balance;
+        },
+        withdraw(amount) {
+            if (amount <= balance) {
+                balance -= amount;
+                return balance;
+            }
+            return "Insufficient funds";
+        },
+        getBalance() {
+            return balance;
+        }
+    };
+}
+
+const myAccount = createBankAccount(1000);
+console.log(myAccount.deposit(500));     // 1500
+console.log(myAccount.withdraw(200));    // 1300
+// console.log(myAccount.balance);  // undefined - can't access directly!</pre>
+        </div>
+
+        <h3>Common Closure Pitfall - Loop Variables</h3>
+        <pre>// ❌ Problem with var
+var functions_var = [];
+for (var i = 0; i < 3; i++) {
+    functions_var.push(function() {
+        console.log(i);
+    });
+}
+functions_var[0]();  // 3 (not 0!)
+functions_var[1]();  // 3 (not 1!)
+functions_var[2]();  // 3 (not 2!)
+
+// ✅ Solution 1: Use let (block scope)
+let functions_let = [];
+for (let i = 0; i < 3; i++) {
+    functions_let.push(function() {
+        console.log(i);
+    });
+}
+functions_let[0]();  // 0
+functions_let[1]();  // 1
+functions_let[2]();  // 2
+
+// ✅ Solution 2: IIFE (Immediately Invoked Function Expression)
+var functions_iife = [];
+for (var i = 0; i < 3; i++) {
+    functions_iife.push((function(j) {
+        return function() {
+            console.log(j);
+        };
+    })(i));
+}
+functions_iife[0]();  // 0
+functions_iife[1]();  // 1
+functions_iife[2]();  // 2</pre>
+
+        <!-- SECTION 9 -->
+        <h2 id="section9"><span class="level advanced">ADVANCED</span>9. Memory and Garbage Collection</h2>
+
+        <h3>How Variables Use Memory</h3>
+        <p>Primitive values are stored directly in memory, while objects are stored as references.</p>
+
+        <pre>// Primitive: 5 bytes of memory for the number
+let age = 25;
+
+// Reference: stores address pointing to object in memory
+let person = { name: "Eve", age: 25 };</pre>
+
+        <h3>Memory Stack vs Heap</h3>
+        <div class="example">
+            <strong>Stack (Primitives):</strong>
+            <pre>let x = 5;      // Stored directly in stack
+let y = 10;     // Stored directly in stack</pre>
+
+            <strong>Heap (Objects):</strong>
+            <pre>let obj = { };  // Reference to object stored in stack
+                        // Actual object stored in heap</pre>
+        </div>
+
+        <h3>Garbage Collection</h3>
+        <p>JavaScript automatically removes variables that are no longer referenced.</p>
+
+        <pre>let obj = { data: "important" };
+let reference = obj;
+
+obj = null;  // obj no longer references the object
+// reference still points to it, so object remains in memory
+
+reference = null;  // Now nothing references it
+// Object is eligible for garbage collection</pre>
+
+        <h3>Memory Leaks - Variables That Won't Garbage Collect</h3>
+        <pre>// ❌ Common memory leak: accidental global variable
+function badFunction() {
+    leakyVar = "This is global!";  // No var/let/const = global!
+}
+
+badFunction();
+// leakyVar persists forever in memory!
+
+// ✅ Correct approach: explicit variable declaration
+function goodFunction() {
+    const safeVar = "This is local";
+}</pre>
+
+        <h3>Circular References</h3>
+        <pre>// Modern garbage collectors handle this well
+const obj1 = { name: "obj1" };
+const obj2 = { name: "obj2" };
+
+obj1.ref = obj2;
+obj2.ref = obj1;  // Circular reference
+
+// When both are no longer referenced, both are cleaned up
+obj1 = null;
+obj2 = null;</pre>
+
+        <!-- SECTION 10 -->
+        <h2 id="section10"><span class="level intermediate">INTERMEDIATE</span>10. Best Practices</h2>
+
+        <h3>1. Use const by Default</h3>
+        <pre>// ✅ Good: Start with const
+const PI = 3.14159;
+const userName = "John";
+const maxAttempts = 5;
+
+// Use let only when necessary
+let counter = 0;
+counter++;
+
+// Avoid var entirely
+// var oldWay = "avoid this";</pre>
+
+        <h3>2. Initialize Variables at Declaration</h3>
+        <pre>// ✅ Good
+const name = "Alice";
+let age = 30;
+
+// ❌ Avoid
+let name;
+let age;
+name = "Alice";
+age = 30;</pre>
+
+        <h3>3. Use Meaningful Names</h3>
+        <pre>// ✅ Descriptive
+const userEmail = "john@example.com";
+const isAuthenticated = true;
+const maxLoginAttempts = 5;
+
+// ❌ Unclear
+const ue = "john@example.com";
+const ia = true;
+const mla = 5;</pre>
+
+        <h3>4. Group Related Variables</h3>
+        <pre>// ✅ Good: Group related data in objects
+const user = {
+    name: "Bob",
+    email: "bob@example.com",
+    age: 28,
+    isAdmin: false
+};
+
+// ❌ Messy: Scattered variables
+const userName = "Bob";
+const userEmail = "bob@example.com";
+const userAge = 28;
+const userIsAdmin = false;</pre>
+
+        <h3>5. Avoid Global Variables</h3>
+        <pre>// ❌ Avoid global variables
+var globalCounter = 0;
+
+function increment() {
+    globalCounter++;
+}
+
+// ✅ Better: Encapsulate in function or module
+const counter = (function() {
+    let count = 0;
+    return {
+        increment: () => ++count,
+        get: () => count
+    };
+})();</pre>
+
+        <h3>6. Be Careful with Object Mutations</h3>
+        <pre>// ❌ Can be problematic
+const config = { timeout: 5000 };
+config.timeout = 10000;  // Mutating original
+
+// ✅ Better: Create new object
+const config = { timeout: 5000 };
+const newConfig = { ...config, timeout: 10000 };</pre>
+
+        <h3>7. Document Complex Variables</h3>
+        <pre>/**
+ * Cached user data with last update timestamp
+ * @type {{id: number, name: string, email: string, timestamp: number}}
+ */
+const cachedUser = {
+    id: 1,
+    name: "John",
+    email: "john@example.com",
+    timestamp: Date.now()
+};</pre>
+
+        <h3>8. Use Destructuring</h3>
+        <pre>// ✅ Modern and clean
+const { name, email, age } = user;
+const [first, second, ...rest] = array;
+
+// Instead of
+const name = user.name;
+const email = user.email;
+const age = user.age;</pre>
+
+        <h3>9. Use Template Literals for Strings</h3>
+        <pre>// ✅ Modern approach
+const greeting = `Hello, ${name}! You are ${age} years old.`;
+
+// Instead of
+const greeting = "Hello, " + name + "! You are " + age + " years old.";</pre>
+
+        <h3>10. Avoid Variable Shadowing</h3>
+        <pre>// ❌ Confusing: same name in different scopes
+let value = "global";
+
+function test() {
+    let value = "local";  // Shadows outer value
+    console.log(value);   // local
+}
+
+// ✅ Better: Use different names
+let globalValue = "global";
+
+function test() {
+    let localValue = "local";
+    console.log(localValue);   // local
+}</pre>
+
+        <!-- SUMMARY -->
+        <h2 style="margin-top: 40px;">📋 Quick Reference Summary</h2>
+
+        <div class="table-wrap">
+        <table>
+            <tr>
+                <th>Concept</th>
+                <th>Key Points</th>
+            </tr>
+            <tr>
+                <td><strong>var</strong></td>
+                <td>Function scoped, hoisted with undefined, can be redeclared. Avoid in modern code.</td>
+            </tr>
+            <tr>
+                <td><strong>let</strong></td>
+                <td>Block scoped, hoisted with TDZ, can be reassigned. Use when value changes.</td>
+            </tr>
+            <tr>
+                <td><strong>const</strong></td>
+                <td>Block scoped, hoisted with TDZ, cannot be reassigned. Use by default.</td>
+            </tr>
+            <tr>
+                <td><strong>Primitives</strong></td>
+                <td>Number, String, Boolean, undefined, null, BigInt, Symbol. Passed by value.</td>
+            </tr>
+            <tr>
+                <td><strong>Objects</strong></td>
+                <td>Object, Array, Function. Passed by reference.</td>
+            </tr>
+            <tr>
+                <td><strong>Scope</strong></td>
+                <td>Global, Function, Block. Inner scopes can access outer scopes.</td>
+            </tr>
+            <tr>
+                <td><strong>Hoisting</strong></td>
+                <td>var hoists with undefined; let/const hoist with TDZ; functions fully hoist.</td>
+            </tr>
+            <tr>
+                <td><strong>Closure</strong></td>
+                <td>Function accessing variables from outer scope after it returns.</td>
+            </tr>
+        </table>
+        </div>
+
+        <div style="margin-top: 40px; padding: 20px; background: #ecf0f1; border-radius: 5px;">
+            <h3>🎓 Learning Path</h3>
+            <p><strong>Beginner:</strong> Master sections 1, 2, 5, 6</p>
+            <p><strong>Intermediate:</strong> Understand sections 3, 4, 10</p>
+            <p><strong>Advanced:</strong> Deep dive into sections 7, 8, 9</p>
+        </div>
+
+    </div>
+</body>
+</html>

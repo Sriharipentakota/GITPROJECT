@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Playwright API Testing: Complete Guide</title>
+    <link rel="stylesheet" href="/guides/guide-base.css">
+</head>
+<body>
+    <div class="container">
+        <h1>🔌 Playwright API Testing: Complete Guide</h1>
+        <p style="font-size: 1.1em; color: #7f8c8d; margin-bottom: 20px;">
+            The built-in HTTP client — pure API tests, hybrid tests, and standalone contexts
+        </p>
+
+        <div class="toc">
+            <h3>📚 Table of Contents</h3>
+            <ul>
+                <li><a href="#section1">1. The Built-In HTTP Client</a></li>
+                <li><a href="#section2">2. GET Requests and Query Params</a></li>
+                <li><a href="#section3">3. POST, PUT, PATCH, DELETE</a></li>
+                <li><a href="#section4">4. Inspecting the Response</a></li>
+                <li><a href="#section5">5. Headers, Forms, and Multipart Uploads</a></li>
+                <li><a href="#section6">6. Three Use Cases for API Testing</a></li>
+                <li><a href="#section7">7. page.request vs Standalone Contexts</a></li>
+                <li><a href="#section8">8. Common Pitfalls</a></li>
+            </ul>
+        </div>
+
+        <!-- SECTION 1 -->
+        <h2 id="section1"><span class="level beginner">BEGINNER</span>1. The Built-In HTTP Client</h2>
+
+        <p>Playwright includes its own HTTP client, <code>APIRequestContext</code> — no axios, node-fetch, or supertest dependency required. Every test automatically has access to it via the <code>request</code> fixture, which is pre-configured with your config's <code>baseURL</code> and any <code>extraHTTPHeaders</code>.</p>
+
+        <pre>test('health check responds OK', async ({ request }) => {
+  const res = await request.get('/api/health');
+  expect(res.ok()).toBeTruthy();
+});</pre>
+
+        <div class="example">
+            <strong>Why this matters:</strong> since it's part of the same test runner and shares the same config, you write API tests with the exact same <code>test()</code>/<code>expect()</code> syntax as UI tests — no context switching between tools.
+        </div>
+
+        <!-- SECTION 2 -->
+        <h2 id="section2"><span class="level beginner">BEGINNER</span>2. GET Requests and Query Params</h2>
+
+        <pre>const res = await request.get('/api/users');
+expect(res.ok()).toBeTruthy();
+const users = await res.json();
+
+const res2 = await request.get('/api/search', {
+  params: { q: 'playwright', page: 1 },
+});</pre>
+
+        <!-- SECTION 3 -->
+        <h2 id="section3"><span class="level beginner">BEGINNER</span>3. POST, PUT, PATCH, DELETE</h2>
+
+        <pre>const created = await request.post('/api/users', {
+  data: { name: 'Alice', email: 'alice@example.com' },
+});
+expect(created.status()).toBe(201);
+const { id } = await created.json();
+
+await request.put(`/api/users/${id}`,  { data: { name: 'Bob' } });
+await request.patch(`/api/users/${id}`, { data: { active: false } });
+await request.delete(`/api/users/${id}`);</pre>
+
+        <h3>Full CRUD Cycle</h3>
+        <pre>test('user CRUD via API', async ({ request }) => {
+  const created = await request.post('/api/users', {
+    data: { name: 'Alice', email: 'alice@test.com' },
+  });
+  expect(created.status()).toBe(201);
+  const { id } = await created.json();
+
+  const fetched = await request.get(`/api/users/${id}`);
+  await expect(fetched).toBeOK();
+  expect((await fetched.json()).name).toBe('Alice');
+
+  const deleted = await request.delete(`/api/users/${id}`);
+  expect(deleted.status()).toBe(204);
+
+  const missing = await request.get(`/api/users/${id}`);
+  expect(missing.status()).toBe(404);
+});</pre>
+
+        <!-- SECTION 4 -->
+        <h2 id="section4"><span class="level intermediate">INTERMEDIATE</span>4. Inspecting the Response</h2>
+
+        <div class="table-wrap">
+        <table class="table-compact">
+            <tr>
+                <th>Method</th>
+                <th>Returns</th>
+            </tr>
+            <tr>
+                <td><code>res.ok()</code></td>
+                <td>Boolean — true for status 200–299</td>
+            </tr>
+            <tr>
+                <td><code>res.status()</code></td>
+                <td>Exact numeric HTTP status code</td>
+            </tr>
+            <tr>
+                <td><code>await res.json()</code></td>
+                <td>Parsed JSON body</td>
+            </tr>
+            <tr>
+                <td><code>await res.text()</code></td>
+                <td>Raw text body</td>
+            </tr>
+            <tr>
+                <td><code>res.headers()</code></td>
+                <td>Response headers as a plain object</td>
+            </tr>
+        </table>
+        </div>
+
+        <pre>await expect(response).toBeOK();   // preferred assertion form in tests</pre>
+
+        <!-- SECTION 5 -->
+        <h2 id="section5"><span class="level intermediate">INTERMEDIATE</span>5. Headers, Forms, and Multipart Uploads</h2>
+
+        <pre>// Custom headers, e.g. auth tokens
+const res = await request.get('/api/protected', {
+  headers: { Authorization: `Bearer ${token}` },
+});
+
+// Form-encoded body
+await request.post('/api/submit', { form: { name: 'Alice' } });
+
+// Multipart file upload
+await request.post('/api/upload', {
+  multipart: { file: { name: 'report.pdf', mimeType: 'application/pdf',
+                        buffer: Buffer.from('…') } },
+});</pre>
+
+        <div class="note">
+            <strong>💡 Tip:</strong> Use <code>data: { … }</code> for a JSON body (Playwright sets <code>Content-Type: application/json</code> automatically), <code>form: { … }</code> for <code>application/x-www-form-urlencoded</code>, and <code>multipart: { … }</code> only when the endpoint genuinely expects <code>multipart/form-data</code> (typically file uploads).
+        </div>
+
+        <!-- SECTION 6 -->
+        <h2 id="section6"><span class="level advanced">ADVANCED</span>6. Three Use Cases for API Testing</h2>
+
+        <div class="table-wrap">
+        <table class="table-compact">
+            <tr>
+                <th>Use case</th>
+                <th>What it looks like</th>
+            </tr>
+            <tr>
+                <td>Pure API test</td>
+                <td>Validate a REST/GraphQL endpoint directly — no browser opened at all</td>
+            </tr>
+            <tr>
+                <td>Setup/teardown</td>
+                <td>Create/delete test data via API, dramatically faster than clicking through the UI</td>
+            </tr>
+            <tr>
+                <td>Hybrid test</td>
+                <td>Seed via API, then assert the UI correctly reflects that state</td>
+            </tr>
+        </table>
+        </div>
+
+        <h3>API Seed + UI Assertion Hybrid Test</h3>
+        <pre>test('newly created product appears in the catalog', async ({ request, page }) => {
+  const res = await request.post('/api/products', {
+    data: { name: 'Playwright Pro', price: 99 },
+  });
+  expect(res.status()).toBe(201);
+  const { id } = await res.json();
+
+  await page.goto('/catalog');
+  await expect(page.getByTestId(`product-${id}`)).toBeVisible();
+  await expect(page.getByTestId(`product-${id}`)).toContainText('Playwright Pro');
+
+  await request.delete(`/api/products/${id}`);   // cleanup via API
+});</pre>
+
+        <div class="example">
+            <strong>Why hybrid tests matter:</strong> seeding state via the UI (clicking "New Product" and filling a form) is slow and adds an extra point of failure unrelated to what you're actually testing (the catalog display). Seeding via API isolates the assertion to exactly the behavior you care about.
+        </div>
+
+        <!-- SECTION 7 -->
+        <h2 id="section7"><span class="level advanced">ADVANCED</span>7. page.request vs Standalone Contexts</h2>
+
+        <div class="comparison">
+            <div>
+                <strong>page.request — shares browser cookies:</strong>
+                <pre>const res = await page.request.get('/api/me');
+// Uses the SAME session cookies
+// as the logged-in browser page</pre>
+            </div>
+            <div>
+                <strong>request.newContext() — fully independent:</strong>
+                <pre>const api = await request.newContext({
+  baseURL: 'https://api.example.com',
+  extraHTTPHeaders: { 'x-api-key': process.env.API_KEY! },
+});
+await api.dispose();  // always release when done</pre>
+            </div>
+        </div>
+
+        <p><code>page.request</code> is ideal when the server authenticates via browser session cookies and you want to make API calls "as" the currently logged-in user. <code>request.newContext()</code> is the right choice in <code>globalSetup</code>, where no browser or page exists yet.</p>
+
+        <pre>// global-setup.ts
+import { request } from '@playwright/test';
+
+export default async function globalSetup() {
+  const api = await request.newContext({ baseURL: process.env.BASE_URL });
+  const loginRes = await api.post('/api/auth/login', {
+    data: { email: 'admin@test.com', password: 'secret' },
+  });
+  await api.storageState({ path: 'auth/admin.json' });
+  await api.dispose();
+}</pre>
+
+        <!-- SECTION 8 -->
+        <h2 id="section8"><span class="level advanced">ADVANCED</span>8. Common Pitfalls</h2>
+
+        <div class="warning">
+            <strong>⚠️ Pitfall 1 — Forgetting to dispose standalone contexts:</strong> Every <code>request.newContext()</code> holds open connections; forgetting <code>await api.dispose()</code> in <code>globalSetup</code> or a fixture teardown can leak resources across a long-running suite.
+        </div>
+
+        <div class="warning">
+            <strong>⚠️ Pitfall 2 — Testing pure logic entirely through the UI:</strong> If a bug is really about backend validation (e.g. "email must be unique"), a pure API test that posts directly to the endpoint is faster, more precise, and less brittle than driving the same check through a full UI form.
+        </div>
+
+        <div class="note">
+            <strong>💡 Tip:</strong> Use API calls for teardown even in UI-heavy tests — deleting test data via <code>request.delete()</code> in an <code>afterEach</code> is far more reliable than trying to click through a UI cleanup flow that might itself be broken.
+        </div>
+
+        <!-- SUMMARY -->
+        <h2 style="margin-top: 40px;">📋 Quick Reference Summary</h2>
+
+        <div class="table-wrap">
+        <table>
+            <tr>
+                <th>Concept</th>
+                <th>Key Points</th>
+            </tr>
+            <tr>
+                <td><strong>request fixture</strong></td>
+                <td>Built-in HTTP client, pre-configured with baseURL — available in every test.</td>
+            </tr>
+            <tr>
+                <td><strong>Methods</strong></td>
+                <td>get/post/put/patch/delete — data: for JSON, form: for urlencoded, params: for query strings.</td>
+            </tr>
+            <tr>
+                <td><strong>Response</strong></td>
+                <td>ok(), status(), json(), text(), headers(); assert with expect(res).toBeOK().</td>
+            </tr>
+            <tr>
+                <td><strong>Three use cases</strong></td>
+                <td>Pure API tests, fast setup/teardown, hybrid seed-then-assert-UI tests.</td>
+            </tr>
+            <tr>
+                <td><strong>page.request</strong></td>
+                <td>Shares the browser's cookies — for authenticated calls as the logged-in user.</td>
+            </tr>
+            <tr>
+                <td><strong>request.newContext()</strong></td>
+                <td>Standalone client for globalSetup or independent sessions — always dispose() it.</td>
+            </tr>
+        </table>
+        </div>
+
+        <div style="margin-top: 40px; padding: 20px; background: #ecf0f1; border-radius: 5px;">
+            <h3>🎓 Learning Path</h3>
+            <p><strong>Beginner:</strong> Master sections 1, 2, 3</p>
+            <p><strong>Intermediate:</strong> Understand sections 4, 5</p>
+            <p><strong>Advanced:</strong> Deep dive into sections 6, 7, 8</p>
+        </div>
+
+    </div>
+</body>
+</html>

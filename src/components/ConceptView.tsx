@@ -10,9 +10,10 @@ interface Props {
   questionCount: number;
   taskCount?: number;
   hasInProgress: boolean;
+  guideUrl?: string | null;
 }
 
-export default function ConceptView({ concept, onStartQuiz, onStartTasks, isLearned, onMarkLearned, questionCount, taskCount, hasInProgress }: Props) {
+export default function ConceptView({ concept, onStartQuiz, onStartTasks, isLearned, onMarkLearned, questionCount, taskCount, hasInProgress, guideUrl }: Props) {
   const [openExample, setOpenExample] = useState<number | null>(null);
 
   return (
@@ -31,6 +32,15 @@ export default function ConceptView({ concept, onStartQuiz, onStartTasks, isLear
             <button className="btn btn-secondary" onClick={onMarkLearned}>Mark as Learned</button>
           )}
           {isLearned && <span className="learned-chip">✓ Learned</span>}
+          {guideUrl && (
+            <button
+              className="btn btn-secondary"
+              onClick={() => window.open(guideUrl, '_blank', 'noopener,noreferrer')}
+              title="Open a full standalone deep-dive guide for this concept in a new tab"
+            >
+              📘 Detailed Guide
+            </button>
+          )}
           {onStartTasks && (
             <button className="btn btn-tasks" onClick={onStartTasks}>
               🛠 Tasks ({taskCount})

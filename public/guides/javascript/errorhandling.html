@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JavaScript Error Handling: Complete Guide</title>
+    <link rel="stylesheet" href="/guides/guide-base.css">
+</head>
+<body>
+    <div class="container">
+        <h1>🛡️ JavaScript Error Handling: Complete Guide</h1>
+        <p style="font-size: 1.1em; color: #7f8c8d; margin-bottom: 20px;">
+            A comprehensive journey from fundamental concepts to advanced techniques
+        </p>
+
+        <div class="toc">
+            <h3>📚 Table of Contents</h3>
+            <ul>
+                <li><a href="#section1">1. Why Handle Errors?</a></li>
+                <li><a href="#section2">2. try / catch / finally</a></li>
+                <li><a href="#section3">3. The Error Object</a></li>
+                <li><a href="#section4">4. Built-In Error Types</a></li>
+                <li><a href="#section5">5. Throwing Your Own Errors</a></li>
+                <li><a href="#section6">6. Custom Error Classes</a></li>
+                <li><a href="#section7">7. Re-throwing Errors</a></li>
+                <li><a href="#section8">8. Error Handling in Async Code</a></li>
+                <li><a href="#section9">9. Common Pitfalls</a></li>
+                <li><a href="#section10">10. Best Practices</a></li>
+            </ul>
+        </div>
+
+        <!-- SECTION 1 -->
+        <h2 id="section1"><span class="level beginner">BEGINNER</span>1. Why Handle Errors?</h2>
+
+        <p><strong>Error handling</strong> lets your program recover gracefully from problems instead of crashing outright — a failed network request shouldn't take down your entire application.</p>
+
+        <div class="example">
+            <strong>Real-world analogy:</strong> Error handling is like a circus safety net. The <code>try</code> block is the acrobat's risky performance. The <code>catch</code> block is the net — if the performer falls, the net catches them and the show continues instead of ending in disaster.
+        </div>
+
+        <pre>// Without error handling, an uncaught error stops execution entirely
+JSON.parse("not valid json"); // throws SyntaxError — script halts here!
+console.log("This line never runs");
+
+// With error handling, the program keeps going
+try {
+    JSON.parse("not valid json");
+} catch (err) {
+    console.log("Failed to parse, using default instead");
+}
+console.log("This line DOES run");</pre>
+
+        <!-- SECTION 2 -->
+        <h2 id="section2"><span class="level beginner">BEGINNER</span>2. try / catch / finally</h2>
+
+        <pre>function divide(a, b) {
+    try {
+        if (b === 0) {
+            throw new Error("Division by zero");
+        }
+        return a / b;
+    } catch (err) {
+        console.log("Caught:", err.message);
+        return null;
+    } finally {
+        console.log("divide() finished"); // ALWAYS runs, error or not
+    }
+}
+
+console.log(divide(10, 2));  // logs "divide() finished", returns 5
+console.log(divide(10, 0));  // logs "Caught: Division by zero", "divide() finished", returns null</pre>
+
+        <div class="note">
+            <strong>💡 Tip:</strong> <code>finally</code> is ideal for cleanup work that must happen regardless of outcome — closing a file handle, hiding a loading spinner, releasing a lock, or logging that an operation completed.
+        </div>
+
+        <h3>finally Runs Even After a return</h3>
+        <pre>function test() {
+    try {
+        return "from try";
+    } finally {
+        console.log("finally still runs, even though try already returned!");
+    }
+}
+console.log(test());
+// Output: "finally still runs..." THEN "from try"</pre>
+
+        <!-- SECTION 3 -->
+        <h2 id="section3"><span class="level beginner">BEGINNER</span>3. The Error Object</h2>
+
+        <p>Every <code>Error</code> object carries three key properties that help you diagnose what went wrong.</p>
+
+        <pre>try {
+    null.someMethod(); // will throw a TypeError
+} catch (err) {
+    console.log(err.name);    // "TypeError"
+    console.log(err.message); // "Cannot read properties of null (reading 'someMethod')"
+    console.log(err.stack);   // the full call stack trace, useful for debugging
+}</pre>
+
+        <div class="table-wrap">
+        <table>
+            <tr>
+                <th>Property</th>
+                <th>Description</th>
+            </tr>
+            <tr><td><code>.name</code></td><td>The error type, e.g. "TypeError", "RangeError"</td></tr>
+            <tr><td><code>.message</code></td><td>Human-readable description of what went wrong</td></tr>
+            <tr><td><code>.stack</code></td><td>The call stack at the moment the error was created (non-standard but universally supported)</td></tr>
+        </table>
+        </div>
+
+        <!-- SECTION 4 -->
+        <h2 id="section4"><span class="level intermediate">INTERMEDIATE</span>4. Built-In Error Types</h2>
+
+        <div class="table-wrap">
+        <table class="table-compact">
+            <tr>
+                <th>Error Type</th>
+                <th>When It Happens</th>
+                <th>Example</th>
+            </tr>
+            <tr>
+                <td><code>TypeError</code></td>
+                <td>Wrong type used for an operation</td>
+                <td><code>null.toString()</code></td>
+            </tr>
+            <tr>
+                <td><code>ReferenceError</code></td>
+                <td>Using an undeclared variable</td>
+                <td><code>console.log(notDefined)</code></td>
+            </tr>
+            <tr>
+                <td><code>RangeError</code></td>
+                <td>Value outside an allowed range</td>
+                <td><code>new Array(-1)</code></td>
+            </tr>
+            <tr>
+                <td><code>SyntaxError</code></td>
+                <td>Invalid code structure — usually caught at parse time</td>
+                <td><code>JSON.parse("{bad}")</code></td>
+            </tr>
+            <tr>
+                <td><code>URIError</code></td>
+                <td>Malformed URI passed to a URI function</td>
+                <td><code>decodeURIComponent("%")</code></td>
+            </tr>
+        </table>
+        </div>
+
+        <pre>try {
+    decodeURIComponent("%");
+} catch (err) {
+    console.log(err instanceof URIError); // true
+}
+
+try {
+    let x = notDeclaredAnywhere;
+} catch (err) {
+    console.log(err instanceof ReferenceError); // true
+}</pre>
+
+        <!-- SECTION 5 -->
+        <h2 id="section5"><span class="level intermediate">INTERMEDIATE</span>5. Throwing Your Own Errors</h2>
+
+        <p>Use <code>throw</code> to signal that something has gone wrong in YOUR code, not just when a built-in operation fails. You can throw any value, but throwing an <code>Error</code> object is best practice — it automatically captures a stack trace.</p>
+
+        <pre>function withdraw(balance, amount) {
+    if (amount > balance) {
+        throw new Error("Insufficient funds");
+    }
+    return balance - amount;
+}
+
+try {
+    withdraw(100, 500);
+} catch (err) {
+    console.log(err.message); // "Insufficient funds"
+}
+
+// You CAN throw a plain string or object, but you lose .stack and consistent shape
+// throw "just a string";      // ❌ works, but discouraged
+// throw { code: 500 };        // ❌ also works, also discouraged
+throw new Error("Prefer this — always an Error object"); // ✅</pre>
+
+        <!-- SECTION 6 -->
+        <h2 id="section6"><span class="level advanced">ADVANCED</span>6. Custom Error Classes</h2>
+
+        <p>Extend the built-in <code>Error</code> class to create your OWN error types — this lets calling code distinguish between different failure categories using <code>instanceof</code>.</p>
+
+        <pre>class ValidationError extends Error {
+    constructor(field, message) {
+        super(message);           // sets this.message
+        this.name = "ValidationError"; // otherwise it would just say "Error"
+        this.field = field;       // custom extra data
+    }
+}
+
+class NotFoundError extends Error {
+    constructor(resource) {
+        super(`${resource} not found`);
+        this.name = "NotFoundError";
+    }
+}
+
+function validateAge(age) {
+    if (typeof age !== "number") {
+        throw new TypeError("age must be a number");
+    }
+    if (age < 0) {
+        throw new ValidationError("age", "Age cannot be negative");
+    }
+}
+
+try {
+    validateAge(-5);
+} catch (err) {
+    if (err instanceof ValidationError) {
+        console.log(`Validation failed on ${err.field}: ${err.message}`);
+    } else if (err instanceof TypeError) {
+        console.log("Type problem:", err.message);
+    } else {
+        throw err; // unknown error type — let it propagate
+    }
+}</pre>
+
+        <!-- SECTION 7 -->
+        <h2 id="section7"><span class="level advanced">ADVANCED</span>7. Re-throwing Errors</h2>
+
+        <p>Sometimes a <code>catch</code> block can only handle SOME kinds of errors. For anything else, re-throw it (<code>throw err;</code>) so it can bubble up to a caller better equipped to deal with it.</p>
+
+        <pre>function loadConfig(json) {
+    try {
+        return JSON.parse(json);
+    } catch (err) {
+        if (err instanceof SyntaxError) {
+            console.log("Invalid config format, using defaults");
+            return {};
+        }
+        throw err; // unexpected error type — don't swallow it silently
+    }
+}
+
+// A caller further up can add its OWN handling
+function startApp() {
+    try {
+        const config = loadConfig(rawInput);
+        console.log(config);
+    } catch (err) {
+        console.error("Fatal startup error:", err);
+        process.exit?.(1); // (Node.js example — exits the process)
+    }
+}</pre>
+
+        <div class="warning">
+            <strong>⚠️ Never Silently Swallow Errors:</strong> An empty <code>catch {}</code> block hides bugs and makes debugging painful — you lose all visibility into what actually went wrong. At minimum, log the error even if you can't fully handle it.
+        </div>
+
+        <!-- SECTION 8 -->
+        <h2 id="section8"><span class="level advanced">ADVANCED</span>8. Error Handling in Async Code</h2>
+
+        <h3>async/await — Use try/catch</h3>
+        <pre>async function fetchUser(id) {
+    try {
+        const res = await fetch(`/api/users/${id}`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return await res.json();
+    } catch (err) {
+        console.error("fetchUser failed:", err.message);
+        return null;
+    } finally {
+        hideSpinner();
+    }
+}
+function hideSpinner() { console.log("spinner hidden"); }</pre>
+
+        <h3>Promise Chains — Use .catch()</h3>
+        <pre>fetch("/api/data")
+    .then(res => res.json())
+    .catch(err => console.error("Request failed:", err));</pre>
+
+        <div class="warning">
+            <strong>⚠️ try/catch Does NOT Catch Async Callback Errors:</strong> Wrapping a <code>setTimeout</code> or event-listener callback in <code>try/catch</code> does NOT catch errors thrown INSIDE that callback — the callback runs later, outside the original try block's execution.
+        </div>
+
+        <pre>try {
+    setTimeout(() => {
+        throw new Error("This escapes the try/catch!");
+    }, 100);
+} catch (err) {
+    console.log("This will NEVER run"); // the throw happens too late, in a new turn
+}
+// The error becomes an uncaught exception instead —
+// put the try/catch INSIDE the callback itself:
+setTimeout(() => {
+    try {
+        throw new Error("Now this IS caught");
+    } catch (err) {
+        console.log("Caught:", err.message);
+    }
+}, 100);</pre>
+
+        <!-- SECTION 9 -->
+        <h2 id="section9"><span class="level intermediate">INTERMEDIATE</span>9. Common Pitfalls</h2>
+
+        <h3>1. Catching Too Broadly</h3>
+        <pre>// ❌ Silently hides ALL errors, including bugs you'd want to know about
+try {
+    riskyOperation();
+} catch (err) {
+    // nothing here — errors vanish without a trace
+}
+
+// ✅ At minimum, log it
+try {
+    riskyOperation();
+} catch (err) {
+    console.error("riskyOperation failed:", err);
+}</pre>
+
+        <h3>2. Forgetting try/catch Around await</h3>
+        <pre>// ❌ An unhandled rejection here can crash a Node process or show a browser warning
+async function load() {
+    const data = await fetchData(); // no try/catch — rejection propagates uncaught
+}
+
+// ✅ Always guard risky awaits
+async function loadSafe() {
+    try {
+        const data = await fetchData();
+    } catch (err) {
+        console.error(err);
+    }
+}</pre>
+
+        <h3>3. Throwing Non-Error Values</h3>
+        <pre>// ❌ Loses stack trace and a consistent shape for catch blocks to rely on
+throw "Something broke";
+
+// ✅ Always throw real Error objects (or subclasses)
+throw new Error("Something broke");</pre>
+
+        <h3>4. Comparing Error Types with .name Instead of instanceof</h3>
+        <pre>// ❌ Fragile — string comparison, easy to typo
+if (err.name === "TypeError") { }
+
+// ✅ Reliable — works correctly with inheritance too
+if (err instanceof TypeError) { }</pre>
+
+        <!-- SECTION 10 -->
+        <h2 id="section10"><span class="level intermediate">INTERMEDIATE</span>10. Best Practices</h2>
+
+        <h3>1. Always Throw Error Objects, Never Plain Values</h3>
+        <pre>// ✅ Preserves stack trace and consistent structure
+throw new Error("Invalid input");</pre>
+
+        <h3>2. Create Custom Error Classes for Domain-Specific Failures</h3>
+        <pre>// ✅ Callers can distinguish failure types cleanly
+class PaymentError extends Error {
+    constructor(message) {
+        super(message);
+        this.name = "PaymentError";
+    }
+}</pre>
+
+        <h3>3. Use finally for Guaranteed Cleanup</h3>
+        <pre>// ✅ Runs whether the operation succeeds or fails
+try {
+    connection.open();
+    doWork();
+} finally {
+    connection.close();
+}</pre>
+
+        <h3>4. Re-throw Errors You Don't Know How to Handle</h3>
+        <pre>// ✅ Don't swallow unexpected error types
+catch (err) {
+    if (err instanceof ValidationError) return handleValidation(err);
+    throw err;
+}</pre>
+
+        <h3>5. Wrap Every await in try/catch (or Handle at a Higher Level)</h3>
+        <pre>// ✅ Predictable async failure handling
+async function safeCall() {
+    try {
+        return await riskyAsyncOp();
+    } catch (err) {
+        return fallbackValue;
+    }
+}</pre>
+
+        <!-- SUMMARY -->
+        <h2 style="margin-top: 40px;">📋 Quick Reference Summary</h2>
+
+        <div class="table-wrap">
+        <table>
+            <tr>
+                <th>Concept</th>
+                <th>Key Points</th>
+            </tr>
+            <tr>
+                <td><strong>try/catch/finally</strong></td>
+                <td>Wrap risky code; catch handles errors; finally always runs for cleanup.</td>
+            </tr>
+            <tr>
+                <td><strong>Error object</strong></td>
+                <td><code>.name</code>, <code>.message</code>, <code>.stack</code> — inspect these to diagnose failures.</td>
+            </tr>
+            <tr>
+                <td><strong>Built-in types</strong></td>
+                <td><code>TypeError</code>, <code>ReferenceError</code>, <code>RangeError</code>, <code>SyntaxError</code>, <code>URIError</code>.</td>
+            </tr>
+            <tr>
+                <td><strong>Custom errors</strong></td>
+                <td>Extend <code>Error</code>, call <code>super(message)</code>, set <code>this.name</code> for clean <code>instanceof</code> checks.</td>
+            </tr>
+            <tr>
+                <td><strong>Re-throwing</strong></td>
+                <td>Let unhandled error types bubble up rather than swallowing them silently.</td>
+            </tr>
+            <tr>
+                <td><strong>Async errors</strong></td>
+                <td>Use <code>try/catch</code> with <code>await</code>, or <code>.catch()</code> on promise chains — not a try/catch around a callback registration.</td>
+            </tr>
+        </table>
+        </div>
+
+        <div style="margin-top: 40px; padding: 20px; background: #ecf0f1; border-radius: 5px;">
+            <h3>🎓 Learning Path</h3>
+            <p><strong>Beginner:</strong> Master sections 1, 2, 3</p>
+            <p><strong>Intermediate:</strong> Understand sections 4, 5, 9, 10</p>
+            <p><strong>Advanced:</strong> Deep dive into sections 6, 7, 8</p>
+        </div>
+
+    </div>
+</body>
+</html>

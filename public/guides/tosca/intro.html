@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tosca TOSCA Overview & TCM: Complete Guide</title>
+    <link rel="stylesheet" href="/guides/guide-base.css">
+</head>
+<body>
+    <div class="container">
+        <h1>🔬 Tosca TOSCA Overview & TCM: Complete Guide</h1>
+        <p style="font-size: 1.1em; color: #7f8c8d; margin-bottom: 20px;">
+            From the model-based testing philosophy to navigating Tosca Commander like a professional
+        </p>
+
+        <div class="toc">
+            <h3>📚 Table of Contents</h3>
+            <ul>
+                <li><a href="#section1">1. What Is Tricentis Tosca?</a></li>
+                <li><a href="#section2">2. The Model-Based Testing Philosophy</a></li>
+                <li><a href="#section3">3. Tosca Commander (TCM): The Workbench</a></li>
+                <li><a href="#section4">4. The Repository and How Assets Are Stored</a></li>
+                <li><a href="#section5">5. Technical vs Business Parameters</a></li>
+                <li><a href="#section6">6. The End-to-End Tosca Workflow</a></li>
+                <li><a href="#section7">7. Tosca vs Traditional Script-Based Automation</a></li>
+                <li><a href="#section8">8. Risk-Based Test Optimisation (TO)</a></li>
+                <li><a href="#section9">9. Common Pitfalls for Newcomers</a></li>
+                <li><a href="#section10">10. Best Practices</a></li>
+            </ul>
+        </div>
+
+        <!-- SECTION 1 -->
+        <h2 id="section1"><span class="level beginner">BEGINNER</span>1. What Is Tricentis Tosca?</h2>
+
+        <h3>Definition</h3>
+        <p>Tricentis Tosca is a <strong>model-based, mostly no-code/low-code</strong> enterprise test automation platform. Instead of writing lines of code to drive a browser, desktop application, or API, testers <em>scan</em> the application under test once to build a reusable model of its controls, then assemble test cases visually by dragging those modelled controls into an ordered sequence of steps.</p>
+
+        <div class="example">
+            <strong>Who uses it and why:</strong> Tosca is popular in large enterprises (banking, insurance, SAP-heavy organisations, healthcare) because it lets manual testers, business analysts, and QA engineers — not just developers — build and maintain automated regression suites, and because a single UI-model change can repair dozens of test cases at once.
+        </div>
+
+        <h3>What Tosca is NOT</h3>
+        <ul style="margin: 15px 0; margin-left: 20px;">
+            <li>It is <strong>not</strong> a programming language or scripting framework like Selenium/WebDriver or Playwright — there is no source file of test code to check into a repository (though the underlying assets are versionable).</li>
+            <li>It is <strong>not</strong> limited to web UIs — the same tool and workflow test desktop apps (WinForms, Java Swing), mainframes, SAP GUI, mobile apps, PDF documents, databases, and REST/SOAP APIs.</li>
+            <li>It is <strong>not</strong> just a "recorder" — while it can capture actions, professional Tosca usage centres on the reusable Module model, not brittle recorded scripts.</li>
+        </ul>
+
+        <h3>The Four Pillars</h3>
+        <pre>1. TBox Scanning    → builds a Module (UI/API model) from the real application
+2. Test Cases       → ordered Test Steps that reference Modules and supply data
+3. Execution        → Execution Lists that run test cases and record results
+4. Requirements     → traceability linking business requirements to test coverage</pre>
+
+        <div class="note">
+            <strong>💡 Tip:</strong> Every other concept in this course (Modules, TestSteps, Buffers, Recovery Scenarios, DEX) is built on top of these four pillars. If you understand how they connect, the rest of Tosca falls into place quickly.
+        </div>
+
+        <!-- SECTION 2 -->
+        <h2 id="section2"><span class="level beginner">BEGINNER</span>2. The Model-Based Testing Philosophy</h2>
+
+        <p>Traditional automation frameworks encode "how to interact with the UI" directly inside each test script — a locator, a click, an assertion, repeated in every file that touches that screen. When the UI changes, every script that hard-codes that locator breaks, and someone has to hunt them all down.</p>
+
+        <h3>Tosca's Answer: Separate the Model from the Logic</h3>
+        <p>Tosca splits automation into two independent layers:</p>
+        <ul style="margin: 15px 0; margin-left: 20px;">
+            <li><strong>The Module (the model):</strong> a single definition of a screen's controls and how to find them technically.</li>
+            <li><strong>The Test Case (the logic):</strong> a sequence of business-meaningful steps that reference the Module's attributes and supply data.</li>
+        </ul>
+
+        <pre>Application UI changes: the "Login" button ID changes from #btnLogin to #loginSubmit
+
+Traditional scripted automation:
+  → grep the codebase for "btnLogin"
+  → find it hard-coded in 40 test scripts
+  → update all 40 files, re-run, hope nothing was missed
+
+Tosca:
+  → open Module: LoginPage
+  → re-scan or fix the LoginButton attribute's technical selector — once
+  → all 40 test cases that reference LoginPage.LoginButton are fixed instantly</pre>
+
+        <div class="example">
+            <strong>Real-world analogy:</strong> Think of the Module as a LEGO brick mould. Scanning shapes the mould once; every test case that snaps that brick into place automatically gets the updated shape if the mould is corrected. You never have to reshape a thousand already-built models by hand.
+        </div>
+
+        <h3>Why This Matters for Maintenance Cost</h3>
+        <p>Industry studies consistently show that the majority of automated-test effort is spent on <em>maintenance</em>, not initial creation. By centralising "how do I find and touch this control" in one place (the Module), Tosca dramatically cuts the ongoing maintenance burden — this is the platform's core value proposition, more than any individual feature.</p>
+
+        <!-- SECTION 3 -->
+        <h2 id="section3"><span class="level beginner">BEGINNER</span>3. Tosca Commander (TCM): The Workbench</h2>
+
+        <p><strong>Tosca Commander</strong>, universally abbreviated <strong>TCM</strong>, is the Windows desktop IDE where every Tosca asset is created, edited, executed, and reviewed. It is organised as a tree of sections down the left-hand navigation pane.</p>
+
+        <div class="table-wrap">
+        <table class="table-compact">
+            <tr>
+                <th>TCM Section</th>
+                <th>Purpose</th>
+                <th>Typical Contents</th>
+            </tr>
+            <tr>
+                <td>Modules</td>
+                <td>The scanned UI/API model layer</td>
+                <td>LoginPage, Dashboard, POST_Login (API module)</td>
+            </tr>
+            <tr>
+                <td>TestCases</td>
+                <td>Test logic — ordered steps referencing modules</td>
+                <td>TC001_Login, TC020_PlaceOrder, Test Suites</td>
+            </tr>
+            <tr>
+                <td>Execution</td>
+                <td>Run configuration and historical results</td>
+                <td>ExecutionLists, ExecutionEntries, logs, screenshots</td>
+            </tr>
+            <tr>
+                <td>Requirements</td>
+                <td>Traceability matrix and risk classification</td>
+                <td>User stories linked to covering test cases</td>
+            </tr>
+            <tr>
+                <td>Libraries</td>
+                <td>Reusable technical assets (recovery scenarios, PCDs)</td>
+                <td>Recovery Test Cases, Parameter Container Definitions</td>
+            </tr>
+        </table>
+        </div>
+
+        <h3>The Repository Tree Structure</h3>
+        <pre>Repository
+├── Modules/
+│   ├── LoginPage/
+│   │   ├── UsernameField   (TBox: TextBox)
+│   │   └── LoginButton     (TBox: Button)
+│   └── Dashboard/
+│       └── WelcomeLabel    (TBox: TextItem)
+├── TestCases/
+│   └── TC001_Login/
+│       ├── Step 1 – Enter username
+│       ├── Step 2 – Enter password
+│       └── Step 3 – Click Login
+└── Execution/
+    └── ExecutionList_Regression/
+        └── TC001_Login</pre>
+
+        <div class="note">
+            <strong>💡 Tip:</strong> New Tosca users often try to work top-down through the TCM ribbon menus. Experienced testers work almost entirely through the tree's right-click context menus — Scan Application, Add Test Step, Create Execution List — because that is where 90% of daily actions live.
+        </div>
+
+        <!-- SECTION 4 -->
+        <h2 id="section4"><span class="level intermediate">INTERMEDIATE</span>4. The Repository and How Assets Are Stored</h2>
+
+        <p>Everything you create in TCM — Modules, TestCases, Execution Lists, Requirements — is persisted to a central <strong>SQL Server or Oracle database</strong> called the <strong>Common Repository</strong>. This is a critical architectural difference from file-based automation frameworks: there is no "test.js" file sitting on your laptop's disk that only you can see.</p>
+
+        <h3>Why a Database Instead of Files?</h3>
+        <ul style="margin: 15px 0; margin-left: 20px;">
+            <li><strong>Single source of truth:</strong> every team member connects to the same repository, so there's no "which branch has the latest module" ambiguity.</li>
+            <li><strong>Structured querying:</strong> Tosca Query Language (TQL) can search across the entire repository — e.g. find every test case that uses a specific module attribute — something that is painful to do with grep across thousands of script files.</li>
+            <li><strong>Built-in locking:</strong> check-out/check-in (covered in the Workspaces guide) prevents two people from silently overwriting each other's work.</li>
+        </ul>
+
+        <div class="warning">
+            <strong>⚠️ Common Pitfall:</strong> Because everything lives in a database, Tosca cannot be "diffed" with a plain text diff tool the way a Git-tracked script file can. Larger teams typically pair Tosca with its XML export/import features or a plugin to get change history into source control — plan for this in your DevOps design rather than discovering it mid-project.
+        </div>
+
+        <h3>Local Repository vs Shared Repository</h3>
+        <div class="comparison">
+            <div>
+                <strong>Local (single-user) Repository:</strong>
+                <pre>Stored as: local database file (e.g. SQL Server Express, LocalDB)
+Used for: solo learning, proof-of-concept, demos
+Limitation: no multi-user collaboration, no DEX agent sharing</pre>
+            </div>
+            <div>
+                <strong>Common (shared) Repository:</strong>
+                <pre>Stored as: central SQL Server / Oracle instance
+Used for: real project teams
+Benefit: check-out/check-in, Workspaces, shared Execution history</pre>
+            </div>
+        </div>
+
+        <!-- SECTION 5 -->
+        <h2 id="section5"><span class="level intermediate">INTERMEDIATE</span>5. Technical vs Business Parameters</h2>
+
+        <p>Every Module Attribute that TBox records has a <strong>Technical Parameter</strong> — the raw engine-level property, such as <code>Value</code>, <code>Checked</code>, or <code>SelectedItem</code>. On its own, a technical parameter is meaningful to the automation engine but not to a business stakeholder reading a test case.</p>
+
+        <p>Testers wrap technical parameters with a <strong>Business Parameter</strong>: a human-readable alias that appears in the Test Step. This is what makes a Tosca test case readable by a non-technical reviewer.</p>
+
+        <pre>// Technical Parameter (TBox-defined, maps to control property)
+Module: UsernameField
+  TechnicalParameter: Value   ← what you type into the field
+
+// Business Parameter (created by tester, maps to technical param)
+Module: UsernameField
+  BusinessParameter: Username → maps to → Value
+
+// Test Step uses business parameter
+Step: Enter credentials
+  Username = "alice@test.com"</pre>
+
+        <div class="example">
+            <strong>Why this decoupling matters:</strong> if a developer renames the underlying HTML attribute, or the field moves to a different control type entirely, the technical parameter mapping is fixed once inside the Module. The business parameter name — and therefore every test case that reads "Username = alice@test.com" — never has to change.
+        </div>
+
+        <!-- SECTION 6 -->
+        <h2 id="section6"><span class="level intermediate">INTERMEDIATE</span>6. The End-to-End Tosca Workflow</h2>
+
+        <p>Nearly every Tosca project follows the same lifecycle, regardless of application type:</p>
+
+        <pre>1. Scan application UI          → TBox creates Module tree
+2. Define Business Parameters   → wrap technical params with readable names
+3. Build Test Cases             → drag Module steps into an ordered sequence
+4. Parameterise with Test Data  → bind values via {P:param}, Excel, or DB (TDM)
+5. Add to Execution List        → group test cases; run locally or via DEX
+6. Review Results               → logs, screenshots, pass/fail per step
+7. Trace to Requirements        → confirm coverage; run Test Optimisation</pre>
+
+        <div class="table-wrap">
+        <table>
+            <tr>
+                <th>Stage</th>
+                <th>Guide in this Course</th>
+            </tr>
+            <tr>
+                <td>Scan → Module</td>
+                <td>TBox Scanning & Modules</td>
+            </tr>
+            <tr>
+                <td>Build → Test Case</td>
+                <td>Test Cases & Test Steps</td>
+            </tr>
+            <tr>
+                <td>Data-drive</td>
+                <td>Test Data Management (TDM), Configuration Parameters</td>
+            </tr>
+            <tr>
+                <td>Run</td>
+                <td>Test Suites & Execution Lists, Distributed Execution (DEX)</td>
+            </tr>
+            <tr>
+                <td>Review</td>
+                <td>Execution & Reporting</td>
+            </tr>
+        </table>
+        </div>
+
+        <!-- SECTION 7 -->
+        <h2 id="section7"><span class="level advanced">ADVANCED</span>7. Tosca vs Traditional Script-Based Automation</h2>
+
+        <p>Understanding when Tosca's model excels — and where its trade-offs bite — helps you set realistic expectations on a project.</p>
+
+        <div class="table-wrap">
+        <table class="table-compact">
+            <tr>
+                <th>Dimension</th>
+                <th>Script-Based (Selenium/Playwright)</th>
+                <th>Tosca (Model-Based)</th>
+            </tr>
+            <tr>
+                <td>Who can author tests</td>
+                <td>Developers / SDETs comfortable with code</td>
+                <td>Manual testers, BAs, and engineers alike</td>
+            </tr>
+            <tr>
+                <td>Maintenance on UI change</td>
+                <td>Locate and fix every affected script</td>
+                <td>Fix once in the Module; all test cases inherit the fix</td>
+            </tr>
+            <tr>
+                <td>Version control</td>
+                <td>Native — plain text files in Git</td>
+                <td>Database-backed; requires XML export or plugin for Git</td>
+            </tr>
+            <tr>
+                <td>Complex custom logic</td>
+                <td>Full programming language available</td>
+                <td>Steering (Buffers/Conditions/Loops) covers most cases; true edge logic needs custom TBox/extensions</td>
+            </tr>
+            <tr>
+                <td>Licensing</td>
+                <td>Mostly open-source</td>
+                <td>Commercial enterprise license</td>
+            </tr>
+            <tr>
+                <td>Cross-technology reach</td>
+                <td>Typically one technology per framework (web, mobile, API separately)</td>
+                <td>One tool spans web, desktop, SAP, mainframe, mobile, API, PDF</td>
+            </tr>
+        </table>
+        </div>
+
+        <div class="note">
+            <strong>💡 Tip:</strong> Enterprises with SAP-heavy, multi-technology estates and large non-developer QA teams tend to see the biggest ROI from Tosca. Small, code-native teams building a single web app may find a scripted framework faster to iterate with.
+        </div>
+
+        <!-- SECTION 8 -->
+        <h2 id="section8"><span class="level advanced">ADVANCED</span>8. Risk-Based Test Optimisation (TO)</h2>
+
+        <p>Because Requirements, risk levels, and test-case coverage all live in the same repository, Tosca can computationally determine the <em>smallest set of test cases</em> that still covers every requirement at its declared risk level. This feature is called <strong>Test Optimisation (TO)</strong> and is one of Tosca's flagship differentiators versus purely scripted tools, which have no concept of "requirement risk" baked into the framework.</p>
+
+        <pre>// Full regression: 200 test cases
+// After Test Optimisation (focus on High/Critical risks):
+
+Optimised set: 43 test cases
+  ✓ Covers all Critical requirements
+  ✓ Covers all High requirements
+  – Skips 157 Low-risk test cases (still logged as skipped)
+
+Execution time: 43 × 30s = ~22 minutes
+  vs. 200 × 30s = 100 minutes (full run)
+  → 78% time reduction with same risk coverage</pre>
+
+        <div class="example">
+            <strong>When to reach for TO:</strong> nightly/CI gate runs where full regression can't fit the pipeline window. Full regression is still run periodically (e.g. weekly) to catch anything the optimised set skipped.
+        </div>
+
+        <!-- SECTION 9 -->
+        <h2 id="section9"><span class="level intermediate">INTERMEDIATE</span>9. Common Pitfalls for Newcomers</h2>
+
+        <ul style="margin: 15px 0; margin-left: 20px;">
+            <li><strong>Recording instead of modelling:</strong> using Tosca purely as a macro recorder produces brittle, unmaintainable test cases — the same anti-pattern Tosca was designed to avoid. Always build proper Modules with business parameters.</li>
+            <li><strong>Skipping Business Parameters:</strong> leaving test steps bound directly to technical parameters makes test cases unreadable to non-technical reviewers and defeats the decoupling benefit.</li>
+            <li><strong>Treating TCM like a file-based IDE:</strong> forgetting that assets live in a shared database leads to surprises around locking (see Workspaces & Collaboration) — always check out before editing shared assets.</li>
+            <li><strong>Ignoring Requirements linkage:</strong> without linking test cases to requirements, Test Optimisation has nothing to optimise against, and coverage gaps go unnoticed until production defects surface.</li>
+        </ul>
+
+        <!-- SECTION 10 -->
+        <h2 id="section10"><span class="level beginner">BEGINNER</span>10. Best Practices</h2>
+
+        <h3>1. Model Before You Automate</h3>
+        <p>Spend time getting the Module structure right (clear names, correct ActionModes, business parameters) before building dozens of test cases on top of it. A well-built Module pays for itself many times over.</p>
+
+        <h3>2. Establish a Naming Convention Early</h3>
+        <pre>Modules:      PageName / ScreenName (PascalCase)
+TestCases:    TC### _ ShortDescription
+Buffers:      B_ meaningful name
+Parameters:   P_ meaningful name</pre>
+
+        <h3>3. Keep Test Cases Business-Readable</h3>
+        <p>A reviewer with no Tosca training should be able to read a Test Case's step list and understand what business scenario it verifies.</p>
+
+        <h3>4. Reuse via Embedded Test Cases</h3>
+        <p>Extract common flows (login, logout, navigation) into shared, reusable test cases rather than duplicating steps everywhere.</p>
+
+        <h3>5. Connect Requirements from Day One</h3>
+        <p>Link every test case to the requirement(s) it verifies as you build it, not retroactively — this keeps the traceability matrix trustworthy and enables Test Optimisation.</p>
+
+        <!-- SUMMARY -->
+        <h2 style="margin-top: 40px;">📋 Quick Reference Summary</h2>
+
+        <div class="table-wrap">
+        <table>
+            <tr>
+                <th>Concept</th>
+                <th>Key Points</th>
+            </tr>
+            <tr>
+                <td><strong>Tosca</strong></td>
+                <td>Model-based, mostly no-code enterprise test automation platform spanning web, desktop, SAP, mobile, mainframe, and API.</td>
+            </tr>
+            <tr>
+                <td><strong>TCM</strong></td>
+                <td>Tosca Commander — the desktop IDE organising Modules, TestCases, Execution, Requirements, Libraries.</td>
+            </tr>
+            <tr>
+                <td><strong>Repository</strong></td>
+                <td>Central SQL/Oracle database storing all assets — no local script files.</td>
+            </tr>
+            <tr>
+                <td><strong>Technical Parameter</strong></td>
+                <td>Engine-level control property (Value, Checked). Not meant for direct business readability.</td>
+            </tr>
+            <tr>
+                <td><strong>Business Parameter</strong></td>
+                <td>Human-readable alias mapped to a technical parameter; used in Test Steps.</td>
+            </tr>
+            <tr>
+                <td><strong>Model-based philosophy</strong></td>
+                <td>Fix the Module once; every Test Case referencing it inherits the fix.</td>
+            </tr>
+            <tr>
+                <td><strong>Test Optimisation (TO)</strong></td>
+                <td>Selects the minimum test set covering all risk-weighted requirements.</td>
+            </tr>
+        </table>
+        </div>
+
+        <div style="margin-top: 40px; padding: 20px; background: #ecf0f1; border-radius: 5px;">
+            <h3>🎓 Learning Path</h3>
+            <p><strong>Beginner:</strong> Master sections 1, 2, 3, 10</p>
+            <p><strong>Intermediate:</strong> Understand sections 4, 5, 6, 9</p>
+            <p><strong>Advanced:</strong> Deep dive into sections 7, 8</p>
+        </div>
+
+    </div>
+</body>
+</html>

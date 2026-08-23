@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Playwright Fixtures & Hooks: Complete Guide</title>
+    <link rel="stylesheet" href="/guides/guide-base.css">
+</head>
+<body>
+    <div class="container">
+        <h1>🔩 Playwright Fixtures & Hooks: Complete Guide</h1>
+        <p style="font-size: 1.1em; color: #7f8c8d; margin-bottom: 20px;">
+            Built-in fixtures, custom fixtures with test.extend, fixture scope, and traditional hooks
+        </p>
+
+        <div class="toc">
+            <h3>📚 Table of Contents</h3>
+            <ul>
+                <li><a href="#section1">1. What Is a Fixture?</a></li>
+                <li><a href="#section2">2. Built-In Fixtures</a></li>
+                <li><a href="#section3">3. Creating a Custom Fixture</a></li>
+                <li><a href="#section4">4. Fixture Scope: test, worker, file</a></li>
+                <li><a href="#section5">5. auto Fixtures</a></li>
+                <li><a href="#section6">6. Composing Fixtures</a></li>
+                <li><a href="#section7">7. Traditional Hooks</a></li>
+                <li><a href="#section8">8. Fixtures vs Hooks — When to Use Which</a></li>
+                <li><a href="#section9">9. Common Pitfalls</a></li>
+            </ul>
+        </div>
+
+        <!-- SECTION 1 -->
+        <h2 id="section1"><span class="level beginner">BEGINNER</span>1. What Is a Fixture?</h2>
+
+        <p>A fixture is a named function that sets up a resource before a test runs and tears it down automatically afterward. Tests request the fixtures they need by destructuring them from the callback argument — Playwright only creates the fixtures a given test actually asks for, nothing more.</p>
+
+        <pre>test('uses the page fixture', async ({ page }) => {
+  await page.goto('/');
+  // Playwright created `page` for you and will close it when this test ends
+});</pre>
+
+        <div class="example">
+            <strong>Why fixtures beat manual setup/teardown:</strong> setup and teardown code live in <em>one place</em> (the fixture definition) instead of being copy-pasted into every test's <code>beforeEach</code>/<code>afterEach</code>. Fixtures also compose — a fixture can depend on other fixtures, building a clean dependency graph.
+        </div>
+
+        <!-- SECTION 2 -->
+        <h2 id="section2"><span class="level beginner">BEGINNER</span>2. Built-In Fixtures</h2>
+
+        <p>Every test has access to these without any imports or configuration:</p>
+
+        <div class="table-wrap">
+        <table class="table-compact">
+            <tr>
+                <th>Fixture</th>
+                <th>What it provides</th>
+            </tr>
+            <tr>
+                <td><code>page</code></td>
+                <td>A ready-to-use browser tab (Page) inside an isolated context</td>
+            </tr>
+            <tr>
+                <td><code>context</code></td>
+                <td>The BrowserContext that owns <code>page</code></td>
+            </tr>
+            <tr>
+                <td><code>browser</code></td>
+                <td>The shared Browser instance for the current worker</td>
+            </tr>
+            <tr>
+                <td><code>browserName</code></td>
+                <td>String: <code>'chromium'</code>, <code>'firefox'</code>, or <code>'webkit'</code></td>
+            </tr>
+            <tr>
+                <td><code>request</code></td>
+                <td>An APIRequestContext for making direct HTTP calls</td>
+            </tr>
+        </table>
+        </div>
+
+        <pre>test('uses built-ins', async ({ page, context, browser, request, browserName }) => {
+  console.log(browserName);          // 'chromium' | 'firefox' | 'webkit'
+  await page.goto('/');
+});</pre>
+
+        <!-- SECTION 3 -->
+        <h2 id="section3"><span class="level intermediate">INTERMEDIATE</span>3. Creating a Custom Fixture</h2>
+
+        <p>Custom fixtures are created with <code>test.extend()</code>. The fixture function receives dependencies plus a special <code>use</code> callback: code before <code>await use(value)</code> is <strong>setup</strong>, the value is handed to the test at that point, and code after <code>use()</code> is <strong>teardown</strong>.</p>
+
+        <pre>import { test as base } from '@playwright/test';
+
+const test = base.extend<{ loggedInPage: Page }>({
+  loggedInPage: async ({ page }, use) => {
+    // Setup: log in
+    await page.goto('/login');
+    await page.getByLabel('Email').fill('user@example.com');
+    await page.getByLabel('Password').fill('secret');
+    await page.getByRole('button', { name: 'Sign in' }).click();
+    await expect(page).toHaveURL('/dashboard');
+
+    await use(page);   // ← the test runs here
+
+    // Teardown: nothing needed; page closes automatically
+  },
+});
+
+test('dashboard shows user name', async ({ loggedInPage: page }) => {
+  await expect(page.getByTestId('user-name')).toContainText('user');
+});</pre>
+
+        <div class="warning">
+            <strong>⚠️ Common Pitfall:</strong> You must import the <em>extended</em> <code>test</code> (usually re-exported from a shared fixtures file), not the base <code>test</code> from <code>@playwright/test</code>, in every spec file that needs the custom fixture. Importing the wrong one gives a confusing "fixture is not defined" error.
+        </div>
+
+        <!-- SECTION 4 -->
+        <h2 id="section4"><span class="level intermediate">INTERMEDIATE</span>4. Fixture Scope: test, worker, file</h2>
+
+        <div class="table-wrap">
+        <table class="table-compact">
+            <tr>
+                <th>Scope</th>
+                <th>Lifetime</th>
+                <th>Good for</th>
+            </tr>
+            <tr>
+                <td><code>'test'</code> (default)</td>
+                <td>Fresh instance created and torn down for every test</td>
+                <td>Anything test-specific — a page, a page object</td>
+            </tr>
+            <tr>
+                <td><code>'worker'</code></td>
+                <td>One instance shared by every test in the same worker process</td>
+                <td>Expensive setup: database connections, one-time seeding</td>
+            </tr>
+            <tr>
+                <td><code>'file'</code></td>
+                <td>One instance shared by every test in a single spec file</td>
+                <td>Setup that's expensive but not safe to share across files</td>
+            </tr>
+        </table>
+        </div>
+
+        <pre>const test = base.extend<{}, { db: Database }>({
+  db: [async ({}, use) => {
+    const db = await Database.connect(process.env.DATABASE_URL);
+    await use(db);
+    await db.close();
+  }, { scope: 'worker' }],
+});
+
+test('creates a user', async ({ db, page }) => {
+  const id = await db.insert('users', { name: 'Alice' });
+  await page.goto(`/users/${id}`);
+});</pre>
+
+        <div class="note">
+            <strong>💡 Tip:</strong> Worker-scoped fixtures are declared with a two-element array: <code>[fixtureFn, { scope: 'worker' }]</code>, not just the function on its own.
+        </div>
+
+        <!-- SECTION 5 -->
+        <h2 id="section5"><span class="level intermediate">INTERMEDIATE</span>5. auto Fixtures</h2>
+
+        <p>Setting <code>auto: true</code> makes Playwright run a fixture for <em>every</em> test in scope, even when the test doesn't destructure it — useful for cross-cutting setup like freezing the clock or seeding shared state.</p>
+
+        <pre>const test = base.extend({
+  mockTime: [async ({ page }, use) => {
+    await page.clock.setFixedTime(new Date('2024-01-01'));
+    await use();
+  }, { auto: true }],
+});
+
+test('defaults to today', async ({ page }) => {
+  // frozen clock applies automatically — no explicit request needed
+  await page.goto('/invoices/new');
+  await expect(page.getByLabel('Date')).toHaveValue('2024-01-01');
+});</pre>
+
+        <!-- SECTION 6 -->
+        <h2 id="section6"><span class="level advanced">ADVANCED</span>6. Composing Fixtures</h2>
+
+        <p>Fixtures can depend on other fixtures — including your own custom ones — by destructuring them in the fixture function's parameters.</p>
+
+        <pre>const test = base.extend({
+  adminPage: async ({ page, db }, use) => {  // depends on the db fixture
+    await db.seed('admin-user');
+    await page.goto('/admin');
+    await use(page);
+  },
+});</pre>
+
+        <p>Playwright resolves the dependency graph automatically — if <code>adminPage</code> is requested, <code>db</code> is set up first, in the correct order, exactly once per its own scope.</p>
+
+        <!-- SECTION 7 -->
+        <h2 id="section7"><span class="level advanced">ADVANCED</span>7. Traditional Hooks</h2>
+
+        <pre>test.describe('checkout flow', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto('/cart');
+  });
+  test.afterEach(async ({ page }) => {
+    await page.getByRole('button', { name: 'Clear cart' }).click();
+  });
+  test.beforeAll(async () => { /* runs once per describe/worker */ });
+  test.afterAll(async  () => { /* runs once per describe/worker */ });
+});</pre>
+
+        <p>Hooks are scoped to the <code>describe</code> block (or the whole file, at the top level) they're declared in — simple and familiar if you've used other JS test frameworks like Jest or Mocha.</p>
+
+        <!-- SECTION 8 -->
+        <h2 id="section8"><span class="level advanced">ADVANCED</span>8. Fixtures vs Hooks — When to Use Which</h2>
+
+        <div class="comparison">
+            <div>
+                <strong>Use a fixture when:</strong>
+                <pre>// Setup is reused across MULTIPLE files
+// or needs automatic teardown ordering
+// or needs different scopes (worker/file)
+const test = base.extend({
+  apiClient: async ({}, use) => {
+    const client = createClient();
+    await use(client);
+    await client.close();
+  },
+});</pre>
+            </div>
+            <div>
+                <strong>Use a hook when:</strong>
+                <pre>// Setup is genuinely local to ONE file
+// and doesn't need to be shared/reused
+test.describe('one-off feature', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto('/feature-x');
+  });
+});</pre>
+            </div>
+        </div>
+
+        <p>File-scoped overrides via <code>test.use({ … })</code> sit between the two — they let a single file or describe block override a fixture's <em>value</em> (like <code>storageState</code>) without redefining the fixture itself:</p>
+
+        <pre>test.use({ storageState: 'auth/admin.json' });</pre>
+
+        <!-- SECTION 9 -->
+        <h2 id="section9"><span class="level advanced">ADVANCED</span>9. Common Pitfalls</h2>
+
+        <div class="warning">
+            <strong>⚠️ Pitfall 1 — Putting teardown before use():</strong> Code written before <code>await use(value)</code> is setup; code after it is teardown. Writing cleanup logic <em>before</em> <code>use()</code> runs it before the test even starts, which is never what you want.
+        </div>
+
+        <div class="warning">
+            <strong>⚠️ Pitfall 2 — Overusing worker scope for stateful resources:</strong> A worker-scoped fixture is shared across every test in that worker — if one test mutates it in a way that leaks into the next test (e.g. leaving data in a shared database), you get order-dependent flakiness that's hard to trace. Reset any shared mutable state explicitly, or keep it 'test'-scoped.
+        </div>
+
+        <!-- SUMMARY -->
+        <h2 style="margin-top: 40px;">📋 Quick Reference Summary</h2>
+
+        <div class="table-wrap">
+        <table>
+            <tr>
+                <th>Concept</th>
+                <th>Key Points</th>
+            </tr>
+            <tr>
+                <td><strong>Built-ins</strong></td>
+                <td>page, context, browser, browserName, request — available in every test.</td>
+            </tr>
+            <tr>
+                <td><strong>test.extend()</strong></td>
+                <td>Creates custom fixtures; setup before use(), teardown after use().</td>
+            </tr>
+            <tr>
+                <td><strong>Scope</strong></td>
+                <td>'test' (default, fresh per test), 'worker' (shared per worker), 'file' (shared per file).</td>
+            </tr>
+            <tr>
+                <td><strong>auto: true</strong></td>
+                <td>Runs a fixture for every test without it being explicitly requested.</td>
+            </tr>
+            <tr>
+                <td><strong>Composition</strong></td>
+                <td>Fixtures can depend on other fixtures; Playwright resolves the order automatically.</td>
+            </tr>
+            <tr>
+                <td><strong>test.use({...})</strong></td>
+                <td>File/describe-scoped override of a fixture's value (e.g. storageState).</td>
+            </tr>
+            <tr>
+                <td><strong>Hooks</strong></td>
+                <td>beforeEach/afterEach/beforeAll/afterAll — best for setup local to one file.</td>
+            </tr>
+        </table>
+        </div>
+
+        <div style="margin-top: 40px; padding: 20px; background: #ecf0f1; border-radius: 5px;">
+            <h3>🎓 Learning Path</h3>
+            <p><strong>Beginner:</strong> Master sections 1, 2</p>
+            <p><strong>Intermediate:</strong> Understand sections 3, 4, 5</p>
+            <p><strong>Advanced:</strong> Deep dive into sections 6, 7, 8, 9</p>
+        </div>
+
+    </div>
+</body>
+</html>

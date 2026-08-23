@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tosca API Testing (ServiceV Engine): Complete Guide</title>
+    <link rel="stylesheet" href="/guides/guide-base.css">
+</head>
+<body>
+    <div class="container">
+        <h1>🔌 Tosca API Testing (ServiceV Engine): Complete Guide</h1>
+        <p style="font-size: 1.1em; color: #7f8c8d; margin-bottom: 20px;">
+            Testing REST, SOAP, and GraphQL APIs with the same no-code Module model used for UI testing
+        </p>
+
+        <div class="toc">
+            <h3>📚 Table of Contents</h3>
+            <ul>
+                <li><a href="#section1">1. What Is ServiceV?</a></li>
+                <li><a href="#section2">2. Anatomy of a Service Endpoint Module</a></li>
+                <li><a href="#section3">3. Building Your First API Test Case</a></li>
+                <li><a href="#section4">4. Chaining Requests with Buffers</a></li>
+                <li><a href="#section5">5. JSONPath and XPath Assertions</a></li>
+                <li><a href="#section6">6. Importing from Swagger/OpenAPI and WSDL</a></li>
+                <li><a href="#section7">7. Service Virtualization (the "SV" Side)</a></li>
+                <li><a href="#section8">8. Combining API and UI Steps in One Test Case</a></li>
+                <li><a href="#section9">9. Common Pitfalls</a></li>
+                <li><a href="#section10">10. Best Practices</a></li>
+            </ul>
+        </div>
+
+        <!-- SECTION 1 -->
+        <h2 id="section1"><span class="level beginner">BEGINNER</span>1. What Is ServiceV?</h2>
+
+        <h3>Definition</h3>
+        <p>Tosca's <strong>ServiceV Engine</strong> (formerly the Tosca API Engine) brings the same model-based, no-code approach used for UI testing to REST, SOAP, GraphQL, and messaging-based APIs. Instead of scanning a screen, you define a <strong>Service Endpoint</strong> Module capturing the API's URL, HTTP method, headers, and body schema — then build Test Steps exactly as you would for a UI Module.</p>
+
+        <div class="example">
+            <strong>Real-world analogy:</strong> API testing in Tosca is like using a universal remote control. The remote (ServiceV module) knows the signal format for each device (endpoint). You press the button (test step), supply the channel number (request data), and the remote verifies the TV changed to the right channel (response assertion) — no need to understand the infrared encoding protocol.
+        </div>
+
+        <h3>ServiceV vs UI Testing: What's the Same, What's Different</h3>
+        <div class="table-wrap">
+        <table class="table-compact">
+            <tr>
+                <th>Aspect</th>
+                <th>UI Testing</th>
+                <th>ServiceV (API Testing)</th>
+            </tr>
+            <tr>
+                <td>Model source</td>
+                <td>TBox scan of live controls</td>
+                <td>Manually defined endpoint, or imported from Swagger/WSDL</td>
+            </tr>
+            <tr>
+                <td>Module attributes</td>
+                <td>Control properties (Value, Checked)</td>
+                <td>Request fields, headers, response fields</td>
+            </tr>
+            <tr>
+                <td>Test Step structure</td>
+                <td>Same TestCase/TestStep model</td>
+                <td>Same TestCase/TestStep model</td>
+            </tr>
+            <tr>
+                <td>Assertions</td>
+                <td>Verify against control value</td>
+                <td>Verify against status code, header, or JSON/XML body field</td>
+            </tr>
+        </table>
+        </div>
+
+        <!-- SECTION 2 -->
+        <h2 id="section2"><span class="level beginner">BEGINNER</span>2. Anatomy of a Service Endpoint Module</h2>
+
+        <pre>// REST API Module structure (created via ServiceV scan)
+Module: POST_Login
+  Endpoint: POST {P:BaseURL}/api/auth/login
+  Headers:
+    Content-Type: application/json
+  Request Body (JSON):
+    username: {P:Username}
+    password: {P:Password}
+  Response:
+    StatusCode [Verify]:  200
+    Body.token [Output]:  → {B:AuthToken}</pre>
+
+        <p>Just like a UI Module, each field can be assigned an ActionMode — Input for request fields you're sending, Verify for response assertions, Output for response values you want to capture into a Buffer for later use.</p>
+
+        <!-- SECTION 3 -->
+        <h2 id="section3"><span class="level beginner">BEGINNER</span>3. Building Your First API Test Case</h2>
+
+        <div class="example">
+            <strong>Step by step in TCM:</strong>
+            <pre>1. Right-click Modules → Add Module → Service Endpoint (ServiceV)
+2. Define method (POST), URL, headers, and request body schema
+3. Define expected Response fields and mark ActionModes
+4. Drag the module into a new TestCase
+5. Fill in request values using {P:...} parameters
+6. Run the TestCase → response is validated against your assertions</pre>
+        </div>
+
+        <pre>TestCase: TC_API_AuthFlow
+Step 1: POST /api/auth/login
+         username = {P:APIUser}
+         password = {P:APIPass}
+         [Response] StatusCode = 200  ← verify
+         [Response] token → {B:Token} ← capture</pre>
+
+        <!-- SECTION 4 -->
+        <h2 id="section4"><span class="level intermediate">INTERMEDIATE</span>4. Chaining Requests with Buffers</h2>
+
+        <p>Real-world API test scenarios almost always involve chaining: authenticate once, then use the returned token to authorize subsequent calls. This is handled exactly like UI-to-UI buffer chaining — capture with Output, reference with <code>{B:...}</code>.</p>
+
+        <pre>// Chained request using token
+Module: GET_UserProfile
+  Endpoint: GET {P:BaseURL}/api/user/me
+  Headers:
+    Authorization: Bearer {B:AuthToken}
+  Response:
+    StatusCode [Verify]: 200
+    Body.name [Verify]:  {P:ExpectedName}</pre>
+
+        <pre>TestCase: TC_API_AuthFlow
+Step 1: POST /api/auth/login
+         username = {P:APIUser}
+         password = {P:APIPass}
+         [Response] StatusCode = 200  ← verify
+         [Response] token → {B:Token} ← capture
+
+Step 2: GET /api/user/profile
+         Authorization = "Bearer {B:Token}"
+         [Response] StatusCode = 200
+         [Response] body.email [Verify] = {P:APIUser}</pre>
+
+        <div class="note">
+            <strong>💡 Tip:</strong> Buffers are the connective tissue for any multi-request API test flow — login → create resource → verify resource → delete resource, capturing an ID at each step to feed the next.
+        </div>
+
+        <!-- SECTION 5 -->
+        <h2 id="section5"><span class="level intermediate">INTERMEDIATE</span>5. JSONPath and XPath Assertions</h2>
+
+        <p>ServiceV lets you target specific fields deep inside a JSON or XML response body directly, rather than asserting against the entire raw payload text.</p>
+
+        <pre>// TOSCA uses JSONPath to target response fields
+Response assertions:
+  $.status           [Verify] = "success"
+  $.data.userId      [Verify] = "12345"
+  $.data.roles[0]    [Verify] = "admin"
+  $.pagination.total [Output] → {B:TotalCount}
+
+// XML (SOAP) uses XPath
+  /Envelope/Body/GetOrderResponse/OrderId [Verify] = "ORD-001"</pre>
+
+        <div class="table-wrap">
+        <table class="table-compact">
+            <tr>
+                <th>Response Format</th>
+                <th>Path Language</th>
+                <th>Example</th>
+            </tr>
+            <tr>
+                <td>JSON (REST, GraphQL)</td>
+                <td>JSONPath</td>
+                <td><code>$.data.roles[0]</code></td>
+            </tr>
+            <tr>
+                <td>XML (SOAP)</td>
+                <td>XPath</td>
+                <td><code>/Envelope/Body/GetOrderResponse/OrderId</code></td>
+            </tr>
+        </table>
+        </div>
+
+        <!-- SECTION 6 -->
+        <h2 id="section6"><span class="level advanced">ADVANCED</span>6. Importing from Swagger/OpenAPI and WSDL</h2>
+
+        <p>Rather than manually typing out every endpoint's URL, headers, and body schema, ServiceV can import an entire API's contract from a Swagger/OpenAPI specification (REST) or a WSDL file (SOAP), auto-generating Service Endpoint Modules for every operation the contract defines.</p>
+
+        <pre>// Conceptual import workflow
+1. TCM → Modules → Import → Swagger/OpenAPI (or WSDL for SOAP)
+2. Point to the spec file or a live spec URL
+3. TCM generates one Module per endpoint/operation defined
+4. Review generated modules — rename attributes to business terms
+5. Build Test Cases referencing the imported modules as usual</pre>
+
+        <div class="example">
+            <strong>Why this saves time:</strong> a REST API with 40 documented endpoints would take hours to model by hand field-by-field. Importing the OpenAPI spec produces all 40 endpoint Modules in minutes, letting testers focus effort on writing meaningful Test Cases rather than re-transcribing a contract that's already documented elsewhere.
+        </div>
+
+        <!-- SECTION 7 -->
+        <h2 id="section7"><span class="level advanced">ADVANCED</span>7. Service Virtualization (the "SV" Side)</h2>
+
+        <p>The "SV" half of ServiceV stands for <strong>Service Virtualization</strong>: standing up a virtual, simulated service that mimics a real backend dependency's request/response behaviour. This decouples your test suite from third-party services or incomplete backend components that aren't reliably available.</p>
+
+        <pre>// Conceptual virtual service definition
+VirtualService: Mock_PaymentGateway
+  Listens on: {P:MockBaseURL}/payments/charge
+  When request.amount > 0:
+    Respond 200 { "status": "approved", "transactionId": "TXN-{{random}}" }
+  When request.amount <= 0:
+    Respond 400 { "status": "rejected", "reason": "invalid amount" }</pre>
+
+        <div class="table-wrap">
+        <table>
+            <tr>
+                <th>Use Case</th>
+                <th>Why Virtualize</th>
+            </tr>
+            <tr>
+                <td>Third-party payment gateway</td>
+                <td>Avoid real charges and rate limits during testing</td>
+            </tr>
+            <tr>
+                <td>Backend still under development</td>
+                <td>Test the consuming application before the real service exists</td>
+            </tr>
+            <tr>
+                <td>Unreliable external dependency</td>
+                <td>Remove flakiness caused by a service outside your team's control</td>
+            </tr>
+        </table>
+        </div>
+
+        <!-- SECTION 8 -->
+        <h2 id="section8"><span class="level intermediate">INTERMEDIATE</span>8. Combining API and UI Steps in One Test Case</h2>
+
+        <p>Because ServiceV Modules and UI Modules share the same Test Case/Test Step model, a single scenario can freely mix API calls and UI actions — for example, seeding data via an API call before driving the UI, or verifying a UI action's side effect by calling an API afterward.</p>
+
+        <pre>TestCase: TC_EndToEnd_OrderFlow
+Step 1: [API] POST /api/testdata/seedUser  → {B:UserId}
+Step 2: [UI]  LoginPage.Username = {P:TestUser}
+Step 3: [UI]  LoginPage.Password = {P:TestPassword}
+Step 4: [UI]  LoginPage.LoginButton [click]
+Step 5: [UI]  Dashboard.PlaceOrderButton [click]
+Step 6: [API] GET /api/orders?userId={B:UserId} [Verify] status=200
+Step 7: [API] Body.orders[0].status [Verify] = "Created"</pre>
+
+        <div class="note">
+            <strong>💡 Tip:</strong> This hybrid pattern is extremely useful for setup/teardown efficiency — seeding or cleaning up test data via a fast API call instead of clicking through slow UI screens just to establish preconditions.
+        </div>
+
+        <!-- SECTION 9 -->
+        <h2 id="section9"><span class="level intermediate">INTERMEDIATE</span>9. Common Pitfalls</h2>
+
+        <ul style="margin: 15px 0; margin-left: 20px;">
+            <li><strong>Asserting the whole response body as a literal string:</strong> brittle against any harmless field reordering or additional fields — use JSONPath/XPath to target only the fields that matter.</li>
+            <li><strong>Hard-coding tokens instead of chaining:</strong> pasting a static, soon-to-expire auth token into a Parameter instead of capturing a fresh one via Buffer each run.</li>
+            <li><strong>Not virtualizing flaky third-party dependencies:</strong> letting an unreliable external API cause intermittent failures across your entire suite.</li>
+            <li><strong>Skipping status code assertions:</strong> checking only the body content and missing cases where the API returns an error status with an unexpectedly "valid-looking" body.</li>
+        </ul>
+
+        <!-- SECTION 10 -->
+        <h2 id="section10"><span class="level beginner">BEGINNER</span>10. Best Practices</h2>
+
+        <h3>1. Always Assert the Status Code</h3>
+        <p>Every API Test Step should verify the HTTP status code, not just body content.</p>
+
+        <h3>2. Import Contracts Instead of Hand-Modelling</h3>
+        <p>Use Swagger/OpenAPI or WSDL import whenever a machine-readable contract exists.</p>
+
+        <h3>3. Chain, Don't Hard-Code, Dynamic Values</h3>
+        <pre>// Good
+[Response] token → {B:Token}
+Authorization = "Bearer {B:Token}"
+
+// Avoid
+Authorization = "Bearer eyJhbGciOi..." (static, will expire)</pre>
+
+        <h3>4. Target Specific Fields with JSONPath/XPath</h3>
+        <p>Avoid whole-body string comparisons; assert only the fields relevant to the scenario.</p>
+
+        <h3>5. Virtualize Unreliable Dependencies Early</h3>
+        <p>Don't wait for flaky third-party failures to pile up — proactively virtualize services outside your team's control.</p>
+
+        <!-- SUMMARY -->
+        <h2 style="margin-top: 40px;">📋 Quick Reference Summary</h2>
+
+        <div class="table-wrap">
+        <table>
+            <tr>
+                <th>Concept</th>
+                <th>Key Points</th>
+            </tr>
+            <tr>
+                <td><strong>ServiceV Engine</strong></td>
+                <td>No-code REST/SOAP/GraphQL API testing using the same Module/TestCase model as UI.</td>
+            </tr>
+            <tr>
+                <td><strong>Service Endpoint Module</strong></td>
+                <td>Defines method, URL, headers, request body, and response assertions.</td>
+            </tr>
+            <tr>
+                <td><strong>Buffer chaining</strong></td>
+                <td>Capture a response value (e.g. token) and inject it into a later request.</td>
+            </tr>
+            <tr>
+                <td><strong>JSONPath / XPath</strong></td>
+                <td>Target specific nested fields in JSON/XML responses for precise assertions.</td>
+            </tr>
+            <tr>
+                <td><strong>Swagger/WSDL import</strong></td>
+                <td>Auto-generates Service Endpoint Modules from an existing API contract.</td>
+            </tr>
+            <tr>
+                <td><strong>Service Virtualization</strong></td>
+                <td>Mocks a backend dependency's behaviour to remove flakiness/unavailability risk.</td>
+            </tr>
+        </table>
+        </div>
+
+        <div style="margin-top: 40px; padding: 20px; background: #ecf0f1; border-radius: 5px;">
+            <h3>🎓 Learning Path</h3>
+            <p><strong>Beginner:</strong> Master sections 1, 2, 3, 10</p>
+            <p><strong>Intermediate:</strong> Understand sections 4, 5, 8, 9</p>
+            <p><strong>Advanced:</strong> Deep dive into sections 6, 7</p>
+        </div>
+
+    </div>
+</body>
+</html>

@@ -13,6 +13,7 @@ import { useImmersiveFeedback } from './hooks/useImmersiveFeedback';
 import { useConfetti } from './hooks/useConfetti';
 import { withViewTransition } from './utils/viewTransition';
 import { recordReviewed } from './utils/reviewClock';
+import { getDetailedGuideUrl } from './data/detailedGuides';
 import Header from './components/Header';
 import Sidebar from './components/Sidebar';
 import ConfettiOverlay from './components/ConfettiOverlay';
@@ -144,6 +145,7 @@ export default function App() {
   );
 
   const concept = useMemo(() => concepts.find(c => c.id === conceptId) ?? concepts[0], [concepts, conceptId]);
+  const guideUrl = useMemo(() => getDetailedGuideUrl(pathId, conceptId), [pathId, conceptId]);
   const questions = useMemo<Question[]>(
     () => ((questionsRaw[conceptId] ?? []) as unknown[][]).map(r => rawToQuestion(r as unknown[])),
     [conceptId, questionsRaw]
@@ -357,6 +359,7 @@ export default function App() {
                   questionCount={questions.length}
                   taskCount={tasks.length}
                   hasInProgress={!!session.inProgress[conceptId]}
+                  guideUrl={guideUrl}
                 />
               ) : mode === 'tasks' ? (
                 <TasksView

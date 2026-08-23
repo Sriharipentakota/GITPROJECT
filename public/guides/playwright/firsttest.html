@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Playwright Writing Your First Test: Complete Guide</title>
+    <link rel="stylesheet" href="/guides/guide-base.css">
+</head>
+<body>
+    <div class="container">
+        <h1>✍️ Playwright Writing Your First Test: Complete Guide</h1>
+        <p style="font-size: 1.1em; color: #7f8c8d; margin-bottom: 20px;">
+            Anatomy of a test file, async fundamentals, grouping, and development workflow
+        </p>
+
+        <div class="toc">
+            <h3>📚 Table of Contents</h3>
+            <ul>
+                <li><a href="#section1">1. Anatomy of a Test File</a></li>
+                <li><a href="#section2">2. Why Everything Needs await</a></li>
+                <li><a href="#section3">3. Your First Real Test</a></li>
+                <li><a href="#section4">4. Grouping Tests with test.describe</a></li>
+                <li><a href="#section5">5. Sharing Setup with beforeEach</a></li>
+                <li><a href="#section6">6. test.only, test.skip, and test.fixme</a></li>
+                <li><a href="#section7">7. Tags, Timeouts, and Annotations</a></li>
+                <li><a href="#section8">8. Common Beginner Mistakes</a></li>
+            </ul>
+        </div>
+
+        <!-- SECTION 1 -->
+        <h2 id="section1"><span class="level beginner">BEGINNER</span>1. Anatomy of a Test File</h2>
+
+        <p>Every Playwright test file is a normal TypeScript (or JavaScript) module. It starts with a single import that gives you the two functions you'll use constantly: <code>test</code> to define a test case, and <code>expect</code> to make assertions.</p>
+
+        <pre>import { test, expect } from '@playwright/test';
+
+test('home page loads', async ({ page }) => {
+  await page.goto('/');
+  await expect(page).toHaveTitle(/Home/);
+});</pre>
+
+        <p>Breaking this down:</p>
+        <ul style="margin: 15px 0; margin-left: 20px;">
+            <li><code>test('description', callback)</code> — the first argument is a human-readable title shown in reports</li>
+            <li><code>async ({ page }) =&gt; { … }</code> — the callback receives <strong>fixtures</strong> via destructuring; <code>page</code> is the most common one</li>
+            <li>Playwright creates the <code>page</code> (a browser tab) before your callback runs, and closes it automatically afterward — you never call <code>new Page()</code> or <code>page.close()</code> yourself</li>
+        </ul>
+
+        <div class="example">
+            <strong>Fixtures explained simply:</strong> think of the object you destructure — <code>{ page }</code> — as a box of pre-built tools Playwright hands you. You only ask for the tools you actually use in that particular test.
+        </div>
+
+        <!-- SECTION 2 -->
+        <h2 id="section2"><span class="level beginner">BEGINNER</span>2. Why Everything Needs await</h2>
+
+        <p>Every browser operation — navigating, clicking, typing, asserting — is asynchronous because it involves real communication with a browser process. That's why the test callback is declared <code>async</code>, and why nearly every line inside it is prefixed with <code>await</code>.</p>
+
+        <pre>// ❌ WRONG — missing await
+test('broken test', async ({ page }) => {
+  page.goto('/login');                 // starts navigating, doesn't wait
+  page.getByLabel('Email').fill('a');  // may run before the page exists!
+});
+
+// ✅ CORRECT — every async call awaited
+test('correct test', async ({ page }) => {
+  await page.goto('/login');
+  await page.getByLabel('Email').fill('a');
+});</pre>
+
+        <div class="warning">
+            <strong>⚠️ Common Pitfall:</strong> A missing <code>await</code> is the single biggest source of flaky Playwright tests. The test moves on to the next line before the browser finishes the current action, causing intermittent, hard-to-reproduce failures. ESLint's <code>eslint-plugin-playwright</code> has a rule (<code>playwright/missing-playwright-await</code>) that catches this automatically — enable it.
+        </div>
+
+        <!-- SECTION 3 -->
+        <h2 id="section3"><span class="level beginner">BEGINNER</span>3. Your First Real Test</h2>
+
+        <pre>import { test, expect } from '@playwright/test';
+
+test('Playwright homepage has correct title', async ({ page }) => {
+  await page.goto('https://playwright.dev/');
+
+  // Auto-retrying title assertion — no manual wait needed
+  await expect(page).toHaveTitle(/Playwright/);
+});</pre>
+
+        <p>Notice the assertion is also <code>await</code>ed. Web-first assertions like <code>toHaveTitle()</code> poll the page repeatedly until the condition is true or the timeout elapses — so this line will pass the instant the title updates, without you writing any wait logic.</p>
+
+        <h3>A More Complete Flow</h3>
+        <pre>test('user can log in', async ({ page }) => {
+  await page.goto('/login');
+
+  await page.getByLabel('Email').fill('user@example.com');
+  await page.getByLabel('Password').fill('secret123');
+  await page.getByRole('button', { name: 'Sign in' }).click();
+
+  await expect(page).toHaveURL('/dashboard');
+  await expect(page.getByText('Welcome back')).toBeVisible();
+});</pre>
+
+        <!-- SECTION 4 -->
+        <h2 id="section4"><span class="level beginner">BEGINNER</span>4. Grouping Tests with test.describe</h2>
+
+        <p><code>test.describe('name', () => { … })</code> groups related tests into a logical unit. This isn't just cosmetic — it scopes hooks (<code>beforeEach</code>/<code>afterEach</code>) to just that group, and it makes the HTML report far easier to scan.</p>
+
+        <pre>test.describe('Login', () => {
+  test('shows login form', async ({ page }) => {
+    await page.goto('/login');
+    await expect(page.getByRole('heading')).toBeVisible();
+  });
+
+  test('rejects wrong password', async ({ page }) => {
+    await page.goto('/login');
+    await page.getByLabel('Password').fill('wrong');
+    await page.getByRole('button', { name: 'Sign in' }).click();
+    await expect(page.getByText('Invalid credentials')).toBeVisible();
+  });
+});</pre>
+
+        <div class="note">
+            <strong>💡 Tip:</strong> Nested <code>describe</code> blocks are allowed and useful for deeply structured suites, e.g. <code>describe('Checkout')</code> containing <code>describe('Payment')</code> and <code>describe('Shipping')</code>.
+        </div>
+
+        <!-- SECTION 5 -->
+        <h2 id="section5"><span class="level intermediate">INTERMEDIATE</span>5. Sharing Setup with beforeEach</h2>
+
+        <pre>test.describe('Product page', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto('/products/1');
+  });
+
+  test('shows product name', async ({ page }) => {
+    await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+  });
+
+  test('add to cart button is enabled', async ({ page }) => {
+    await expect(page.getByRole('button', { name: 'Add to cart' })).toBeEnabled();
+  });
+});</pre>
+
+        <p><code>beforeEach</code> runs before every test in its <code>describe</code> block (or every test in the file, if declared at the top level). This keeps each test focused on what it's actually verifying instead of repeating navigation boilerplate.</p>
+
+        <div class="comparison">
+            <div>
+                <strong>❌ Without beforeEach (repetitive):</strong>
+                <pre>test('a', async ({ page }) => {
+  await page.goto('/products/1');
+  // ...assertion
+});
+test('b', async ({ page }) => {
+  await page.goto('/products/1');
+  // ...assertion
+});</pre>
+            </div>
+            <div>
+                <strong>✅ With beforeEach (DRY):</strong>
+                <pre>test.beforeEach(async ({ page }) => {
+  await page.goto('/products/1');
+});
+test('a', async ({ page }) => { /* ... */ });
+test('b', async ({ page }) => { /* ... */ });</pre>
+            </div>
+        </div>
+
+        <!-- SECTION 6 -->
+        <h2 id="section6"><span class="level intermediate">INTERMEDIATE</span>6. test.only, test.skip, and test.fixme</h2>
+
+        <p>Three modifiers help during day-to-day development:</p>
+
+        <div class="table-wrap">
+        <table class="table-compact">
+            <tr>
+                <th>Modifier</th>
+                <th>Effect</th>
+                <th>Typical use</th>
+            </tr>
+            <tr>
+                <td><code>test.only()</code></td>
+                <td>Runs <em>only</em> this test in the file; all others are skipped</td>
+                <td>Focusing on one test while iterating</td>
+            </tr>
+            <tr>
+                <td><code>test.skip()</code></td>
+                <td>Never runs; shown as skipped in the report</td>
+                <td>Temporarily disabling a broken or irrelevant test</td>
+            </tr>
+            <tr>
+                <td><code>test.fixme()</code></td>
+                <td>Marks a known failure; runner won't fail the build on it</td>
+                <td>Tracking a real bug without blocking CI</td>
+            </tr>
+        </table>
+        </div>
+
+        <pre>test.only('debug checkout flow', async ({ page }) => {
+  await page.goto('/checkout');
+  await expect(page.getByText('Order summary')).toBeVisible();
+});
+
+// Skipped while test.only is present above
+test.skip('payment step', async ({ page }) => { /* work in progress */ });
+test.fixme('known failing bug', async ({ page }) => { /* … */ });</pre>
+
+        <div class="warning">
+            <strong>⚠️ Common Pitfall:</strong> <code>test.only</code> is meant for local development only. It's easy to accidentally commit it, silently disabling the rest of the file's coverage in CI. Add a lint rule or a pre-commit check that fails the build if <code>test.only</code> is found in the diff.
+        </div>
+
+        <!-- SECTION 7 -->
+        <h2 id="section7"><span class="level intermediate">INTERMEDIATE</span>7. Tags, Timeouts, and Annotations</h2>
+
+        <p>Add a tag like <code>@smoke</code> directly in a test's title to filter which tests run at the CLI:</p>
+
+        <pre>test('rejects wrong password @smoke', async ({ page }) => { /* … */ });</pre>
+        <pre>npx playwright test --grep "@smoke"</pre>
+
+        <p>Override the per-test timeout or attach metadata for a slow or tracked test using the options object (second argument):</p>
+
+        <pre>test('slow upload', { timeout: 60_000 }, async ({ page }) => { /* … */ });
+
+test('tracked bug', {
+  annotation: { type: 'issue', description: 'https://github.com/org/repo/issues/42' },
+}, async ({ page }) => { /* … */ });</pre>
+
+        <!-- SECTION 8 -->
+        <h2 id="section8"><span class="level advanced">ADVANCED</span>8. Common Beginner Mistakes</h2>
+
+        <div class="warning">
+            <strong>⚠️ Mistake 1 — Asserting on <code>page.url()</code> instead of <code>expect(page).toHaveURL()</code>:</strong> <code>page.url()</code> reads the current URL synchronously, at the exact instant it's called — it does not wait for an in-flight redirect to finish. Prefer the auto-retrying <code>expect(page).toHaveURL()</code>.
+        </div>
+
+        <div class="warning">
+            <strong>⚠️ Mistake 2 — One giant test instead of several focused tests:</strong> Cramming an entire user journey into a single <code>test()</code> makes failures hard to localize — the report tells you "the test failed," not "the third of ten actions failed." Prefer several smaller, descriptively-named tests unless the flow is genuinely sequential (see the Parallel Execution guide for <code>describe.serial</code>).
+        </div>
+
+        <div class="warning">
+            <strong>⚠️ Mistake 3 — Not awaiting expect():</strong> Just like actions, forgetting <code>await</code> on an assertion means the check runs "detached" — the test can finish and report success before the assertion has actually resolved, silently hiding failures.
+        </div>
+
+        <div class="note">
+            <strong>💡 Tip:</strong> Run <code>npx playwright test --ui</code> while learning — the visual timeline makes it obvious exactly where a test stalled or failed, which is far faster to debug than reading a stack trace alone.
+        </div>
+
+        <!-- SUMMARY -->
+        <h2 style="margin-top: 40px;">📋 Quick Reference Summary</h2>
+
+        <div class="table-wrap">
+        <table>
+            <tr>
+                <th>Concept</th>
+                <th>Key Points</th>
+            </tr>
+            <tr>
+                <td><strong>Imports</strong></td>
+                <td><code>import { test, expect } from '@playwright/test'</code> at the top of every spec file.</td>
+            </tr>
+            <tr>
+                <td><strong>Test shape</strong></td>
+                <td><code>test('title', async ({ page }) =&gt; { … })</code> — fixtures via destructuring.</td>
+            </tr>
+            <tr>
+                <td><strong>await everywhere</strong></td>
+                <td>Every action and assertion must be awaited — the #1 cause of flaky tests.</td>
+            </tr>
+            <tr>
+                <td><strong>describe</strong></td>
+                <td>Groups tests, scopes hooks, improves report readability.</td>
+            </tr>
+            <tr>
+                <td><strong>beforeEach/afterEach</strong></td>
+                <td>Shared setup/teardown per test within a describe block or file.</td>
+            </tr>
+            <tr>
+                <td><strong>only/skip/fixme</strong></td>
+                <td>Development modifiers — never leave <code>test.only</code> in committed code.</td>
+            </tr>
+            <tr>
+                <td><strong>Tags</strong></td>
+                <td>Add <code>@smoke</code> etc. to titles, filter with <code>--grep</code>.</td>
+            </tr>
+        </table>
+        </div>
+
+        <div style="margin-top: 40px; padding: 20px; background: #ecf0f1; border-radius: 5px;">
+            <h3>🎓 Learning Path</h3>
+            <p><strong>Beginner:</strong> Master sections 1, 2, 3, 4</p>
+            <p><strong>Intermediate:</strong> Understand sections 5, 6, 7</p>
+            <p><strong>Advanced:</strong> Deep dive into section 8</p>
+        </div>
+
+    </div>
+</body>
+</html>

@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tosca Recovery Scenarios: Complete Guide</title>
+    <link rel="stylesheet" href="/guides/guide-base.css">
+</head>
+<body>
+    <div class="container">
+        <h1>🛡️ Tosca Recovery Scenarios: Complete Guide</h1>
+        <p style="font-size: 1.1em; color: #7f8c8d; margin-bottom: 20px;">
+            Building automatic error handlers so one broken step doesn't sink your whole regression run
+        </p>
+
+        <div class="toc">
+            <h3>📚 Table of Contents</h3>
+            <ul>
+                <li><a href="#section1">1. What Is a Recovery Scenario?</a></li>
+                <li><a href="#section2">2. Anatomy of a Recovery Scenario</a></li>
+                <li><a href="#section3">3. Recovery Actions</a></li>
+                <li><a href="#section4">4. Attachment Levels: Step, TestCase, ExecutionList</a></li>
+                <li><a href="#section5">5. Priority and Conditions</a></li>
+                <li><a href="#section6">6. Common Recovery Patterns</a></li>
+                <li><a href="#section7">7. Recovery Scenario Chains and Fallbacks</a></li>
+                <li><a href="#section8">8. Testing Your Recovery Scenarios</a></li>
+                <li><a href="#section9">9. Common Pitfalls</a></li>
+                <li><a href="#section10">10. Best Practices</a></li>
+            </ul>
+        </div>
+
+        <!-- SECTION 1 -->
+        <h2 id="section1"><span class="level beginner">BEGINNER</span>1. What Is a Recovery Scenario?</h2>
+
+        <h3>Definition</h3>
+        <p>A <strong>Recovery Scenario</strong> is an error handler that Tosca triggers automatically when a Test Step fails. Instead of letting one failed step abort the whole Test Case — and potentially block every remaining entry in an Execution List — you define a recovery that cleans up the broken state and either retries the step, skips ahead, or exits gracefully.</p>
+
+        <div class="example">
+            <strong>Real-world analogy:</strong> Recovery Scenarios are like an airbag system in a car. You don't re-engineer the car every time an accident happens — the airbag deploys automatically, protects the occupants (the subsequent test cases), and the car can be driven again after recovery. The driver (test run) continues rather than being completely totalled.
+        </div>
+
+        <h3>Why This Matters at Scale</h3>
+        <p>In a nightly regression of hundreds of Test Cases, a single unhandled unexpected dialog (a session-timeout popup, a "rate this app" prompt) can otherwise cascade into dozens of unrelated failures downstream — because every subsequent step keeps failing to find the controls it expects while that dialog sits on top of the screen. A Recovery Scenario stops that cascade at its source.</p>
+
+        <!-- SECTION 2 -->
+        <h2 id="section2"><span class="level beginner">BEGINNER</span>2. Anatomy of a Recovery Scenario</h2>
+
+        <p>A Recovery Scenario is itself a Test Case — an ordered list of steps — with one extra property at the end: a declared <strong>Recovery Action</strong> telling Tosca what to do once recovery steps finish running.</p>
+
+        <pre>// Common recovery test case pattern
+TC_RecoverFromUnexpectedDialog:
+  Step 1: UnexpectedDialog.CloseButton [click]
+  Step 2: Screenshot → save to results
+  Step 3: [Recovery Action] = Skip</pre>
+
+        <div class="note">
+            <strong>💡 Tip:</strong> Because a Recovery Scenario is a regular Test Case, you build and edit it with the exact same TCM tools you use for any other Test Case — there is no special recovery-authoring mode to learn.
+        </div>
+
+        <!-- SECTION 3 -->
+        <h2 id="section3"><span class="level beginner">BEGINNER</span>3. Recovery Actions</h2>
+
+        <p>The Recovery Action, set as the final instruction in a Recovery Scenario, tells Tosca what happens to the original failed step and the rest of the Test Case after recovery steps have run:</p>
+
+        <pre>// Recovery actions (what happens after recovery TC runs)
+Retry         → re-attempt the failed step (up to N times)
+Skip          → skip the failed step, continue the test case
+NextTestCase  → abort this TC, start the next in Execution List
+Exit          → stop the entire Execution List</pre>
+
+        <div class="table-wrap">
+        <table class="table-compact">
+            <tr>
+                <th>Recovery Action</th>
+                <th>When to Use</th>
+            </tr>
+            <tr>
+                <td>Retry</td>
+                <td>The failure was transient and the recovery steps restored a state where the original step should now succeed (e.g. re-login after a session timeout)</td>
+            </tr>
+            <tr>
+                <td>Skip</td>
+                <td>The failed step is not critical to the rest of the scenario (e.g. dismissing an optional survey popup)</td>
+            </tr>
+            <tr>
+                <td>NextTestCase</td>
+                <td>The failure means this specific scenario cannot continue meaningfully, but other Test Cases in the list are unaffected</td>
+            </tr>
+            <tr>
+                <td>Exit</td>
+                <td>The failure indicates a systemic environment problem (e.g. application is down) where continuing any further test is pointless</td>
+            </tr>
+        </table>
+        </div>
+
+        <!-- SECTION 4 -->
+        <h2 id="section4"><span class="level intermediate">INTERMEDIATE</span>4. Attachment Levels: Step, TestCase, ExecutionList</h2>
+
+        <p>Recovery Scenarios can be attached at three different scopes, letting you decide how broadly a given handler should apply:</p>
+
+        <div class="table-wrap">
+        <table class="table-compact">
+            <tr>
+                <th>Attachment Level</th>
+                <th>Scope</th>
+                <th>Example</th>
+            </tr>
+            <tr>
+                <td>TestStep</td>
+                <td>Handles failure of one specific step only</td>
+                <td>A flaky "Submit" button that occasionally needs a second click</td>
+            </tr>
+            <tr>
+                <td>TestCase</td>
+                <td>Handles any step failure within that Test Case</td>
+                <td>Session timeout recovery applicable to any step in a long checkout flow</td>
+            </tr>
+            <tr>
+                <td>ExecutionList</td>
+                <td>Global handler applied across every Test Case in the run</td>
+                <td>Unexpected alert dialogs that could appear anywhere in the application</td>
+            </tr>
+        </table>
+        </div>
+
+        <pre>// Attaching a Recovery Scenario
+TestStep → Properties → Recovery Scenario → Select TC_CloseDialog
+Priority: 1   (lower = higher priority)
+Condition: Always / OnError / OnVerificationFailed</pre>
+
+        <!-- SECTION 5 -->
+        <h2 id="section5"><span class="level intermediate">INTERMEDIATE</span>5. Priority and Conditions</h2>
+
+        <p>Multiple Recovery Scenarios can be attached at the same or overlapping scopes. Tosca evaluates them in <strong>priority order</strong> — lower priority numbers run first — and each carries a <strong>Condition</strong> narrowing exactly when it should trigger.</p>
+
+        <div class="table-wrap">
+        <table class="table-compact">
+            <tr>
+                <th>Condition</th>
+                <th>Fires When</th>
+            </tr>
+            <tr>
+                <td>Always</td>
+                <td>Any failure of the associated step/case, regardless of cause</td>
+            </tr>
+            <tr>
+                <td>OnError</td>
+                <td>An unexpected exception occurred (element not found, timeout)</td>
+            </tr>
+            <tr>
+                <td>OnVerificationFailed</td>
+                <td>Specifically a Verify/Checkpoint step's assertion mismatch</td>
+            </tr>
+        </table>
+        </div>
+
+        <div class="warning">
+            <strong>⚠️ Common Pitfall:</strong> Attaching an OnError recovery meant for "unexpected dialog appeared" to also fire OnVerificationFailed can mask genuine functional defects — if a Verify step legitimately fails because the feature is broken, a recovery that automatically retries or skips it may hide a real bug from your reports. Scope Conditions narrowly to the failure type you're actually trying to handle.
+        </div>
+
+        <!-- SECTION 6 -->
+        <h2 id="section6"><span class="level intermediate">INTERMEDIATE</span>6. Common Recovery Patterns</h2>
+
+        <pre>// Recovery TC: TC_ClosePopup
+Step 1: BrowserEngine.SwitchToAlert [if exists]
+Step 2: AlertDialog.AcceptButton [click]
+Step 3: [Recovery Action] = Retry   ← re-try original step
+
+// Attached to:
+ExecutionList level → Priority 1
+// Fires any time an unexpected alert blocks a step</pre>
+
+        <pre>// Recovery TC: TC_HandleSessionTimeout
+Step 1: LoginPage.Username → {P:Username}
+Step 2: LoginPage.Password → {P:Password}
+Step 3: LoginPage.LoginButton [click]
+Step 4: [Recovery Action] = Retry   ← retry original step after re-login
+
+// Attached at TestCase level with condition: OnError
+// When session expires mid-test → auto re-login → retry</pre>
+
+        <div class="table-wrap">
+        <table>
+            <tr>
+                <th>Scenario</th>
+                <th>Pattern</th>
+            </tr>
+            <tr>
+                <td>Unexpected alert/dialog</td>
+                <td>Close it, then Retry the original step</td>
+            </tr>
+            <tr>
+                <td>Session expiry</td>
+                <td>Re-authenticate, then Retry</td>
+            </tr>
+            <tr>
+                <td>Non-critical popup (survey, tour)</td>
+                <td>Dismiss it, then Skip</td>
+            </tr>
+            <tr>
+                <td>Application completely unreachable</td>
+                <td>Screenshot/log, then Exit</td>
+            </tr>
+        </table>
+        </div>
+
+        <!-- SECTION 7 -->
+        <h2 id="section7"><span class="level advanced">ADVANCED</span>7. Recovery Scenario Chains and Fallbacks</h2>
+
+        <p>When several distinct failure modes can occur at the same attachment level, Tosca evaluates attached Recovery Scenarios in priority order until one condition's trigger matches. This effectively lets you build a fallback chain of handlers.</p>
+
+        <pre>ExecutionList-level Recovery Scenarios (evaluated in priority order):
+Priority 1: TC_CloseCookieBanner    (Condition: Always)
+Priority 2: TC_CloseSurveyPopup     (Condition: Always)
+Priority 3: TC_HandleSessionTimeout (Condition: OnError)
+Priority 4: TC_GenericScreenshotAndSkip (Condition: Always — catch-all)
+
+// If a step fails and no dialog/timeout is actually present,
+// execution falls through to the catch-all at Priority 4</pre>
+
+        <div class="example">
+            <strong>Why a catch-all matters:</strong> a final, low-priority "take a screenshot and Skip" recovery ensures that even genuinely unanticipated failures are logged with diagnostic evidence rather than causing an unhandled abort of the entire Execution List.
+        </div>
+
+        <!-- SECTION 8 -->
+        <h2 id="section8"><span class="level advanced">ADVANCED</span>8. Testing Your Recovery Scenarios</h2>
+
+        <p>A Recovery Scenario that has never actually been triggered is an untested piece of automation — exactly the kind of risk Tosca is meant to reduce elsewhere. Deliberately exercising the failure path before relying on it in production regression runs is essential.</p>
+
+        <pre>// Deliberate trigger technique
+1. Temporarily point a Test Step at a Module Attribute
+   that is guaranteed to fail (e.g. wrong expected text)
+2. Run the Test Case → confirm the Recovery Scenario fires
+3. Confirm the Recovery Action behaves as expected
+   (Retry actually retries; Skip actually continues; etc.)
+4. Revert the Test Step to its correct configuration</pre>
+
+        <div class="note">
+            <strong>💡 Tip:</strong> Keep a small, dedicated "Recovery Validation" Test Case or folder that intentionally triggers each Recovery Scenario, so regressions in recovery logic itself are caught the same way regressions in application behaviour are.
+        </div>
+
+        <!-- SECTION 9 -->
+        <h2 id="section9"><span class="level intermediate">INTERMEDIATE</span>9. Common Pitfalls</h2>
+
+        <ul style="margin: 15px 0; margin-left: 20px;">
+            <li><strong>Recovery masking real defects:</strong> an overly broad OnError/Always recovery that retries past a genuine, reproducible failure hides the defect from your test report.</li>
+            <li><strong>Infinite retry loops:</strong> a Retry recovery attached to a step whose failure condition never resolves (e.g. a permanently broken selector) can loop until a timeout, wasting execution time on every run.</li>
+            <li><strong>No catch-all at the ExecutionList level:</strong> leaving unanticipated failures completely unhandled, causing avoidable cascading failures across an entire nightly run.</li>
+            <li><strong>Untested recovery logic:</strong> a Recovery Scenario written once and never deliberately triggered may itself be broken and fail silently when it's actually needed.</li>
+        </ul>
+
+        <!-- SECTION 10 -->
+        <h2 id="section10"><span class="level beginner">BEGINNER</span>10. Best Practices</h2>
+
+        <h3>1. Identify Failure Modes Deliberately</h3>
+        <pre>Common candidates:
+- Unexpected dialogs / popups / cookie banners
+- Session timeouts / re-authentication needs
+- Slow-loading spinners causing premature timeouts
+- Network blips on external service calls</pre>
+
+        <h3>2. Scope Conditions Narrowly</h3>
+        <p>Prefer OnError over Always when the recovery is meant for exceptions, not for genuine assertion failures — protect your ability to see real defects.</p>
+
+        <h3>3. Always Cap Retry Attempts</h3>
+        <p>Never leave a Retry recovery without an explicit maximum attempt count.</p>
+
+        <h3>4. Layer Recovery from Specific to General</h3>
+        <p>Attach narrow, specific recoveries at the Step level; broader catch-alls at the ExecutionList level with a lower priority (higher number).</p>
+
+        <h3>5. Deliberately Test Every Recovery Scenario</h3>
+        <p>Trigger each one at least once before trusting it in a real regression run, and re-validate after any change to its logic.</p>
+
+        <!-- SUMMARY -->
+        <h2 style="margin-top: 40px;">📋 Quick Reference Summary</h2>
+
+        <div class="table-wrap">
+        <table>
+            <tr>
+                <th>Concept</th>
+                <th>Key Points</th>
+            </tr>
+            <tr>
+                <td><strong>Recovery Scenario</strong></td>
+                <td>A Test Case that runs automatically when a step fails, to clean up and decide what happens next.</td>
+            </tr>
+            <tr>
+                <td><strong>Recovery Action</strong></td>
+                <td>Retry / Skip / NextTestCase / Exit — declared as the final step of the recovery.</td>
+            </tr>
+            <tr>
+                <td><strong>Attachment levels</strong></td>
+                <td>TestStep (narrow), TestCase (medium), ExecutionList (global).</td>
+            </tr>
+            <tr>
+                <td><strong>Priority</strong></td>
+                <td>Lower number = evaluated first among multiple attached recoveries.</td>
+            </tr>
+            <tr>
+                <td><strong>Condition</strong></td>
+                <td>Always / OnError / OnVerificationFailed — narrows exactly when a recovery fires.</td>
+            </tr>
+            <tr>
+                <td><strong>Catch-all pattern</strong></td>
+                <td>A low-priority, broad recovery that screenshots and skips truly unanticipated failures.</td>
+            </tr>
+        </table>
+        </div>
+
+        <div style="margin-top: 40px; padding: 20px; background: #ecf0f1; border-radius: 5px;">
+            <h3>🎓 Learning Path</h3>
+            <p><strong>Beginner:</strong> Master sections 1, 2, 3, 10</p>
+            <p><strong>Intermediate:</strong> Understand sections 4, 5, 6, 9</p>
+            <p><strong>Advanced:</strong> Deep dive into sections 7, 8</p>
+        </div>
+
+    </div>
+</body>
+</html>

@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tosca Requirements & Traceability: Complete Guide</title>
+    <link rel="stylesheet" href="/guides/guide-base.css">
+</head>
+<body>
+    <div class="container">
+        <h1>📌 Tosca Requirements & Traceability: Complete Guide</h1>
+        <p style="font-size: 1.1em; color: #7f8c8d; margin-bottom: 20px;">
+            Linking business requirements to test coverage, and letting risk drive what actually gets run
+        </p>
+
+        <div class="toc">
+            <h3>📚 Table of Contents</h3>
+            <ul>
+                <li><a href="#section1">1. What Is the Requirements Section?</a></li>
+                <li><a href="#section2">2. Risk Levels</a></li>
+                <li><a href="#section3">3. Linking Test Cases to Requirements</a></li>
+                <li><a href="#section4">4. The Coverage Matrix</a></li>
+                <li><a href="#section5">5. Test Optimisation (TO)</a></li>
+                <li><a href="#section6">6. Importing Requirements from ALM Tools</a></li>
+                <li><a href="#section7">7. Using TQL for Coverage Queries</a></li>
+                <li><a href="#section8">8. Requirements-Driven Reporting to Stakeholders</a></li>
+                <li><a href="#section9">9. Common Pitfalls</a></li>
+                <li><a href="#section10">10. Best Practices</a></li>
+            </ul>
+        </div>
+
+        <!-- SECTION 1 -->
+        <h2 id="section1"><span class="level beginner">BEGINNER</span>1. What Is the Requirements Section?</h2>
+
+        <h3>Definition</h3>
+        <p>Tosca's <strong>Requirements</strong> section provides a traceability matrix linking business requirements to the Test Cases that verify them. Every requirement is tagged with a <strong>risk level</strong> and linked to one or more Test Cases. If a linked Test Case fails, Tosca immediately shows which requirement is at risk — turning an abstract test failure into a concrete statement about business impact.</p>
+
+        <div class="example">
+            <strong>Real-world analogy:</strong> Requirements traceability is like a building inspection checklist cross-referenced with the building code. Each code clause (requirement) maps to specific inspection items (test cases). Test Optimisation is the inspector focusing only on load-bearing walls (critical requirements) when time is short — the cosmetic items (low-risk) get deferred without compromising structural safety.
+        </div>
+
+        <!-- SECTION 2 -->
+        <h2 id="section2"><span class="level beginner">BEGINNER</span>2. Risk Levels</h2>
+
+        <p>Each Requirement is assigned a risk classification that drives both prioritisation and, later, Test Optimisation decisions.</p>
+
+        <pre>Requirements/
+├── US001: User can log in with valid credentials
+│     Risk: Critical
+│     LinkedTests: TC001_Login, TC010_SSOLogin
+├── US002: User sees dashboard after login
+│     Risk: High
+│     LinkedTests: TC001_Login (step 5 verifies dashboard)
+└── US003: Password must be 8+ characters
+      Risk: Medium
+      LinkedTests: TC005_PasswordValidation</pre>
+
+        <div class="table-wrap">
+        <table class="table-compact">
+            <tr>
+                <th>Risk Level</th>
+                <th>Typical Meaning</th>
+            </tr>
+            <tr>
+                <td>Critical</td>
+                <td>Core business function; failure blocks users entirely or causes major financial/compliance impact</td>
+            </tr>
+            <tr>
+                <td>High</td>
+                <td>Important function with significant but not catastrophic impact if broken</td>
+            </tr>
+            <tr>
+                <td>Medium</td>
+                <td>Noticeable but workaround-able impact</td>
+            </tr>
+            <tr>
+                <td>Low</td>
+                <td>Cosmetic or edge-case functionality</td>
+            </tr>
+        </table>
+        </div>
+
+        <!-- SECTION 3 -->
+        <h2 id="section3"><span class="level beginner">BEGINNER</span>3. Linking Test Cases to Requirements</h2>
+
+        <div class="example">
+            <strong>Step by step in TCM:</strong>
+            <pre>1. Create or import a Requirement in the Requirements section
+2. Set its Risk level (Critical / High / Medium / Low)
+3. Open a Test Case that verifies this requirement
+4. Drag the Requirement onto the Test Case (or vice versa) to create the link
+5. Repeat for every Test Case that contributes coverage to this requirement</pre>
+        </div>
+
+        <p>A single Requirement can be linked to multiple Test Cases (full coverage often needs more than one scenario), and a single Test Case can cover multiple Requirements — the relationship is many-to-many.</p>
+
+        <!-- SECTION 4 -->
+        <h2 id="section4"><span class="level intermediate">INTERMEDIATE</span>4. The Coverage Matrix</h2>
+
+        <p>Once links exist, TCM can render a <strong>coverage matrix</strong> — a grid showing which Test Cases cover which Requirements, immediately surfacing any Requirement with zero linked Test Cases.</p>
+
+        <pre>Requirement       | Risk    | TC001 | TC005 | TC010 | Coverage
+US001 Login       | Critical|  ✓    |       |  ✓    |  100%
+US002 Dashboard   | High    |  ✓    |       |       |  100%
+US003 Password    | Medium  |       |  ✓    |       |  100%
+US004 Logout      | Low     |       |       |       |   0%  ← gap!
+
+// US004 has no test case → alert in TOSCA dashboard</pre>
+
+        <div class="warning">
+            <strong>⚠️ Common Pitfall:</strong> A coverage gap on a Low-risk requirement is often acceptable to defer; a coverage gap on a Critical or High-risk requirement is a serious finding that should block a release sign-off. Review the matrix filtered by risk level, not just raw coverage percentage.
+        </div>
+
+        <!-- SECTION 5 -->
+        <h2 id="section5"><span class="level advanced">ADVANCED</span>5. Test Optimisation (TO)</h2>
+
+        <p>Because Requirements, risk levels, and coverage links all live in the same repository, Tosca can computationally determine the <strong>minimum set of Test Cases</strong> that still covers every Requirement at its declared risk level. This is <strong>Test Optimisation (TO)</strong> — one of Tosca's flagship differentiators, since purely scripted frameworks have no native concept of "requirement risk" to optimise against.</p>
+
+        <pre>// Test Optimisation (TO) workflow
+1. Set risk level on each requirement
+2. Mark test cases as covering specific requirements
+3. Run "Optimise" → TOSCA selects minimum covering set
+4. Execution List is auto-populated with optimised TC set</pre>
+
+        <pre>// Full regression: 200 test cases
+// After Test Optimisation (focus on High/Critical risks):
+
+Optimised set: 43 test cases
+  ✓ Covers all Critical requirements
+  ✓ Covers all High requirements
+  – Skips 157 Low-risk test cases (still logged as skipped)
+
+Execution time: 43 × 30s = ~22 minutes
+  vs. 200 × 30s = 100 minutes (full run)
+  → 78% time reduction with same risk coverage</pre>
+
+        <div class="example">
+            <strong>When to reach for TO:</strong> nightly/CI gate runs where a full 100-minute regression doesn't fit the pipeline window. Full regression should still run periodically (e.g. weekly) to catch anything the optimised set intentionally skipped.
+        </div>
+
+        <!-- SECTION 6 -->
+        <h2 id="section6"><span class="level advanced">ADVANCED</span>6. Importing Requirements from ALM Tools</h2>
+
+        <p>Requirements rarely originate inside Tosca itself — they typically live in a dedicated ALM (Application Lifecycle Management) tool. Tosca's integration layer can import Requirements from tools like Jira, Azure DevOps, and IBM DOORS, keeping the traceability matrix automatically synchronised rather than manually re-entered.</p>
+
+        <pre>// Conceptual sync configuration
+Integration: Jira
+  Project:     PROJ
+  IssueType:   Story
+  SyncField:   Risk ← maps to Jira custom field "Business Impact"
+  SyncMode:    Two-way / One-way (Jira → Tosca)</pre>
+
+        <div class="note">
+            <strong>💡 Tip:</strong> Keeping this sync live (rather than a one-time import) prevents the common failure mode where the traceability matrix silently drifts out of date as new stories are added to the backlog after the initial import.
+        </div>
+
+        <!-- SECTION 7 -->
+        <h2 id="section7"><span class="level intermediate">INTERMEDIATE</span>7. Using TQL for Coverage Queries</h2>
+
+        <p><strong>Tosca Query Language (TQL)</strong> can query the Requirements/Test Case relationship directly, letting you answer coverage questions programmatically rather than eyeballing the matrix UI.</p>
+
+        <pre>// Conceptual TQL query: find uncovered Critical/High requirements
+SELECT Requirement.Name, Requirement.Risk
+FROM Requirements
+WHERE Requirement.Risk IN ("Critical", "High")
+  AND Requirement.LinkedTestCaseCount = 0</pre>
+
+        <div class="example">
+            <strong>Why this earns its keep:</strong> on a project with hundreds of requirements, a saved TQL query surfacing "high-risk requirements with zero coverage" can run as a standing health-check before every release, rather than relying on someone remembering to scroll through the full matrix.
+        </div>
+
+        <!-- SECTION 8 -->
+        <h2 id="section8"><span class="level intermediate">INTERMEDIATE</span>8. Requirements-Driven Reporting to Stakeholders</h2>
+
+        <p>Because coverage and risk data are structured, Tosca Reports (see Execution & Reporting) can present results framed around business requirements rather than raw test case names — far more meaningful to a product owner or compliance auditor than a list of internal Test Case IDs.</p>
+
+        <div class="table-wrap">
+        <table>
+            <tr>
+                <th>Technical View</th>
+                <th>Requirements-Framed View</th>
+            </tr>
+            <tr>
+                <td>"TC001_Login: Passed, TC010_SSOLogin: Failed"</td>
+                <td>"US001 (Critical – User Login): Partial risk exposure — 1 of 2 covering tests failed"</td>
+            </tr>
+        </table>
+        </div>
+
+        <!-- SECTION 9 -->
+        <h2 id="section9"><span class="level intermediate">INTERMEDIATE</span>9. Common Pitfalls</h2>
+
+        <ul style="margin: 15px 0; margin-left: 20px;">
+            <li><strong>Linking test cases retroactively, if at all:</strong> building the whole suite first and treating traceability as an afterthought, resulting in a permanently incomplete matrix.</li>
+            <li><strong>Inconsistent risk assignment:</strong> different team members applying "Critical" and "High" inconsistently, undermining Test Optimisation's selection quality.</li>
+            <li><strong>Stale ALM sync:</strong> a one-time import from Jira that's never refreshed, silently drifting out of sync with the real backlog.</li>
+            <li><strong>Never running full regression:</strong> relying exclusively on the optimised subset forever, allowing defects in deliberately-skipped low-risk areas to accumulate unnoticed.</li>
+        </ul>
+
+        <!-- SECTION 10 -->
+        <h2 id="section10"><span class="level beginner">BEGINNER</span>10. Best Practices</h2>
+
+        <h3>1. Link Requirements as You Build, Not Afterward</h3>
+        <p>Create the Requirement-to-Test Case link at the same time you build the Test Case, while the connection is still fresh in mind.</p>
+
+        <h3>2. Calibrate Risk Levels as a Team</h3>
+        <pre>// Establish shared definitions, e.g.:
+Critical = revenue-blocking or regulatory
+High     = major feature, no workaround
+Medium   = feature with acceptable workaround
+Low      = cosmetic / rarely used path</pre>
+
+        <h3>3. Review the Coverage Matrix Before Every Release</h3>
+        <p>Filter by Critical/High risk and treat any gap as a release-blocking finding.</p>
+
+        <h3>4. Keep ALM Sync Live</h3>
+        <p>Prefer a continuously synced integration over a one-time import.</p>
+
+        <h3>5. Run Full Regression Periodically Alongside Optimised Runs</h3>
+        <p>Use Test Optimisation for fast CI gates, but schedule full regression (e.g. weekly) to catch anything the optimised set skips.</p>
+
+        <!-- SUMMARY -->
+        <h2 style="margin-top: 40px;">📋 Quick Reference Summary</h2>
+
+        <div class="table-wrap">
+        <table>
+            <tr>
+                <th>Concept</th>
+                <th>Key Points</th>
+            </tr>
+            <tr>
+                <td><strong>Requirement</strong></td>
+                <td>A business need, tagged with a risk level and linked to covering Test Cases.</td>
+            </tr>
+            <tr>
+                <td><strong>Risk level</strong></td>
+                <td>Critical / High / Medium / Low — drives prioritisation and Test Optimisation.</td>
+            </tr>
+            <tr>
+                <td><strong>Coverage matrix</strong></td>
+                <td>Grid view revealing which requirements lack test coverage.</td>
+            </tr>
+            <tr>
+                <td><strong>Test Optimisation (TO)</strong></td>
+                <td>Auto-selects the minimum Test Case set covering all risk-weighted requirements.</td>
+            </tr>
+            <tr>
+                <td><strong>ALM integration</strong></td>
+                <td>Syncs Requirements from Jira/ADO/DOORS to keep the matrix current.</td>
+            </tr>
+            <tr>
+                <td><strong>TQL coverage queries</strong></td>
+                <td>Programmatically surface uncovered high-risk requirements.</td>
+            </tr>
+        </table>
+        </div>
+
+        <div style="margin-top: 40px; padding: 20px; background: #ecf0f1; border-radius: 5px;">
+            <h3>🎓 Learning Path</h3>
+            <p><strong>Beginner:</strong> Master sections 1, 2, 3, 10</p>
+            <p><strong>Intermediate:</strong> Understand sections 4, 7, 8, 9</p>
+            <p><strong>Advanced:</strong> Deep dive into sections 5, 6</p>
+        </div>
+
+    </div>
+</body>
+</html>

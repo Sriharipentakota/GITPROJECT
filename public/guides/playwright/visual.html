@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Playwright Screenshots, Videos & Traces: Complete Guide</title>
+    <link rel="stylesheet" href="/guides/guide-base.css">
+</head>
+<body>
+    <div class="container">
+        <h1>📸 Playwright Screenshots, Videos & Traces: Complete Guide</h1>
+        <p style="font-size: 1.1em; color: #7f8c8d; margin-bottom: 20px;">
+            Three complementary debugging and visual regression tools, from a single PNG to a full trace timeline
+        </p>
+
+        <div class="toc">
+            <h3>📚 Table of Contents</h3>
+            <ul>
+                <li><a href="#section1">1. Three Tools, Three Purposes</a></li>
+                <li><a href="#section2">2. Ad-Hoc Screenshots</a></li>
+                <li><a href="#section3">3. Visual Regression with toHaveScreenshot()</a></li>
+                <li><a href="#section4">4. Masking Dynamic Content</a></li>
+                <li><a href="#section5">5. Video Recording</a></li>
+                <li><a href="#section6">6. Traces — the Most Powerful Artifact</a></li>
+                <li><a href="#section7">7. Manual Trace Control</a></li>
+                <li><a href="#section8">8. Configuring Capture Modes</a></li>
+                <li><a href="#section9">9. Common Pitfalls</a></li>
+            </ul>
+        </div>
+
+        <!-- SECTION 1 -->
+        <h2 id="section1"><span class="level beginner">BEGINNER</span>1. Three Tools, Three Purposes</h2>
+
+        <div class="table-wrap">
+        <table class="table-compact">
+            <tr>
+                <th>Tool</th>
+                <th>What it captures</th>
+                <th>Best for</th>
+            </tr>
+            <tr>
+                <td>📸 Screenshot</td>
+                <td>A single PNG at one point in time</td>
+                <td>Ad-hoc debugging, visual regression baselines</td>
+            </tr>
+            <tr>
+                <td>🎬 Video</td>
+                <td>Continuous WebM recording of the whole session</td>
+                <td>Watching exactly what happened during a failure</td>
+            </tr>
+            <tr>
+                <td>🔍 Trace</td>
+                <td>DOM snapshots, network waterfall, console logs, timeline — all in one zip</td>
+                <td>Deep, step-by-step debugging of a specific failure</td>
+            </tr>
+        </table>
+        </div>
+
+        <div class="example">
+            <strong>How they relate:</strong> a screenshot is a photograph, a video is CCTV footage, and a trace is a full forensics kit — you can inspect the DOM at any moment, replay network requests, and read console output, all synchronized to the same timeline.
+        </div>
+
+        <!-- SECTION 2 -->
+        <h2 id="section2"><span class="level beginner">BEGINNER</span>2. Ad-Hoc Screenshots</h2>
+
+        <pre>await page.screenshot({ path: 'debug.png' });
+await page.screenshot({ path: 'full.png', fullPage: true });
+await page.screenshot({
+  clip: { x: 0, y: 0, width: 800, height: 400 },
+});
+await locator.screenshot({ path: 'element.png' });</pre>
+
+        <h3>Capturing Specific Regions</h3>
+        <pre>test('capture specific regions', async ({ page }) => {
+  await page.goto('/dashboard');
+
+  await page.screenshot({ path: 'test-results/dashboard-full.png', fullPage: true });
+
+  await page.screenshot({
+    path: 'test-results/header.png',
+    clip: { x: 0, y: 0, width: 1280, height: 80 },
+  });
+
+  const chart = page.getByTestId('revenue-chart');
+  await chart.screenshot({ path: 'test-results/revenue-chart.png' });
+});</pre>
+
+        <!-- SECTION 3 -->
+        <h2 id="section3"><span class="level intermediate">INTERMEDIATE</span>3. Visual Regression with toHaveScreenshot()</h2>
+
+        <p><code>expect(page).toHaveScreenshot('name.png')</code> creates a baseline image on the first run and compares against it pixel-by-pixel on every subsequent run.</p>
+
+        <pre>test('homepage matches visual baseline', async ({ page }) => {
+  await page.goto('/');
+  await expect(page).toHaveScreenshot('homepage.png');
+});
+
+// First run:  creates __snapshots__/homepage-1.png as the baseline
+// Next runs:  compares pixel-by-pixel and fails on meaningful differences
+// Update:     npx playwright test --update-snapshots</pre>
+
+        <div class="warning">
+            <strong>⚠️ Common Pitfall:</strong> Baselines are captured per-browser and per-platform by default (Chromium on Linux renders subtly differently from Chromium on Windows). Generate and commit baselines from the same environment your CI runs in — usually a Linux Docker container — or you'll see spurious diffs.
+        </div>
+
+        <!-- SECTION 4 -->
+        <h2 id="section4"><span class="level intermediate">INTERMEDIATE</span>4. Masking Dynamic Content</h2>
+
+        <pre>await expect(page).toHaveScreenshot('homepage.png', {
+  mask: [page.getByTestId('live-ticker'), page.locator('.timestamp')],
+  maxDiffPixels: 50,
+});</pre>
+
+        <div class="table-wrap">
+        <table class="table-compact">
+            <tr>
+                <th>Option</th>
+                <th>Purpose</th>
+            </tr>
+            <tr>
+                <td><code>mask: [locator, ...]</code></td>
+                <td>Paints a solid box over elements that change every run (timestamps, ads)</td>
+            </tr>
+            <tr>
+                <td><code>maxDiffPixels</code></td>
+                <td>Tolerate up to N different pixels before failing</td>
+            </tr>
+            <tr>
+                <td><code>threshold</code></td>
+                <td>Per-pixel color distance (0–1) allowed before a pixel counts as "different"</td>
+            </tr>
+        </table>
+        </div>
+
+        <!-- SECTION 5 -->
+        <h2 id="section5"><span class="level intermediate">INTERMEDIATE</span>5. Video Recording</h2>
+
+        <pre>// playwright.config.ts
+use: { video: 'on-first-retry' }
+
+// Accessing the video from within a test
+const video = page.video();
+await video?.saveAs('recordings/my-test.webm');</pre>
+
+        <p>The recommended setting, <code>video: 'on-first-retry'</code>, only records when a test is retried after failing — keeping disk usage low while still capturing evidence of real failures.</p>
+
+        <!-- SECTION 6 -->
+        <h2 id="section6"><span class="level advanced">ADVANCED</span>6. Traces — the Most Powerful Artifact</h2>
+
+        <p>A trace is a single <code>.zip</code> file containing DOM snapshots at every action, a full network request waterfall, console messages, and timestamped screenshots — everything needed to understand exactly what the browser saw at each step.</p>
+
+        <pre># View a trace
+npx playwright show-trace trace.zip
+# Or drag-and-drop the zip onto trace.playwright.dev</pre>
+
+        <div class="example">
+            <strong>What makes traces different from video:</strong> in a trace, you can hover over any recorded action to see the exact DOM at that instant, inspect the network request that was in flight, and read console output — none of which is possible by just watching a video.
+        </div>
+
+        <!-- SECTION 7 -->
+        <h2 id="section7"><span class="level advanced">ADVANCED</span>7. Manual Trace Control</h2>
+
+        <pre>await context.tracing.start({
+  screenshots: true,   // capture screenshots at each action
+  snapshots:   true,   // capture DOM snapshots for hover inspection
+  sources:     true,   // embed test source code
+});
+
+await page.goto('/');
+await page.getByRole('button').click();
+
+await context.tracing.stop({ path: 'trace.zip' });</pre>
+
+        <h3>Recording a Specific Failing Scenario</h3>
+        <pre>test('checkout flow trace', async ({ page, context }) => {
+  await context.tracing.start({ screenshots: true, snapshots: true, sources: true });
+
+  await page.goto('/cart');
+  await page.getByRole('button', { name: 'Checkout' }).click();
+  await page.getByLabel('Card number').fill('4111111111111111');
+  await page.getByRole('button', { name: 'Pay' }).click();
+
+  await context.tracing.stop({ path: 'test-results/checkout-trace.zip' });
+});</pre>
+
+        <!-- SECTION 8 -->
+        <h2 id="section8"><span class="level advanced">ADVANCED</span>8. Configuring Capture Modes</h2>
+
+        <div class="table-wrap">
+        <table class="table-compact">
+            <tr>
+                <th>Mode</th>
+                <th>Behavior</th>
+                <th>Applies to</th>
+            </tr>
+            <tr>
+                <td><code>'off'</code></td>
+                <td>Never record</td>
+                <td>trace, video, screenshot</td>
+            </tr>
+            <tr>
+                <td><code>'on'</code></td>
+                <td>Always record</td>
+                <td>trace, video, screenshot</td>
+            </tr>
+            <tr>
+                <td><code>'on-first-retry'</code></td>
+                <td>Only record when a test is retried</td>
+                <td>trace, video</td>
+            </tr>
+            <tr>
+                <td><code>'retain-on-failure'</code></td>
+                <td>Always record, but delete the artifact if the test passes</td>
+                <td>trace, video</td>
+            </tr>
+            <tr>
+                <td><code>'only-on-failure'</code></td>
+                <td>Capture a screenshot only when the test fails</td>
+                <td>screenshot</td>
+            </tr>
+        </table>
+        </div>
+
+        <pre>use: {
+  trace:      'on-first-retry',
+  screenshot: 'only-on-failure',
+  video:      'retain-on-failure',
+},</pre>
+
+        <!-- SECTION 9 -->
+        <h2 id="section9"><span class="level advanced">ADVANCED</span>9. Common Pitfalls</h2>
+
+        <div class="warning">
+            <strong>⚠️ Pitfall 1 — Setting trace/video to 'on' everywhere:</strong> Recording everything for every test in CI generates enormous artifact sizes and slows uploads. Reserve <code>'on'</code> for local debugging sessions; use <code>'on-first-retry'</code> or <code>'retain-on-failure'</code> in CI.
+        </div>
+
+        <div class="warning">
+            <strong>⚠️ Pitfall 2 — Not masking dynamic content in visual tests:</strong> A visual regression test on a page with a live clock, ticker, or ad banner will fail on almost every run unless you explicitly <code>mask</code> those regions — leading teams to abandon visual testing as "too flaky" when the real fix is a two-line mask array.
+        </div>
+
+        <!-- SUMMARY -->
+        <h2 style="margin-top: 40px;">📋 Quick Reference Summary</h2>
+
+        <div class="table-wrap">
+        <table>
+            <tr>
+                <th>Concept</th>
+                <th>Key Points</th>
+            </tr>
+            <tr>
+                <td><strong>Screenshot</strong></td>
+                <td>page.screenshot() for debugging; toHaveScreenshot() for regression baselines.</td>
+            </tr>
+            <tr>
+                <td><strong>mask / maxDiffPixels</strong></td>
+                <td>Handle dynamic content and minor rendering noise in visual comparisons.</td>
+            </tr>
+            <tr>
+                <td><strong>Video</strong></td>
+                <td>Continuous WebM recording; access via page.video().saveAs().</td>
+            </tr>
+            <tr>
+                <td><strong>Trace</strong></td>
+                <td>DOM snapshots + network + console + timeline in one zip — richest debug artifact.</td>
+            </tr>
+            <tr>
+                <td><strong>Manual tracing</strong></td>
+                <td>context.tracing.start()/stop({ path }) for scoped, targeted recording.</td>
+            </tr>
+            <tr>
+                <td><strong>Capture modes</strong></td>
+                <td>off / on / on-first-retry / retain-on-failure / only-on-failure.</td>
+            </tr>
+        </table>
+        </div>
+
+        <div style="margin-top: 40px; padding: 20px; background: #ecf0f1; border-radius: 5px;">
+            <h3>🎓 Learning Path</h3>
+            <p><strong>Beginner:</strong> Master sections 1, 2</p>
+            <p><strong>Intermediate:</strong> Understand sections 3, 4, 5</p>
+            <p><strong>Advanced:</strong> Deep dive into sections 6, 7, 8, 9</p>
+        </div>
+
+    </div>
+</body>
+</html>

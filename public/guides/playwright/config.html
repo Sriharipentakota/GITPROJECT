@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Playwright Test Configuration: Complete Guide</title>
+    <link rel="stylesheet" href="/guides/guide-base.css">
+</head>
+<body>
+    <div class="container">
+        <h1>⚙️ Playwright Test Configuration: Complete Guide</h1>
+        <p style="font-size: 1.1em; color: #7f8c8d; margin-bottom: 20px;">
+            playwright.config.ts from the ground up — use, projects, timeouts, webServer, and global hooks
+        </p>
+
+        <div class="toc">
+            <h3>📚 Table of Contents</h3>
+            <ul>
+                <li><a href="#section1">1. The Shape of playwright.config.ts</a></li>
+                <li><a href="#section2">2. The use Block — Browser Defaults</a></li>
+                <li><a href="#section3">3. The projects Array — Multi-Browser Testing</a></li>
+                <li><a href="#section4">4. Timeouts: test vs expect</a></li>
+                <li><a href="#section5">5. Retries and Workers</a></li>
+                <li><a href="#section6">6. Reporters</a></li>
+                <li><a href="#section7">7. webServer — Auto-Starting Your App</a></li>
+                <li><a href="#section8">8. globalSetup and globalTeardown</a></li>
+                <li><a href="#section9">9. Common Pitfalls</a></li>
+            </ul>
+        </div>
+
+        <!-- SECTION 1 -->
+        <h2 id="section1"><span class="level beginner">BEGINNER</span>1. The Shape of playwright.config.ts</h2>
+
+        <p>All configuration lives in one file at the project root, exported through <code>defineConfig()</code> — which gives you full TypeScript autocomplete for every option.</p>
+
+        <pre>import { defineConfig, devices } from '@playwright/test';
+
+export default defineConfig({
+  testDir: './tests',
+  timeout: 30_000,
+  use: {
+    baseURL: 'http://localhost:3000',
+  },
+  projects: [
+    { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
+  ],
+});</pre>
+
+        <div class="example">
+            <strong>Why one central file matters:</strong> instead of every test file hardcoding its own base URL or timeout, changing one line in the config updates behavior for the entire suite — critical when you promote a suite from a local dev server to a staging environment to CI.
+        </div>
+
+        <!-- SECTION 2 -->
+        <h2 id="section2"><span class="level beginner">BEGINNER</span>2. The use Block — Browser Defaults</h2>
+
+        <p>The <code>use</code> block sets defaults inherited by every project and every test:</p>
+
+        <pre>use: {
+  baseURL:    'http://localhost:3000',
+  headless:   true,
+  viewport:   { width: 1280, height: 720 },
+  trace:      'on-first-retry',
+  screenshot: 'only-on-failure',
+  video:      'on-first-retry',
+},</pre>
+
+        <div class="table-wrap">
+        <table class="table-compact">
+            <tr>
+                <th>Option</th>
+                <th>Purpose</th>
+            </tr>
+            <tr>
+                <td><code>baseURL</code></td>
+                <td>Lets tests call <code>page.goto('/path')</code> instead of full URLs</td>
+            </tr>
+            <tr>
+                <td><code>headless</code></td>
+                <td>Run without a visible browser window (default true)</td>
+            </tr>
+            <tr>
+                <td><code>viewport</code></td>
+                <td>Default browser window size for every test</td>
+            </tr>
+            <tr>
+                <td><code>trace</code> / <code>screenshot</code> / <code>video</code></td>
+                <td>Debugging artifact capture policy (see the Screenshots, Videos & Traces guide)</td>
+            </tr>
+        </table>
+        </div>
+
+        <!-- SECTION 3 -->
+        <h2 id="section3"><span class="level beginner">BEGINNER</span>3. The projects Array — Multi-Browser Testing</h2>
+
+        <p>Each entry in <code>projects</code> represents a distinct test configuration — most commonly a browser engine, but also useful for device emulation or role-based test suites (see the Authentication guide).</p>
+
+        <pre>projects: [
+  { name: 'chromium',      use: { ...devices['Desktop Chrome']  } },
+  { name: 'firefox',       use: { ...devices['Desktop Firefox'] } },
+  { name: 'webkit',        use: { ...devices['Desktop Safari']  } },
+  { name: 'mobile-chrome', use: { ...devices['Pixel 5']         } },
+  { name: 'mobile-safari', use: { ...devices['iPhone 13']       } },
+],</pre>
+
+        <p>Spreading <code>...devices['Desktop Chrome']</code> loads Playwright's built-in preset for that browser/device combination (viewport, user agent, touch support, etc.). Run a single project from the CLI with <code>--project=chromium</code>.</p>
+
+        <div class="note">
+            <strong>💡 Tip:</strong> Each project can override any part of <code>use</code> — for example giving only the <code>mobile-chrome</code> project a different <code>baseURL</code> to test a mobile-specific subdomain.
+        </div>
+
+        <!-- SECTION 4 -->
+        <h2 id="section4"><span class="level intermediate">INTERMEDIATE</span>4. Timeouts: test vs expect</h2>
+
+        <div class="comparison">
+            <div>
+                <strong>timeout — per-test wall clock:</strong>
+                <pre>export default defineConfig({
+  timeout: 30_000, // whole test must
+                   // finish in 30s
+});</pre>
+            </div>
+            <div>
+                <strong>expect.timeout — assertion retry window:</strong>
+                <pre>export default defineConfig({
+  expect: { timeout: 5_000 }, // each
+    // web-first assertion retries
+    // for up to 5s
+});</pre>
+            </div>
+        </div>
+
+        <p>These are independent: a test can run for up to 30 seconds total, while any single <code>expect(locator).toBeVisible()</code> inside it gives up (and fails the test) after 5 seconds if the condition never becomes true.</p>
+
+        <!-- SECTION 5 -->
+        <h2 id="section5"><span class="level intermediate">INTERMEDIATE</span>5. Retries and Workers</h2>
+
+        <pre>retries: process.env.CI ? 2 : 0,
+workers: process.env.CI ? 1 : undefined,  // undefined = auto-detect
+fullyParallel: true,</pre>
+
+        <p>The standard pattern re-runs a failed test up to twice <em>only in CI</em> (where transient infrastructure flakiness is more common), while local runs fail immediately for fast feedback. <code>fullyParallel: true</code> runs every individual test in its own worker rather than only parallelizing across files (see the Parallel Execution guide for the full breakdown).</p>
+
+        <div class="warning">
+            <strong>⚠️ Common Pitfall:</strong> Leaving <code>retries</code> high everywhere (including locally) can mask a genuinely flaky test that will eventually cause real problems in CI. Treat CI retries as a safety net, not a substitute for fixing the root cause of flakiness.
+        </div>
+
+        <!-- SECTION 6 -->
+        <h2 id="section6"><span class="level intermediate">INTERMEDIATE</span>6. Reporters</h2>
+
+        <pre>reporter: [['html'], ['dot']],
+
+// Environment-specific reporting
+reporter: process.env.CI
+  ? [['html', { open: 'never' }], ['github']]
+  : [['dot']],</pre>
+
+        <div class="table-wrap">
+        <table class="table-compact">
+            <tr>
+                <th>Reporter</th>
+                <th>Use case</th>
+            </tr>
+            <tr>
+                <td><code>html</code></td>
+                <td>Rich interactive report with screenshots, video, traces</td>
+            </tr>
+            <tr>
+                <td><code>dot</code></td>
+                <td>Minimal one-character-per-test console output</td>
+            </tr>
+            <tr>
+                <td><code>github</code></td>
+                <td>Inline annotations on GitHub Actions pull requests</td>
+            </tr>
+            <tr>
+                <td><code>junit</code></td>
+                <td>XML output for non-native CI dashboards</td>
+            </tr>
+            <tr>
+                <td><code>blob</code></td>
+                <td>Intermediate format used for merging sharded CI runs</td>
+            </tr>
+        </table>
+        </div>
+
+        <!-- SECTION 7 -->
+        <h2 id="section7"><span class="level advanced">ADVANCED</span>7. webServer — Auto-Starting Your App</h2>
+
+        <pre>webServer: {
+  command:             'npm run dev',
+  url:                 'http://localhost:3000',
+  reuseExistingServer: !process.env.CI,
+},</pre>
+
+        <p>Playwright starts your dev server before the suite begins (waiting until <code>url</code> responds), and tears it down after — no separate terminal window needed, and no risk of tests running against a stale server left over from a previous session.</p>
+
+        <div class="example">
+            <strong><code>reuseExistingServer: !process.env.CI</code> explained:</strong> locally, if you already have <code>npm run dev</code> running in another terminal, Playwright detects the port is occupied and reuses it instead of erroring — a nice developer-experience touch. In CI, this is always <code>false</code> so every run starts from a clean server.
+        </div>
+
+        <!-- SECTION 8 -->
+        <h2 id="section8"><span class="level advanced">ADVANCED</span>8. globalSetup and globalTeardown</h2>
+
+        <pre>globalSetup:    './global-setup.ts',
+globalTeardown: './global-teardown.ts',</pre>
+
+        <p>These TypeScript files run once for the <em>entire suite</em>, before/after all tests and all workers. The canonical use case is authenticating once and saving the browser's <code>storageState</code> so individual tests skip the login flow entirely (see the Authentication & State guide for the full pattern).</p>
+
+        <pre>// global-setup.ts
+import { chromium } from '@playwright/test';
+
+export default async function globalSetup() {
+  const browser = await chromium.launch();
+  const page = await browser.newPage();
+
+  await page.goto('http://localhost:3000/login');
+  await page.getByLabel('Email').fill('admin@example.com');
+  await page.getByLabel('Password').fill('password');
+  await page.getByRole('button', { name: 'Sign in' }).click();
+
+  await page.context().storageState({ path: 'auth.json' });
+  await browser.close();
+}</pre>
+
+        <!-- SECTION 9 -->
+        <h2 id="section9"><span class="level advanced">ADVANCED</span>9. Common Pitfalls</h2>
+
+        <div class="warning">
+            <strong>⚠️ Pitfall 1 — Setting workers too high locally:</strong> More workers than CPU cores doesn't make tests faster — it causes resource contention that can make things slower and flakier. Let <code>workers</code> default to <code>undefined</code> (auto) locally and only pin an explicit number for CI where resources are known and fixed.
+        </div>
+
+        <div class="warning">
+            <strong>⚠️ Pitfall 2 — Forgetting project-level overrides inherit, not replace:</strong> A project's <code>use</code> block merges with (doesn't fully overwrite) the top-level <code>use</code> block — so you only need to specify the fields that actually differ for that project.
+        </div>
+
+        <div class="note">
+            <strong>💡 Tip:</strong> Keep <code>webServer.url</code> pointing at a lightweight health-check route if your app's homepage is slow to render — Playwright only needs a 2xx/3xx response to consider the server ready, not a fully rendered page.
+        </div>
+
+        <!-- SUMMARY -->
+        <h2 style="margin-top: 40px;">📋 Quick Reference Summary</h2>
+
+        <div class="table-wrap">
+        <table>
+            <tr>
+                <th>Concept</th>
+                <th>Key Points</th>
+            </tr>
+            <tr>
+                <td><strong>use block</strong></td>
+                <td>Browser-level defaults inherited by all projects: baseURL, viewport, trace, screenshot, video.</td>
+            </tr>
+            <tr>
+                <td><strong>projects</strong></td>
+                <td>Defines target browsers/devices; each can override use; filter with --project.</td>
+            </tr>
+            <tr>
+                <td><strong>timeout vs expect.timeout</strong></td>
+                <td>Per-test wall clock vs. per-assertion auto-retry window — independent settings.</td>
+            </tr>
+            <tr>
+                <td><strong>retries/workers</strong></td>
+                <td>Typically CI-only retries; workers default to auto locally, fixed in CI.</td>
+            </tr>
+            <tr>
+                <td><strong>webServer</strong></td>
+                <td>Auto-starts and tears down your dev server; reuseExistingServer for local convenience.</td>
+            </tr>
+            <tr>
+                <td><strong>globalSetup/Teardown</strong></td>
+                <td>Run once per suite — canonical use is one-time login + storageState.</td>
+            </tr>
+        </table>
+        </div>
+
+        <div style="margin-top: 40px; padding: 20px; background: #ecf0f1; border-radius: 5px;">
+            <h3>🎓 Learning Path</h3>
+            <p><strong>Beginner:</strong> Master sections 1, 2, 3</p>
+            <p><strong>Intermediate:</strong> Understand sections 4, 5, 6</p>
+            <p><strong>Advanced:</strong> Deep dive into sections 7, 8, 9</p>
+        </div>
+
+    </div>
+</body>
+</html>

@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JavaScript Conditionals: Complete Guide</title>
+    <link rel="stylesheet" href="/guides/guide-base.css">
+</head>
+<body>
+    <div class="container">
+        <h1>🔀 JavaScript Conditionals: Complete Guide</h1>
+        <p style="font-size: 1.1em; color: #7f8c8d; margin-bottom: 20px;">
+            A comprehensive journey from fundamental concepts to advanced techniques
+        </p>
+
+        <div class="toc">
+            <h3>📚 Table of Contents</h3>
+            <ul>
+                <li><a href="#section1">1. What are Conditionals?</a></li>
+                <li><a href="#section2">2. if / else if / else</a></li>
+                <li><a href="#section3">3. Truthy and Falsy in Conditions</a></li>
+                <li><a href="#section4">4. The switch Statement</a></li>
+                <li><a href="#section5">5. Fall-Through in switch</a></li>
+                <li><a href="#section6">6. Ternary as a Conditional Expression</a></li>
+                <li><a href="#section7">7. Guard Clauses & Early Returns</a></li>
+                <li><a href="#section8">8. Combining Conditions</a></li>
+                <li><a href="#section9">9. Common Pitfalls</a></li>
+                <li><a href="#section10">10. Best Practices</a></li>
+            </ul>
+        </div>
+
+        <!-- SECTION 1 -->
+        <h2 id="section1"><span class="level beginner">BEGINNER</span>1. What are Conditionals?</h2>
+
+        <p><strong>Conditionals</strong> let a program make decisions — running different code depending on whether something is true or false. Without them, every program would run the exact same sequence of steps every single time.</p>
+
+        <div class="example">
+            <strong>Real-world analogy:</strong> A conditional is like a traffic light. At each intersection, the light checks a condition and decides which cars go. <code>if</code> is the green light, <code>else if</code> is a secondary check, <code>else</code> is the fallback detour.
+        </div>
+
+        <h3>The Building Blocks</h3>
+        <ul style="margin: 15px 0; margin-left: 20px;">
+            <li><code>if</code> — run code only when a condition is true</li>
+            <li><code>else</code> — run alternative code when it's false</li>
+            <li><code>else if</code> — check another condition if the first failed</li>
+            <li><code>switch</code> — compare one value against many fixed options</li>
+            <li>ternary (<code>?:</code>) — an expression form of if/else</li>
+        </ul>
+
+        <pre>const isRaining = true;
+
+if (isRaining) {
+    console.log("Bring an umbrella");
+} else {
+    console.log("Enjoy the sun");
+}</pre>
+
+        <!-- SECTION 2 -->
+        <h2 id="section2"><span class="level beginner">BEGINNER</span>2. if / else if / else</h2>
+
+        <p>JavaScript evaluates the condition inside <code>if (...)</code> and coerces it to a boolean. The braces <code>{}</code> — not indentation — define exactly what code belongs to each branch.</p>
+
+        <pre>let score = 85;
+let grade;
+
+if (score >= 90) {
+    grade = "A";
+} else if (score >= 80) {
+    grade = "B";       // ← this branch runs
+} else if (score >= 70) {
+    grade = "C";
+} else {
+    grade = "F";
+}
+
+console.log(grade); // "B"</pre>
+
+        <div class="warning">
+            <strong>⚠️ Mutual Exclusivity:</strong> In an <code>if / else if / else</code> chain, AT MOST ONE branch runs — JavaScript checks top to bottom and stops at the first truthy condition. Two SEPARATE <code>if</code> statements are NOT mutually exclusive — both can run if both conditions are true.
+        </div>
+
+        <pre>// else if chain — mutually exclusive, only one runs
+if (score >= 90) grade = "A";
+else if (score >= 60) grade = "Pass"; // this catches score=95 too, but never runs
+                                       // because the first branch already matched
+
+// Two separate ifs — NOT mutually exclusive, BOTH can run
+if (score >= 90) console.log("Excellent!");
+if (score >= 60) console.log("You passed!"); // this ALSO runs for score=95</pre>
+
+        <h3>Braces Matter</h3>
+        <pre>// Without braces, only the NEXT line belongs to the if
+if (isReady)
+    console.log("A");
+    console.log("B"); // ⚠️ this ALWAYS runs — it's not part of the if!
+
+// Always use braces to avoid this trap
+if (isReady) {
+    console.log("A");
+    console.log("B"); // now correctly scoped
+}</pre>
+
+        <!-- SECTION 3 -->
+        <h2 id="section3"><span class="level beginner">BEGINNER</span>3. Truthy and Falsy in Conditions</h2>
+
+        <p>A condition doesn't have to be a literal <code>true</code>/<code>false</code> — ANY value can be used, and JavaScript coerces it. There are exactly 6 falsy values; everything else is truthy.</p>
+
+        <pre>if ("")        console.log("A"); // skipped — empty string is falsy
+if (0)         console.log("B"); // skipped — 0 is falsy
+if (null)      console.log("C"); // skipped
+if (undefined) console.log("D"); // skipped
+if (NaN)       console.log("E"); // skipped
+if (false)     console.log("F"); // skipped
+
+if ([])        console.log("G"); // ✅ runs — empty array is truthy!
+if ({})        console.log("H"); // ✅ runs — empty object is truthy!
+if ("0")       console.log("I"); // ✅ runs — non-empty string, even "0", is truthy!
+if (" ")       console.log("J"); // ✅ runs — a space is a non-empty string</pre>
+
+        <h3>Guard Pattern</h3>
+        <pre>function loadUser(user) {
+    if (!user) {
+        console.log("No user provided");
+        return;
+    }
+    console.log(user.name);
+}
+
+// Common shorthand for "does this exist and is it truthy?"
+if (isAuthenticated) {
+    loadDashboard();
+}</pre>
+
+        <!-- SECTION 4 -->
+        <h2 id="section4"><span class="level beginner">BEGINNER</span>4. The switch Statement</h2>
+
+        <p><code>switch</code> is a cleaner alternative to a long <code>if/else if</code> chain when you're comparing ONE value against MANY fixed options. Internally it uses strict (<code>===</code>) comparison.</p>
+
+        <pre>const day = 3;
+let dayName;
+
+switch (day) {
+    case 1:
+        dayName = "Monday";
+        break;
+    case 2:
+        dayName = "Tuesday";
+        break;
+    case 3:
+        dayName = "Wednesday";
+        break;
+    default:
+        dayName = "Unknown";
+}
+
+console.log(dayName); // "Wednesday"</pre>
+
+        <div class="comparison">
+            <div>
+                <strong>if/else chain (verbose):</strong>
+                <pre>if (day === 1) {
+    dayName = "Monday";
+} else if (day === 2) {
+    dayName = "Tuesday";
+} else if (day === 3) {
+    dayName = "Wednesday";
+} else {
+    dayName = "Unknown";
+}</pre>
+            </div>
+            <div>
+                <strong>switch (cleaner for many fixed values):</strong>
+                <pre>switch (day) {
+    case 1: dayName = "Monday"; break;
+    case 2: dayName = "Tuesday"; break;
+    case 3: dayName = "Wednesday"; break;
+    default: dayName = "Unknown";
+}</pre>
+            </div>
+        </div>
+
+        <!-- SECTION 5 -->
+        <h2 id="section5"><span class="level intermediate">INTERMEDIATE</span>5. Fall-Through in switch</h2>
+
+        <p>Without a <code>break</code>, execution <strong>falls through</strong> to the next case automatically — this can be a bug, or a deliberate technique for grouping cases that share behavior.</p>
+
+        <pre>let day = 6;
+
+switch (day) {
+    case 6:
+    case 7:
+        console.log("Weekend"); // both 6 and 7 land here — intentional grouping
+        break;
+    default:
+        console.log("Weekday");
+}
+// Output: "Weekend"</pre>
+
+        <div class="warning">
+            <strong>⚠️ Accidental Fall-Through:</strong> Forgetting <code>break</code> is one of the most common <code>switch</code> bugs. Without it, execution continues into the NEXT case's code even if that case's condition doesn't match.
+        </div>
+
+        <pre>// BUG: missing break
+switch (2) {
+    case 1:
+        console.log("one");
+    case 2:
+        console.log("two");    // runs
+    case 3:
+        console.log("three");  // ALSO runs — fell through, no break after "two"!
+        break;
+    default:
+        console.log("other");
+}
+// Output: "two" then "three" — probably not intended!</pre>
+
+        <h3>return Instead of break</h3>
+        <p>Inside a function, <code>return</code> also exits a <code>switch</code> — no <code>break</code> needed after it, since the whole function ends.</p>
+        <pre>function getDayType(day) {
+    switch (day) {
+        case 6:
+        case 7:
+            return "Weekend";
+        default:
+            return "Weekday";
+    }
+}
+console.log(getDayType(6)); // "Weekend"</pre>
+
+        <!-- SECTION 6 -->
+        <h2 id="section6"><span class="level intermediate">INTERMEDIATE</span>6. Ternary as a Conditional Expression</h2>
+
+        <p>The ternary operator <code>condition ? ifTrue : ifFalse</code> is not a full statement replacement for <code>if/else</code> — it's an <em>expression</em> that produces a value, ideal for simple assignments.</p>
+
+        <pre>const age = 20;
+const status = age >= 18 ? "adult" : "minor";
+console.log(status); // "adult"
+
+// Useful inline in JSX/template strings too
+const message = `You are ${age >= 18 ? "an adult" : "a minor"}.`;</pre>
+
+        <div class="note">
+            <strong>💡 Tip:</strong> Use a ternary when you're producing a VALUE from a condition. Use <code>if/else</code> when you're running different BLOCKS of side-effecting code (multiple statements, no clean single value).
+        </div>
+
+        <!-- SECTION 7 -->
+        <h2 id="section7"><span class="level intermediate">INTERMEDIATE</span>7. Guard Clauses & Early Returns</h2>
+
+        <p>A <strong>guard clause</strong> checks for an invalid/edge case up front and returns immediately, avoiding deeply nested <code>if</code> blocks.</p>
+
+        <div class="comparison">
+            <div>
+                <strong>❌ Deeply nested:</strong>
+                <pre>function process(user) {
+    if (user) {
+        if (user.isActive) {
+            if (user.hasPermission) {
+                return doWork(user);
+            } else {
+                return "No permission";
+            }
+        } else {
+            return "Inactive";
+        }
+    } else {
+        return "No user";
+    }
+}</pre>
+            </div>
+            <div>
+                <strong>✅ Guard clauses (flat):</strong>
+                <pre>function process(user) {
+    if (!user) return "No user";
+    if (!user.isActive) return "Inactive";
+    if (!user.hasPermission) return "No permission";
+
+    return doWork(user);
+}</pre>
+            </div>
+        </div>
+
+        <!-- SECTION 8 -->
+        <h2 id="section8"><span class="level advanced">ADVANCED</span>8. Combining Conditions</h2>
+
+        <p>Real-world conditions often combine multiple checks with <code>&&</code>, <code>||</code>, and <code>!</code>. Parentheses control grouping and readability.</p>
+
+        <pre>const age = 25;
+const hasLicense = true;
+const hasInsurance = false;
+
+if (age >= 18 && hasLicense && hasInsurance) {
+    console.log("Can drive");
+} else {
+    console.log("Cannot drive"); // runs — hasInsurance is false
+}
+
+// Grouping matters
+if ((role === "admin" || role === "moderator") && isActive) {
+    console.log("Has elevated access");
+}</pre>
+
+        <h3>Object Lookup Instead of Long else-if Chains</h3>
+        <pre>// Instead of a long if/else if chain for a fixed mapping...
+function getColorForStatus(status) {
+    const colors = {
+        active: "green",
+        pending: "yellow",
+        inactive: "gray",
+    };
+    return colors[status] ?? "black"; // fallback for unknown status
+}
+console.log(getColorForStatus("pending")); // "yellow"</pre>
+
+        <!-- SECTION 9 -->
+        <h2 id="section9"><span class="level advanced">ADVANCED</span>9. Common Pitfalls</h2>
+
+        <h3>1. Using = Instead of === (Accidental Assignment)</h3>
+        <pre>let x = 5;
+// if (x = 10) { }   // ⚠️ assigns 10 to x, then evaluates 10 as truthy — BUG!
+if (x === 10) { }    // ✅ correct comparison</pre>
+
+        <h3>2. Comparing Objects/Arrays Directly</h3>
+        <pre>if ([1,2] === [1,2]) { }   // always false — different array instances
+if ({} === {}) { }         // always false — different object instances
+// Compare contents instead, e.g. via JSON.stringify or a deep-equal helper</pre>
+
+        <h3>3. Forgetting break in switch</h3>
+        <pre>switch (status) {
+    case "active":
+        console.log("Active");
+        // missing break — falls into "pending" case too!
+    case "pending":
+        console.log("Pending");
+        break;
+}</pre>
+
+        <h3>4. Truthy Object/Array Traps</h3>
+        <pre>const errors = [];
+if (errors) {
+    console.log("has errors"); // ⚠️ runs even though errors is EMPTY — [] is truthy!
+}
+// Correct: check length
+if (errors.length > 0) {
+    console.log("has errors"); // only runs when there really are errors
+}</pre>
+
+        <!-- SECTION 10 -->
+        <h2 id="section10"><span class="level intermediate">INTERMEDIATE</span>10. Best Practices</h2>
+
+        <h3>1. Always Use Braces, Even for One-Liners</h3>
+        <pre>// ✅ Safe
+if (isValid) {
+    process();
+}
+
+// ❌ Risky if someone adds a line later without noticing scope
+if (isValid) process();</pre>
+
+        <h3>2. Prefer Guard Clauses Over Deep Nesting</h3>
+        <pre>function getDiscount(user) {
+    if (!user.isMember) return 0;
+    if (user.yearsActive < 1) return 5;
+    return 10;
+}</pre>
+
+        <h3>3. Use switch for 3+ Fixed Value Comparisons</h3>
+        <pre>// ✅ Cleaner than 5 else-if branches
+switch (httpStatus) {
+    case 200: return "OK";
+    case 404: return "Not Found";
+    case 500: return "Server Error";
+    default:  return "Unknown";
+}</pre>
+
+        <h3>4. Check .length for Arrays, Not Truthiness</h3>
+        <pre>// ✅ Correct
+if (items.length === 0) { showEmptyState(); }
+
+// ❌ Wrong — arrays are always truthy, even empty ones
+if (!items) { showEmptyState(); }</pre>
+
+        <h3>5. Use Explicit Comparisons for Clarity</h3>
+        <pre>// ✅ Clear
+if (count === 0) { }
+
+// Also fine, but be intentional about which you mean
+if (!count) { } // true for 0, but ALSO true for NaN, undefined, etc.</pre>
+
+        <!-- SUMMARY -->
+        <h2 style="margin-top: 40px;">📋 Quick Reference Summary</h2>
+
+        <div class="table-wrap">
+        <table>
+            <tr>
+                <th>Concept</th>
+                <th>Key Points</th>
+            </tr>
+            <tr>
+                <td><strong>if / else if / else</strong></td>
+                <td>Mutually exclusive chain — first truthy branch wins, rest are skipped.</td>
+            </tr>
+            <tr>
+                <td><strong>switch</strong></td>
+                <td>Compares one value against many with <code>===</code>. Needs <code>break</code> to avoid fall-through.</td>
+            </tr>
+            <tr>
+                <td><strong>Ternary</strong></td>
+                <td>Expression form of if/else — best for producing a single value.</td>
+            </tr>
+            <tr>
+                <td><strong>Truthy/Falsy</strong></td>
+                <td>6 falsy values: <code>false, 0, "", null, undefined, NaN</code>. <code>[]</code> and <code>{}</code> are truthy.</td>
+            </tr>
+            <tr>
+                <td><strong>Guard clauses</strong></td>
+                <td>Return early for invalid cases to keep code flat and readable.</td>
+            </tr>
+        </table>
+        </div>
+
+        <div style="margin-top: 40px; padding: 20px; background: #ecf0f1; border-radius: 5px;">
+            <h3>🎓 Learning Path</h3>
+            <p><strong>Beginner:</strong> Master sections 1, 2, 3, 4</p>
+            <p><strong>Intermediate:</strong> Understand sections 5, 6, 7, 10</p>
+            <p><strong>Advanced:</strong> Deep dive into sections 8, 9</p>
+        </div>
+
+    </div>
+</body>
+</html>

@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Playwright Locators & Selectors: Complete Guide</title>
+    <link rel="stylesheet" href="/guides/guide-base.css">
+</head>
+<body>
+    <div class="container">
+        <h1>🎯 Playwright Locators & Selectors: Complete Guide</h1>
+        <p style="font-size: 1.1em; color: #7f8c8d; margin-bottom: 20px;">
+            Finding elements the resilient way — priority order, chaining, filtering, and strict mode
+        </p>
+
+        <div class="toc">
+            <h3>📚 Table of Contents</h3>
+            <ul>
+                <li><a href="#section1">1. What Makes Locators Special</a></li>
+                <li><a href="#section2">2. The Locator Priority Order</a></li>
+                <li><a href="#section3">3. Semantic Locators in Depth</a></li>
+                <li><a href="#section4">4. CSS and XPath as a Last Resort</a></li>
+                <li><a href="#section5">5. Chaining Locators</a></li>
+                <li><a href="#section6">6. Filtering and Indexing</a></li>
+                <li><a href="#section7">7. Strict Mode</a></li>
+                <li><a href="#section8">8. Common Pitfalls</a></li>
+            </ul>
+        </div>
+
+        <!-- SECTION 1 -->
+        <h2 id="section1"><span class="level beginner">BEGINNER</span>1. What Makes Locators Special</h2>
+
+        <p>A Playwright <strong>Locator</strong> is not a direct reference to a DOM element — it's a lazy, re-usable recipe for finding one. <code>page.getByRole('button')</code> doesn't search the DOM the moment you write it; it only queries when you actually call an action or assertion on it (e.g. <code>.click()</code> or <code>expect(...).toBeVisible()</code>).</p>
+
+        <p>This laziness is what enables <strong>auto-waiting</strong>: every time a locator is used, Playwright re-queries the DOM and waits for the element to be visible, attached, and stable before interacting — without you writing a single manual wait.</p>
+
+        <div class="example">
+            <strong>Old-style selector (fragile):</strong> a raw CSS selector captured once represents a specific DOM node at a specific moment. If that node is removed and re-added (common in React/Vue re-renders), old automation tools throw a stale-element error. A Playwright locator simply re-finds the matching element the next time it's used.
+        </div>
+
+        <!-- SECTION 2 -->
+        <h2 id="section2"><span class="level beginner">BEGINNER</span>2. The Locator Priority Order</h2>
+
+        <p>Playwright's own documentation recommends this priority, from most to least resilient:</p>
+
+        <div class="table-wrap">
+        <table class="table-compact">
+            <tr>
+                <th>Priority</th>
+                <th>Method</th>
+                <th>Matches</th>
+            </tr>
+            <tr>
+                <td>①</td>
+                <td><code>getByRole()</code></td>
+                <td>ARIA role + accessible name — how screen readers see the page</td>
+            </tr>
+            <tr>
+                <td>②</td>
+                <td><code>getByLabel()</code></td>
+                <td>Form inputs linked to their visible <code>&lt;label&gt;</code></td>
+            </tr>
+            <tr>
+                <td>③</td>
+                <td><code>getByPlaceholder()</code></td>
+                <td>Unlabelled inputs, by placeholder text</td>
+            </tr>
+            <tr>
+                <td>④</td>
+                <td><code>getByText()</code> / <code>getByAltText()</code> / <code>getByTitle()</code></td>
+                <td>Visible text, image alt text, or title attributes</td>
+            </tr>
+            <tr>
+                <td>⑤</td>
+                <td><code>getByTestId()</code></td>
+                <td>Explicit <code>data-testid</code> attribute</td>
+            </tr>
+            <tr>
+                <td>⑥</td>
+                <td>CSS / XPath</td>
+                <td>Raw DOM structure — last resort</td>
+            </tr>
+        </table>
+        </div>
+
+        <p>Higher-priority strategies are more resilient because they mirror how a real user or assistive technology identifies the element, so they survive styling and markup refactors that would break a CSS class selector.</p>
+
+        <!-- SECTION 3 -->
+        <h2 id="section3"><span class="level beginner">BEGINNER</span>3. Semantic Locators in Depth</h2>
+
+        <pre>page.getByRole('button', { name: 'Submit' })
+page.getByRole('textbox', { name: 'Email' })
+page.getByRole('heading', { level: 1 })
+page.getByLabel('Password')
+page.getByPlaceholder('Enter your email')
+page.getByText('Welcome back')
+page.getByText('Welcome', { exact: false })   // substring match
+page.getByAltText('Company logo')
+page.getByTitle('Close dialog')
+page.getByTestId('checkout-btn')</pre>
+
+        <h3>Complete Form Example</h3>
+        <pre>test('fill and submit login form', async ({ page }) => {
+  await page.goto('/login');
+
+  await page.getByLabel('Email address').fill('user@example.com');
+  await page.getByLabel('Password').fill('secret123');
+  await page.getByRole('button', { name: 'Sign in' }).click();
+
+  await expect(page).toHaveURL('/dashboard');
+});</pre>
+
+        <div class="note">
+            <strong>💡 Tip:</strong> <code>getByRole()</code> understands implicit roles — a plain <code>&lt;button&gt;</code> has role <code>button</code> automatically, and an <code>&lt;a href&gt;</code> has role <code>link</code>, so you rarely need to add ARIA attributes just to make elements locatable.
+        </div>
+
+        <!-- SECTION 4 -->
+        <h2 id="section4"><span class="level intermediate">INTERMEDIATE</span>4. CSS and XPath as a Last Resort</h2>
+
+        <pre>page.locator('.submit-btn')
+page.locator('#email-input')
+page.locator('input[type="email"]')
+page.locator('xpath=//button[@type="submit"]')</pre>
+
+        <p>These work fine, but couple your test directly to implementation details (a CSS class or DOM position) that frontend developers change freely without thinking of tests. Reach for them only when no semantic role, label, or test id is available and you cannot add one.</p>
+
+        <div class="comparison">
+            <div>
+                <strong>❌ Fragile CSS selector:</strong>
+                <pre>await page.locator('.btn.btn-primary.mt-3').click();
+// Breaks the moment a class name changes</pre>
+            </div>
+            <div>
+                <strong>✅ Resilient role locator:</strong>
+                <pre>await page.getByRole('button', { name: 'Save' }).click();
+// Survives styling and markup refactors</pre>
+            </div>
+        </div>
+
+        <!-- SECTION 5 -->
+        <h2 id="section5"><span class="level intermediate">INTERMEDIATE</span>5. Chaining Locators</h2>
+
+        <p>Chaining scopes a search to inside a parent element — essential once a page has repeated components like cards or list rows.</p>
+
+        <pre>page.locator('.product-card').getByRole('button', { name: 'Add to cart' })
+page.getByRole('listitem').getByRole('link')</pre>
+
+        <pre>test('like the second product card', async ({ page }) => {
+  await page.goto('/products');
+
+  const secondCard = page.locator('.product-card').nth(1);
+
+  // getByRole here searches ONLY within secondCard
+  await secondCard.getByRole('button', { name: 'Like' }).click();
+
+  await expect(secondCard.getByTestId('like-count')).toHaveText('1');
+});</pre>
+
+        <!-- SECTION 6 -->
+        <h2 id="section6"><span class="level intermediate">INTERMEDIATE</span>6. Filtering and Indexing</h2>
+
+        <pre>// Filtering: narrow a set of matches by content
+page.getByRole('listitem').filter({ hasText: 'Special offer' })
+page.getByRole('row').filter({ has: page.getByRole('checkbox') })
+
+// Indexing: pick one of several matches
+page.getByRole('option').first()
+page.getByRole('option').last()
+page.getByRole('row').nth(2)      // 0-indexed</pre>
+
+        <h3>Filtering a Cart to Remove One Item</h3>
+        <pre>test('remove only the "Playwright" item from the cart', async ({ page }) => {
+  await page.goto('/cart');
+
+  const playwrightRow = page.getByRole('row').filter({ hasText: 'Playwright' });
+  await playwrightRow.getByRole('button', { name: 'Remove' }).click();
+
+  await expect(page.getByRole('row').filter({ hasText: 'Playwright' })).toHaveCount(0);
+});</pre>
+
+        <div class="example">
+            <strong>filter({ hasText }) vs. filter({ has }):</strong> <code>hasText</code> matches on visible text content; <code>has</code> matches when the row contains a nested locator (e.g. only rows that contain a checked checkbox). They can be combined for very precise scoping.
+        </div>
+
+        <!-- SECTION 7 -->
+        <h2 id="section7"><span class="level advanced">ADVANCED</span>7. Strict Mode</h2>
+
+        <p>By default, Playwright locators run in <strong>strict mode</strong>: if a locator resolves to more than one element when you try to act on it, Playwright throws an error rather than guessing which one you meant.</p>
+
+        <pre>// ❌ Throws if there are multiple buttons named "Delete"
+await page.getByRole('button', { name: 'Delete' }).click();
+
+// ✅ Narrow explicitly
+await page.getByRole('button', { name: 'Delete' }).first().click();
+await page.getByRole('row').filter({ hasText: 'Order #42' })
+  .getByRole('button', { name: 'Delete' }).click();</pre>
+
+        <div class="warning">
+            <strong>⚠️ Common Pitfall:</strong> Strict mode errors are a <em>feature</em>, not a bug — they surface ambiguity you would otherwise discover as a flaky, hard-to-explain test (Playwright silently clicking the wrong "Delete" button). Resist the urge to reach for <code>.first()</code> as a quick fix without checking whether you actually meant to scope more precisely.
+        </div>
+
+        <!-- SECTION 8 -->
+        <h2 id="section8"><span class="level advanced">ADVANCED</span>8. Common Pitfalls</h2>
+
+        <div class="warning">
+            <strong>⚠️ Pitfall 1 — Over-relying on getByTestId():</strong> Test IDs are a useful escape hatch, but sprinkling them everywhere means your tests no longer verify the app is <em>accessible</em> — a button with no accessible name but a <code>data-testid</code> passes your tests while failing real screen-reader users. Prefer role/label locators when the element already has a sensible accessible name.
+        </div>
+
+        <div class="warning">
+            <strong>⚠️ Pitfall 2 — Using indexes on a dynamic list:</strong> <code>.nth(2)</code> is fragile against a list whose order can change (sorting, filtering, async loading). Prefer <code>.filter({ hasText })</code> to identify the specific row by its content instead of its position whenever possible.
+        </div>
+
+        <div class="note">
+            <strong>💡 Tip:</strong> Playwright's VS Code extension and Codegen (<code>npx playwright codegen</code>) suggest the best available locator automatically as you click around a real page — a great way to learn the priority order by example.
+        </div>
+
+        <!-- SUMMARY -->
+        <h2 style="margin-top: 40px;">📋 Quick Reference Summary</h2>
+
+        <div class="table-wrap">
+        <table>
+            <tr>
+                <th>Concept</th>
+                <th>Key Points</th>
+            </tr>
+            <tr>
+                <td><strong>Locators are lazy</strong></td>
+                <td>No DOM query until an action/assertion runs — re-evaluated every time.</td>
+            </tr>
+            <tr>
+                <td><strong>Priority order</strong></td>
+                <td>getByRole → getByLabel → getByPlaceholder → getByText → getByTestId → CSS/XPath.</td>
+            </tr>
+            <tr>
+                <td><strong>Chaining</strong></td>
+                <td>parent.getByRole(…) scopes the search inside a component.</td>
+            </tr>
+            <tr>
+                <td><strong>Filtering</strong></td>
+                <td>.filter({ hasText }) / .filter({ has }) narrows a list by content.</td>
+            </tr>
+            <tr>
+                <td><strong>Indexing</strong></td>
+                <td>.first(), .last(), .nth(n) — prefer filtering by content when order can change.</td>
+            </tr>
+            <tr>
+                <td><strong>Strict mode</strong></td>
+                <td>Multiple matches throw an error instead of silently picking one.</td>
+            </tr>
+        </table>
+        </div>
+
+        <div style="margin-top: 40px; padding: 20px; background: #ecf0f1; border-radius: 5px;">
+            <h3>🎓 Learning Path</h3>
+            <p><strong>Beginner:</strong> Master sections 1, 2, 3</p>
+            <p><strong>Intermediate:</strong> Understand sections 4, 5, 6</p>
+            <p><strong>Advanced:</strong> Deep dive into sections 7, 8</p>
+        </div>
+
+    </div>
+</body>
+</html>

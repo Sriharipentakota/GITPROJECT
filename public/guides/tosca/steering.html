@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tosca Steering: Buffers, Conditions & Loops: Complete Guide</title>
+    <link rel="stylesheet" href="/guides/guide-base.css">
+</head>
+<body>
+    <div class="container">
+        <h1>🔀 Tosca Steering: Buffers, Conditions & Loops: Complete Guide</h1>
+        <p style="font-size: 1.1em; color: #7f8c8d; margin-bottom: 20px;">
+            Adding dynamic, branching logic to test cases without writing a single line of script
+        </p>
+
+        <div class="toc">
+            <h3>📚 Table of Contents</h3>
+            <ul>
+                <li><a href="#section1">1. What Is Steering?</a></li>
+                <li><a href="#section2">2. Buffers: Capturing Runtime Values</a></li>
+                <li><a href="#section3">3. Referencing and Chaining Buffers</a></li>
+                <li><a href="#section4">4. Conditions: If/Else Without Code</a></li>
+                <li><a href="#section5">5. While Loops</a></li>
+                <li><a href="#section6">6. For Iterations</a></li>
+                <li><a href="#section7">7. Buffer Arithmetic and Manipulation</a></li>
+                <li><a href="#section8">8. Combining Buffers, Conditions, and Loops</a></li>
+                <li><a href="#section9">9. Common Pitfalls</a></li>
+                <li><a href="#section10">10. Best Practices</a></li>
+            </ul>
+        </div>
+
+        <!-- SECTION 1 -->
+        <h2 id="section1"><span class="level beginner">BEGINNER</span>1. What Is Steering?</h2>
+
+        <h3>Definition</h3>
+        <p><strong>Steering</strong> is Tosca's umbrella term for the mechanisms that add conditional logic and dynamic data flow to Test Cases — without writing code. It rests on three pillars: <strong>Buffers</strong> (capturing values), <strong>Conditions</strong> (branching), and <strong>Loops</strong> (repetition).</p>
+
+        <div class="example">
+            <strong>Real-world analogy:</strong> Steering is like a traffic light controller. Buffers are the sensors in the road measuring car count. Conditions are the logic rules ("if north traffic > south traffic, give north a green"). Loops are the timer that keeps checking every 30 seconds. No one rewrites the controller's code every time traffic patterns change — the rules adapt dynamically.
+        </div>
+
+        <!-- SECTION 2 -->
+        <h2 id="section2"><span class="level beginner">BEGINNER</span>2. Buffers: Capturing Runtime Values</h2>
+
+        <p>A <strong>Buffer</strong> stores a value captured from the application at runtime — text read from a label, a generated order ID, a date field — for use in later steps. Setting a Module Attribute's ActionMode to <strong>Output</strong> writes its control's current value into a named buffer.</p>
+
+        <pre>// Buffer: capture a value at runtime
+Step: OrderConfirmation.OrderID
+  ActionMode: Output       → captures text to {B:OrderID}</pre>
+
+        <div class="note">
+            <strong>💡 Tip:</strong> Buffers exist only for the duration of the Test Case run in which they were captured (unless deliberately passed between embedded Test Cases). Each execution starts with clean, uninitialized buffer state.
+        </div>
+
+        <!-- SECTION 3 -->
+        <h2 id="section3"><span class="level beginner">BEGINNER</span>3. Referencing and Chaining Buffers</h2>
+
+        <p>Once captured, a buffer's value is referenced anywhere with <code>{B:BufferName}</code> — in a later Verify step, in a Condition, in another module's input value, even across a chain of several steps.</p>
+
+        <pre>// Use buffer in later step
+Step: VerifyEmail.OrderReference [Verify]
+  Value: {B:OrderID}       → asserts value matches captured ID</pre>
+
+        <pre>// Test Case: Place Order and Verify Confirmation
+Step 1: PlaceOrderPage.SubmitBtn [click]
+Step 2: ConfirmationPage.OrderNumber
+         ActionMode = Output → {B:OrderID}
+Step 3: ConfirmationPage.OrderNumber [Verify]
+         Value = {B:OrderID}        ← self-verify readable
+Step 4: EmailPage.SubjectLine [Verify]
+         Value = "Order {B:OrderID} Confirmed"
+// Buffer bridges steps 2 → 4 without hard-coding the ID</pre>
+
+        <div class="example">
+            <strong>Why this matters:</strong> the order ID is generated fresh on every run — it could never be a literal or a Parameter. Buffers are the only mechanism for asserting consistency of values that are unknown until the application creates them.
+        </div>
+
+        <!-- SECTION 4 -->
+        <h2 id="section4"><span class="level intermediate">INTERMEDIATE</span>4. Conditions: If/Else Without Code</h2>
+
+        <p>A <strong>Condition</strong> evaluates a Buffer or Parameter value and determines whether a block of Test Steps executes — Tosca's equivalent of an if/else statement, configured entirely through the TCM UI.</p>
+
+        <pre>// Condition (if/else steering)
+Condition: {B:UserRole} = "Admin"
+  [If true]  TC_OpenAdminPanel
+  [If false] TC_OpenUserDashboard</pre>
+
+        <div class="table-wrap">
+        <table class="table-compact">
+            <tr>
+                <th>Condition Type</th>
+                <th>Example</th>
+            </tr>
+            <tr>
+                <td>Equality</td>
+                <td><code>{B:Status} = "Ready"</code></td>
+            </tr>
+            <tr>
+                <td>Inequality</td>
+                <td><code>{B:StatusValue} != "Ready"</code></td>
+            </tr>
+            <tr>
+                <td>Numeric comparison</td>
+                <td><code>{B:AttemptCount} &lt; 10</code></td>
+            </tr>
+            <tr>
+                <td>Combined (AND/OR)</td>
+                <td><code>{B:StatusValue} != "Ready" AND {B:AttemptCount} &lt; 10</code></td>
+            </tr>
+        </table>
+        </div>
+
+        <!-- SECTION 5 -->
+        <h2 id="section5"><span class="level intermediate">INTERMEDIATE</span>5. While Loops</h2>
+
+        <p>A <strong>While loop</strong> repeats a block of Test Steps as long as a condition remains true — used for polling, retry logic, or processing an unknown number of items.</p>
+
+        <pre>// While loop
+While: {B:RetryCount} < 3
+  Step: CheckStatus
+  Step: IncrementRetry     → buffer arithmetic</pre>
+
+        <pre>// Retry until status = "Ready" or 10 attempts
+Buffer: AttemptCount = 0
+Buffer: StatusValue  = ""
+
+While: {B:StatusValue} != "Ready" AND {B:AttemptCount} < 10
+  Step: StatusPage.StatusLabel
+         ActionMode = Output → {B:StatusValue}
+  Step: Math.Add
+         {B:AttemptCount} + 1 → {B:AttemptCount}
+  Step: Wait 2 seconds</pre>
+
+        <div class="warning">
+            <strong>⚠️ Common Pitfall:</strong> A While loop without a guaranteed exit condition (like the attempt counter above) can run indefinitely if the polled value never changes, effectively hanging the Test Case. Always pair a status-based While condition with a maximum attempt/timeout counter.
+        </div>
+
+        <!-- SECTION 6 -->
+        <h2 id="section6"><span class="level intermediate">INTERMEDIATE</span>6. For Iterations</h2>
+
+        <p>A <strong>For</strong> block repeats a set of Test Steps a fixed number of times — useful when the repeat count is known ahead of time, unlike a While loop's condition-driven repetition.</p>
+
+        <pre>// For iteration (repeat 5 times)
+For: Iterations = 5
+  Step: AddItemToCart</pre>
+
+        <div class="comparison">
+            <div>
+                <strong>While loop (condition-driven):</strong>
+                <pre>While: {B:Status} != "Ready"
+  Step: PollStatus
+// Repeats an unknown number of
+// times until the condition changes</pre>
+            </div>
+            <div>
+                <strong>For loop (count-driven):</strong>
+                <pre>For: Iterations = 5
+  Step: AddItemToCart
+// Always repeats exactly 5 times,
+// regardless of any runtime value</pre>
+            </div>
+        </div>
+
+        <!-- SECTION 7 -->
+        <h2 id="section7"><span class="level advanced">ADVANCED</span>7. Buffer Arithmetic and Manipulation</h2>
+
+        <p>Buffers aren't limited to storing raw captured strings — Tosca's built-in steering modules support arithmetic and string operations on buffer values, which is essential for counters, running totals, and string composition inside loops.</p>
+
+        <pre>// Increment a counter buffer
+Step: Math.Add
+  {B:AttemptCount} + 1 → {B:AttemptCount}
+
+// Concatenate buffers into a composite value
+Step: String.Concat
+  {B:FirstName} + " " + {B:LastName} → {B:FullName}
+
+// Compare and branch on buffer numeric value
+Condition: {B:CartTotal} > 100
+  [If true]  ApplyDiscountCode</pre>
+
+        <div class="note">
+            <strong>💡 Tip:</strong> These arithmetic/string steering modules live alongside your regular Module attributes in TCM's built-in technical modules — you don't need a special TBox to use them; they're part of core Tosca functionality available in any Test Case.
+        </div>
+
+        <!-- SECTION 8 -->
+        <h2 id="section8"><span class="level advanced">ADVANCED</span>8. Combining Buffers, Conditions, and Loops</h2>
+
+        <p>Real-world steering usually combines all three pillars in a single Test Case. A typical pattern: poll a status field in a While loop, capture it into a Buffer each iteration, and branch with a Condition once the loop exits.</p>
+
+        <pre>Buffer: AttemptCount = 0
+Buffer: OrderStatus  = ""
+
+While: {B:OrderStatus} != "Shipped" AND {B:AttemptCount} < 15
+  Step: OrderStatusPage.StatusLabel
+         ActionMode = Output → {B:OrderStatus}
+  Step: Math.Add {B:AttemptCount} + 1 → {B:AttemptCount}
+  Step: Wait 5 seconds
+
+Condition: {B:OrderStatus} = "Shipped"
+  [If true]  Step: NotifyEmail.SubjectLine [Verify] = "Your order has shipped"
+  [If false] Step: [Recovery Action] = flag as timeout / Failed</pre>
+
+        <div class="example">
+            <strong>Reading this pattern:</strong> the loop polls up to 15 times, waiting 5 seconds between checks, for the order to reach "Shipped" status. Once the loop exits (either condition satisfied), a Condition step verifies the outcome and reports accordingly — a fully dynamic, code-free polling-and-assertion pattern.
+        </div>
+
+        <!-- SECTION 9 -->
+        <h2 id="section9"><span class="level intermediate">INTERMEDIATE</span>9. Common Pitfalls</h2>
+
+        <ul style="margin: 15px 0; margin-left: 20px;">
+            <li><strong>Unbounded While loops:</strong> forgetting a maximum-attempt guard on a condition that may never become true.</li>
+            <li><strong>Overusing loops for simple repetition:</strong> using a While loop when a fixed-count For loop would be clearer and safer.</li>
+            <li><strong>Deep, hard-to-follow nested Conditions:</strong> excessive branching inside a single Test Case makes it as hard to maintain as a tangled script — consider splitting into embedded Test Cases per branch.</li>
+            <li><strong>Forgetting to initialise a Buffer before a loop:</strong> referencing <code>{B:AttemptCount}</code> in a condition before any step has set it can produce unexpected comparison behaviour.</li>
+        </ul>
+
+        <!-- SECTION 10 -->
+        <h2 id="section10"><span class="level beginner">BEGINNER</span>10. Best Practices</h2>
+
+        <h3>1. Always Bound Your Loops</h3>
+        <p>Every While loop should have a maximum iteration/timeout safeguard, even when the "expected" case resolves quickly.</p>
+
+        <h3>2. Name Buffers for What They Hold, Not How They're Used</h3>
+        <pre>// Good
+{B:OrderID}, {B:AuthToken}, {B:AttemptCount}
+
+// Avoid
+{B:Temp1}, {B:X}, {B:Value2}</pre>
+
+        <h3>3. Prefer For Loops When the Count Is Known</h3>
+        <p>Reserve While loops for genuinely condition-driven repetition (polling, retries).</p>
+
+        <h3>4. Keep Conditions Shallow</h3>
+        <p>If branching logic grows deep, extract each branch into its own embedded Test Case rather than nesting many Conditions in one flat sequence.</p>
+
+        <h3>5. Log Buffer Values During Debugging</h3>
+        <p>When a steering-heavy Test Case behaves unexpectedly, temporarily add Verify steps on key buffers to inspect their value at each stage.</p>
+
+        <!-- SUMMARY -->
+        <h2 style="margin-top: 40px;">📋 Quick Reference Summary</h2>
+
+        <div class="table-wrap">
+        <table>
+            <tr>
+                <th>Concept</th>
+                <th>Key Points</th>
+            </tr>
+            <tr>
+                <td><strong>Buffer</strong></td>
+                <td>Runtime-captured value, referenced as {B:Name}; set via ActionMode = Output.</td>
+            </tr>
+            <tr>
+                <td><strong>Condition</strong></td>
+                <td>Evaluates a buffer/parameter to branch execution — Tosca's if/else.</td>
+            </tr>
+            <tr>
+                <td><strong>While loop</strong></td>
+                <td>Repeats steps while a condition holds; always needs a bounded exit.</td>
+            </tr>
+            <tr>
+                <td><strong>For loop</strong></td>
+                <td>Repeats steps a fixed number of times.</td>
+            </tr>
+            <tr>
+                <td><strong>Buffer arithmetic</strong></td>
+                <td>Math/String steering modules manipulate buffer values (increment, concat).</td>
+            </tr>
+            <tr>
+                <td><strong>Combined pattern</strong></td>
+                <td>Poll in a While loop, capture with Output, branch with a Condition on exit.</td>
+            </tr>
+        </table>
+        </div>
+
+        <div style="margin-top: 40px; padding: 20px; background: #ecf0f1; border-radius: 5px;">
+            <h3>🎓 Learning Path</h3>
+            <p><strong>Beginner:</strong> Master sections 1, 2, 3, 10</p>
+            <p><strong>Intermediate:</strong> Understand sections 4, 5, 6, 9</p>
+            <p><strong>Advanced:</strong> Deep dive into sections 7, 8</p>
+        </div>
+
+    </div>
+</body>
+</html>

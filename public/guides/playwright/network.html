@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Playwright Network Interception: Complete Guide</title>
+    <link rel="stylesheet" href="/guides/guide-base.css">
+</head>
+<body>
+    <div class="container">
+        <h1>🕸️ Playwright Network Interception: Complete Guide</h1>
+        <p style="font-size: 1.1em; color: #7f8c8d; margin-bottom: 20px;">
+            Mocking, blocking, and inspecting requests with page.route()
+        </p>
+
+        <div class="toc">
+            <h3>📚 Table of Contents</h3>
+            <ul>
+                <li><a href="#section1">1. How page.route() Works</a></li>
+                <li><a href="#section2">2. Mocking Responses with fulfill()</a></li>
+                <li><a href="#section3">3. Blocking Requests with abort()</a></li>
+                <li><a href="#section4">4. Passing Through with continue()</a></li>
+                <li><a href="#section5">5. Spy-and-Modify with route.fetch()</a></li>
+                <li><a href="#section6">6. URL Patterns: Glob, Exact, RegExp</a></li>
+                <li><a href="#section7">7. Passive Monitoring and context.route()</a></li>
+                <li><a href="#section8">8. Replaying HAR Files</a></li>
+                <li><a href="#section9">9. Common Pitfalls</a></li>
+            </ul>
+        </div>
+
+        <!-- SECTION 1 -->
+        <h2 id="section1"><span class="level beginner">BEGINNER</span>1. How page.route() Works</h2>
+
+        <p><code>page.route(pattern, handler)</code> places a handler between the browser and the network. Every request whose URL matches the pattern is intercepted <em>before</em> it leaves the browser, and control passes to your handler function, which receives a <code>Route</code> object.</p>
+
+        <pre>await page.route('**/api/users', route => {
+  // your handler decides what happens to this request
+});
+await page.goto('/');</pre>
+
+        <div class="warning">
+            <strong>⚠️ Common Pitfall:</strong> Register routes <em>before</em> calling <code>page.goto()</code>. If you register a route after navigation, the very first request (and possibly more) will already have gone out unintercepted.
+        </div>
+
+        <!-- SECTION 2 -->
+        <h2 id="section2"><span class="level beginner">BEGINNER</span>2. Mocking Responses with fulfill()</h2>
+
+        <p><code>route.fulfill()</code> returns a completely synthetic response — the real server is never contacted.</p>
+
+        <pre>await page.route('**/api/todos', route => route.fulfill({
+  status: 200,
+  json: [],   // empty list — automatically JSON-serialized
+}));</pre>
+
+        <h3>Testing an Empty State and an Error State</h3>
+        <pre>test('shows empty state when API returns no items', async ({ page }) => {
+  await page.route('**/api/todos', route => route.fulfill({
+    status: 200,
+    json: [],
+  }));
+
+  await page.goto('/todos');
+  await expect(page.getByTestId('empty-state')).toBeVisible();
+});
+
+test('shows error banner when API fails', async ({ page }) => {
+  await page.route('**/api/todos', route => route.fulfill({
+    status: 500,
+    body: 'Internal Server Error',
+  }));
+
+  await page.goto('/todos');
+  await expect(page.getByRole('alert')).toBeVisible();
+});</pre>
+
+        <div class="example">
+            <strong>Why mocking matters:</strong> reproducing a "server returned 500" or "server returned empty list" scenario against a real backend is often impossible or fragile. Mocking makes every edge case deterministic and instantly reproducible.
+        </div>
+
+        <!-- SECTION 3 -->
+        <h2 id="section3"><span class="level beginner">BEGINNER</span>3. Blocking Requests with abort()</h2>
+
+        <pre>await page.route(/google-analytics\.com/, route => route.abort());
+await page.route('**/*.{png,jpg,gif,svg}', route => route.abort());</pre>
+
+        <p>Blocking analytics beacons, ad scripts, and images can significantly speed up test execution and remove sources of nondeterminism (e.g. third-party scripts that occasionally fail to load).</p>
+
+        <div class="note">
+            <strong>💡 Tip:</strong> <code>route.abort()</code> makes the browser see a genuine network error — good for testing your app's offline/error-handling UI, not just for cleaning up test noise.
+        </div>
+
+        <!-- SECTION 4 -->
+        <h2 id="section4"><span class="level intermediate">INTERMEDIATE</span>4. Passing Through with continue()</h2>
+
+        <pre>await page.route('**/api/**', route =>
+  route.continue({
+    headers: { ...route.request().headers(), 'x-test-id': 'suite-42' },
+  })
+);</pre>
+
+        <p><code>route.continue()</code> forwards the request essentially unchanged — optionally with modified headers, method, or post data. This is useful for tagging requests (so your backend logs can identify test traffic) without altering the actual response.</p>
+
+        <!-- SECTION 5 -->
+        <h2 id="section5"><span class="level intermediate">INTERMEDIATE</span>5. Spy-and-Modify with route.fetch()</h2>
+
+        <p>When you want the <em>real</em> response but need to tweak it before the page sees it, use <code>route.fetch()</code> to make the real request yourself, then <code>route.fulfill()</code> with a modified body.</p>
+
+        <pre>await page.route('**/api/products', async route => {
+  const res  = await route.fetch();
+  const json = await res.json();
+  json.push({ id: 999, name: 'Injected Item' });
+  await route.fulfill({ json });
+});</pre>
+
+        <h3>Injecting a Promoted Product</h3>
+        <pre>test('dashboard includes promoted product', async ({ page }) => {
+  await page.route('**/api/products', async route => {
+    const res  = await route.fetch();
+    const json = await res.json();
+    const modified = [{ id: 999, name: 'Promoted!', featured: true }, ...json];
+    await route.fulfill({ json: modified });
+  });
+
+  await page.goto('/dashboard');
+  await expect(page.locator('.product-card').first()).toContainText('Promoted!');
+});</pre>
+
+        <!-- SECTION 6 -->
+        <h2 id="section6"><span class="level intermediate">INTERMEDIATE</span>6. URL Patterns: Glob, Exact, RegExp</h2>
+
+        <div class="table-wrap">
+        <table class="table-compact">
+            <tr>
+                <th>Pattern type</th>
+                <th>Example</th>
+                <th>Matches</th>
+            </tr>
+            <tr>
+                <td>Glob string</td>
+                <td><code>'**/api/users**'</code></td>
+                <td>Any URL containing <code>/api/users</code> regardless of host or query string</td>
+            </tr>
+            <tr>
+                <td>Exact string</td>
+                <td><code>'https://api.example.com/health'</code></td>
+                <td>Only that exact URL</td>
+            </tr>
+            <tr>
+                <td>RegExp</td>
+                <td><code>/analytics|tracking/</code></td>
+                <td>Any URL matching the regular expression</td>
+            </tr>
+        </table>
+        </div>
+
+        <div class="warning">
+            <strong>⚠️ Common Pitfall:</strong> Multiple routes matching the same URL fire in <strong>LIFO order</strong> (last registered wins first). A broad catch-all route registered after a specific one can silently shadow it — register the most specific patterns last if they need to take precedence.
+        </div>
+
+        <!-- SECTION 7 -->
+        <h2 id="section7"><span class="level advanced">ADVANCED</span>7. Passive Monitoring and context.route()</h2>
+
+        <p>For read-only inspection without altering traffic, use event listeners instead of routes:</p>
+
+        <pre>page.on('request', req => {
+  console.log(req.method(), req.url());
+});
+page.on('response', res => {
+  console.log(res.status(), res.url());
+});</pre>
+
+        <h3>Collecting API Calls During a Flow</h3>
+        <pre>test('checkout fires the order-complete event', async ({ page }) => {
+  await page.route(/analytics|tracking|hotjar/, route => route.abort());
+
+  const apiCalls: string[] = [];
+  page.on('request', req => {
+    if (req.url().includes('/api/')) apiCalls.push(req.url());
+  });
+
+  await page.goto('/cart');
+  await page.getByRole('button', { name: 'Place order' }).click();
+  await expect(page).toHaveURL('/confirmation');
+
+  expect(apiCalls.some(u => u.includes('/api/orders'))).toBe(true);
+});</pre>
+
+        <p><code>context.route()</code> applies the same interception logic to <em>every page</em> in a browser context — including pages/tabs opened later — whereas <code>page.route()</code> only covers that one page.</p>
+
+        <!-- SECTION 8 -->
+        <h2 id="section8"><span class="level advanced">ADVANCED</span>8. Replaying HAR Files</h2>
+
+        <pre>await page.routeFromHAR('fixtures/api.har', { url: '**/api/**' });</pre>
+
+        <p><code>page.routeFromHAR()</code> replays a previously-recorded HTTP Archive (HAR) file — letting you mock an entire realistic API surface without hand-writing every response. Record one with <code>npx playwright open --save-har=api.har &lt;url&gt;</code> or via <code>context.routeFromHAR(..., { update: true })</code> during a real session.</p>
+
+        <p>Remove any handler with <code>page.unroute(pattern)</code> when it's no longer needed within a test.</p>
+
+        <!-- SECTION 9 -->
+        <h2 id="section9"><span class="level advanced">ADVANCED</span>9. Common Pitfalls</h2>
+
+        <div class="warning">
+            <strong>⚠️ Pitfall 1 — Forgetting to resolve the route:</strong> Every handler must call exactly one of <code>fulfill()</code>, <code>abort()</code>, or <code>continue()</code>. Forgetting to call any of them leaves the request hanging until the test's timeout — a frustrating failure mode with no obvious error message.
+        </div>
+
+        <div class="warning">
+            <strong>⚠️ Pitfall 2 — Over-mocking until the test proves nothing real:</strong> Mocking every single endpoint can make a test pass even when the real integration is broken. Reserve heavy mocking for edge cases (errors, empty states) that are hard to reproduce naturally, and keep some tests exercising the real API end-to-end.
+        </div>
+
+        <!-- SUMMARY -->
+        <h2 style="margin-top: 40px;">📋 Quick Reference Summary</h2>
+
+        <div class="table-wrap">
+        <table>
+            <tr>
+                <th>Concept</th>
+                <th>Key Points</th>
+            </tr>
+            <tr>
+                <td><strong>page.route()</strong></td>
+                <td>Register before goto(); handler must call fulfill(), abort(), or continue().</td>
+            </tr>
+            <tr>
+                <td><strong>fulfill()</strong></td>
+                <td>Mock a synthetic response — status, headers, json/body.</td>
+            </tr>
+            <tr>
+                <td><strong>abort()</strong></td>
+                <td>Simulate a network error — good for blocking noise or testing offline UI.</td>
+            </tr>
+            <tr>
+                <td><strong>route.fetch()</strong></td>
+                <td>Forward to the real server, then modify the response before fulfill().</td>
+            </tr>
+            <tr>
+                <td><strong>Patterns</strong></td>
+                <td>Glob, exact string, or RegExp; multiple matches fire LIFO.</td>
+            </tr>
+            <tr>
+                <td><strong>Passive listeners</strong></td>
+                <td>page.on('request'/'response') for read-only inspection.</td>
+            </tr>
+            <tr>
+                <td><strong>routeFromHAR</strong></td>
+                <td>Replays a recorded HAR file to mock a whole API surface at once.</td>
+            </tr>
+        </table>
+        </div>
+
+        <div style="margin-top: 40px; padding: 20px; background: #ecf0f1; border-radius: 5px;">
+            <h3>🎓 Learning Path</h3>
+            <p><strong>Beginner:</strong> Master sections 1, 2, 3</p>
+            <p><strong>Intermediate:</strong> Understand sections 4, 5, 6</p>
+            <p><strong>Advanced:</strong> Deep dive into sections 7, 8, 9</p>
+        </div>
+
+    </div>
+</body>
+</html>

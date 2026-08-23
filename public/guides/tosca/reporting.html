@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tosca Execution & Reporting: Complete Guide</title>
+    <link rel="stylesheet" href="/guides/guide-base.css">
+</head>
+<body>
+    <div class="container">
+        <h1>📈 Tosca Execution & Reporting: Complete Guide</h1>
+        <p style="font-size: 1.1em; color: #7f8c8d; margin-bottom: 20px;">
+            From step-level logs to stakeholder PDFs and CI-native test result formats
+        </p>
+
+        <div class="toc">
+            <h3>📚 Table of Contents</h3>
+            <ul>
+                <li><a href="#section1">1. What Happens During a Run</a></li>
+                <li><a href="#section2">2. Result States Explained</a></li>
+                <li><a href="#section3">3. Step-Level Execution Logs</a></li>
+                <li><a href="#section4">4. Screenshots and Evidence Capture</a></li>
+                <li><a href="#section5">5. Tosca Report: HTML/PDF Generation</a></li>
+                <li><a href="#section6">6. JUnit XML for CI Pipelines</a></li>
+                <li><a href="#section7">7. Defect Tracker Integration</a></li>
+                <li><a href="#section8">8. Using TQL to Query Results</a></li>
+                <li><a href="#section9">9. Common Pitfalls</a></li>
+                <li><a href="#section10">10. Best Practices</a></li>
+            </ul>
+        </div>
+
+        <!-- SECTION 1 -->
+        <h2 id="section1"><span class="level beginner">BEGINNER</span>1. What Happens During a Run</h2>
+
+        <h3>Definition</h3>
+        <p>When an Execution List runs, Tosca records every step's outcome in real time — not just a final pass/fail per Test Case, but a full audit trail down to the individual Test Step level: the value sent, the value actually found, and the verdict.</p>
+
+        <div class="example">
+            <strong>Real-world analogy:</strong> Tosca's reporting is like a flight data recorder (black box). Every action taken during the flight (test run) is captured in chronological order. When something goes wrong, you replay the recording — you see exactly what was done, what was expected, and what actually happened, right down to the millisecond.
+        </div>
+
+        <p>All of this is stored in the central repository database, not in scattered local log files, so any team member with TCM access can review any historical run.</p>
+
+        <!-- SECTION 2 -->
+        <h2 id="section2"><span class="level beginner">BEGINNER</span>2. Result States Explained</h2>
+
+        <pre>// Result states
+Passed           ✓  all steps succeeded
+Failed           ✗  a Verify/Checkpoint step mismatch
+Error            !  unexpected exception (element not found, timeout)
+Skipped          –  step skipped by Condition or steering
+NotExecuted      ○  not yet run in this execution</pre>
+
+        <div class="table-wrap">
+        <table class="table-compact">
+            <tr>
+                <th>State</th>
+                <th>What It Tells You</th>
+            </tr>
+            <tr>
+                <td>Passed</td>
+                <td>Every assertion in the Test Case held true — the feature behaved as expected</td>
+            </tr>
+            <tr>
+                <td>Failed</td>
+                <td>A Verify step's expected value did not match the actual — investigate as a potential functional defect</td>
+            </tr>
+            <tr>
+                <td>Error</td>
+                <td>Something prevented the step from even completing — usually an automation/environment issue, not necessarily a product bug</td>
+            </tr>
+            <tr>
+                <td>Skipped</td>
+                <td>A Condition (steering) or manual exclusion prevented this entry from running at all</td>
+            </tr>
+            <tr>
+                <td>NotExecuted</td>
+                <td>Placeholder state before any run has touched this entry</td>
+            </tr>
+        </table>
+        </div>
+
+        <!-- SECTION 3 -->
+        <h2 id="section3"><span class="level beginner">BEGINNER</span>3. Step-Level Execution Logs</h2>
+
+        <p>The most valuable diagnostic artifact Tosca produces is the per-step log — it shows exactly which step in a multi-step Test Case broke, and what the expected-vs-actual mismatch was.</p>
+
+        <pre>TestCase: TC001_Login  → FAILED
+  Step 1: Navigate URL       → Passed   | Got: 200 OK
+  Step 2: Enter Username     → Passed   | Typed: alice@test.com
+  Step 3: Enter Password     → Passed   | Typed: ****
+  Step 4: Click Login        → Passed   | Button clicked
+  Step 5: Verify Welcome     → FAILED
+    Expected: "Welcome, Alice"
+    Actual:   "Account locked. Contact admin."
+    Screenshot: step5_fail_2024-11-01_14-23-11.png</pre>
+
+        <div class="note">
+            <strong>💡 Tip:</strong> Reading the step log from top to bottom pinpoints the exact failure boundary — everything before it worked correctly, so investigation time should focus on the failing step and what changed around it, not the whole scenario.
+        </div>
+
+        <!-- SECTION 4 -->
+        <h2 id="section4"><span class="level intermediate">INTERMEDIATE</span>4. Screenshots and Evidence Capture</h2>
+
+        <p>Tosca can automatically capture screenshots (and, depending on configuration, short video) at the moment a step fails, or on every step if configured for maximum evidence. These are attached directly to the step's log entry.</p>
+
+        <div class="table-wrap">
+        <table class="table-compact">
+            <tr>
+                <th>Capture Mode</th>
+                <th>Trade-off</th>
+            </tr>
+            <tr>
+                <td>On failure only</td>
+                <td>Minimal storage overhead; sufficient for most regression suites</td>
+            </tr>
+            <tr>
+                <td>Always (every step)</td>
+                <td>Rich audit trail useful for compliance-heavy industries, but significant storage growth over time</td>
+            </tr>
+        </table>
+        </div>
+
+        <div class="warning">
+            <strong>⚠️ Common Pitfall:</strong> Enabling "always capture" screenshots across a large nightly suite without a retention/cleanup policy can silently balloon the repository database size over months, degrading TCM performance. Set a retention window or archive older execution results periodically.
+        </div>
+
+        <!-- SECTION 5 -->
+        <h2 id="section5"><span class="level intermediate">INTERMEDIATE</span>5. Tosca Report: HTML/PDF Generation</h2>
+
+        <p>For stakeholders who don't use TCM directly, Tosca ships a report generator that turns execution results into structured, readable HTML or PDF documents.</p>
+
+        <pre>// Tosca Report (HTML/PDF export)
+TCM → Reports → New Report → choose template → Export</pre>
+
+        <div class="table-wrap">
+        <table>
+            <tr>
+                <th>Audience</th>
+                <th>Best Format</th>
+            </tr>
+            <tr>
+                <td>Test engineers / automation team</td>
+                <td>TCM Execution → Results (live, drill-down step logs)</td>
+            </tr>
+            <tr>
+                <td>Project managers / stakeholders</td>
+                <td>HTML/PDF Tosca Report — summary pass/fail with charts</td>
+            </tr>
+            <tr>
+                <td>CI/CD pipeline</td>
+                <td>JUnit-compatible XML — see next section</td>
+            </tr>
+        </table>
+        </div>
+
+        <!-- SECTION 6 -->
+        <h2 id="section6"><span class="level intermediate">INTERMEDIATE</span>6. JUnit XML for CI Pipelines</h2>
+
+        <p>When Tosca is triggered from a build server via <strong>ToscaCI</strong>, results are also written as a JUnit-compatible XML file — a format essentially every CI tool (Jenkins, Azure DevOps, GitHub Actions) already knows how to parse and render natively in its own test-results UI.</p>
+
+        <pre>// Tosca CI — results directory
+ToscaCI.exe run ... --resultdir "C:\\CI\\Results"
+// Produces: ExecutionResults.xml  (JUnit-compatible)</pre>
+
+        <pre><!-- ExecutionResults.xml (auto-generated by ToscaCI) -->
+<testsuite name="Regression_Sprint12" tests="45" failures="2" errors="1">
+  <testcase name="TC001_Login" classname="Smoke" time="4.2"/>
+  <testcase name="TC020_PlaceOrder" classname="Regression" time="12.8">
+    <failure message="Verify WelcomeLabel failed">
+      Expected: Welcome, Alice | Actual: Account locked
+    </failure>
+  </testcase>
+</testsuite></pre>
+
+        <div class="example">
+            <strong>Why JUnit XML matters:</strong> it lets Tosca slot into a pipeline exactly like any developer unit-test framework — no custom parsing plugin needed, and build servers can show pass/fail trends over time in their standard dashboards.
+        </div>
+
+        <!-- SECTION 7 -->
+        <h2 id="section7"><span class="level advanced">ADVANCED</span>7. Defect Tracker Integration</h2>
+
+        <p>Tosca integrates natively with defect trackers such as Jira, Azure DevOps, and ServiceNow. Failed Test Cases can automatically create a defect ticket carrying the step-level failure detail, screenshots, and environment metadata — closing the loop between "test failed" and "someone is tracking the fix."</p>
+
+        <div class="table-wrap">
+        <table class="table-compact">
+            <tr>
+                <th>Auto-Created Defect Contents</th>
+                <th>Source</th>
+            </tr>
+            <tr>
+                <td>Failure summary and expected/actual values</td>
+                <td>Step log</td>
+            </tr>
+            <tr>
+                <td>Screenshot at time of failure</td>
+                <td>Evidence capture</td>
+            </tr>
+            <tr>
+                <td>Environment/agent used</td>
+                <td>Execution List configuration</td>
+            </tr>
+            <tr>
+                <td>Linked requirement</td>
+                <td>Requirements traceability matrix</td>
+            </tr>
+        </table>
+        </div>
+
+        <div class="note">
+            <strong>💡 Tip:</strong> Auto-created defects are most valuable when paired with de-duplication logic (or a human triage step) — otherwise a flaky test that fails every night can spam the tracker with dozens of near-identical tickets.
+        </div>
+
+        <!-- SECTION 8 -->
+        <h2 id="section8"><span class="level advanced">ADVANCED</span>8. Using TQL to Query Results</h2>
+
+        <p><strong>Tosca Query Language (TQL)</strong> can be used against execution history, not just against Modules and Test Cases — letting you answer questions like "which Test Cases have failed in the last 5 runs" or "which requirements currently have failing coverage" directly, without manually clicking through the Execution tree.</p>
+
+        <pre>// Conceptual TQL query against execution history
+SELECT TestCase.Name, Result.State, Result.ExecutionDate
+FROM ExecutionResults
+WHERE Result.State = "Failed"
+  AND Result.ExecutionDate >= LAST_7_DAYS
+ORDER BY Result.ExecutionDate DESC</pre>
+
+        <div class="example">
+            <strong>When this earns its keep:</strong> on suites with hundreds of Test Cases, manually browsing execution history to spot a flaky test pattern is impractical. A saved TQL query can surface "Test Cases failing intermittently over the last 2 weeks" as a standing health-check.
+        </div>
+
+        <!-- SECTION 9 -->
+        <h2 id="section9"><span class="level intermediate">INTERMEDIATE</span>9. Common Pitfalls</h2>
+
+        <ul style="margin: 15px 0; margin-left: 20px;">
+            <li><strong>Treating every non-Passed result the same:</strong> conflating Error (automation/environment issue) with Failed (genuine assertion mismatch) skews triage priorities.</li>
+            <li><strong>No screenshot retention policy:</strong> unlimited evidence capture growing the repository unchecked over months.</li>
+            <li><strong>Auto-creating duplicate defects:</strong> flaky tests spamming the tracker with near-identical tickets night after night.</li>
+            <li><strong>Ignoring stakeholder reporting:</strong> relying solely on TCM's technical views when non-technical stakeholders actually need the HTML/PDF summary report.</li>
+        </ul>
+
+        <!-- SECTION 10 -->
+        <h2 id="section10"><span class="level beginner">BEGINNER</span>10. Best Practices</h2>
+
+        <h3>1. Read Failures Before Errors</h3>
+        <p>Prioritise triaging genuine Failed assertions (likely real defects) before chasing Error entries (often flaky automation/environment issues) unless Errors dominate the run.</p>
+
+        <h3>2. Capture Screenshots on Failure by Default</h3>
+        <p>Reserve "always capture" for specific compliance-driven suites; use failure-only capture as the default to control storage growth.</p>
+
+        <h3>3. Wire JUnit XML into Every CI Pipeline</h3>
+        <pre>ToscaCI.exe run --executionList "Smoke" --resultdir ".\results"
+// Then in CI:
+junit '.\results\ExecutionResults.xml'</pre>
+
+        <h3>4. Distribute the Right Report to the Right Audience</h3>
+        <p>Engineers get TCM drill-down; stakeholders get the HTML/PDF report; CI gets JUnit XML.</p>
+
+        <h3>5. De-Duplicate Auto-Created Defects</h3>
+        <p>Add a triage step or de-duplication rule before defect auto-creation goes fully unattended in production pipelines.</p>
+
+        <!-- SUMMARY -->
+        <h2 style="margin-top: 40px;">📋 Quick Reference Summary</h2>
+
+        <div class="table-wrap">
+        <table>
+            <tr>
+                <th>Concept</th>
+                <th>Key Points</th>
+            </tr>
+            <tr>
+                <td><strong>Result states</strong></td>
+                <td>Passed / Failed / Error / Skipped / NotExecuted — each with a distinct meaning.</td>
+            </tr>
+            <tr>
+                <td><strong>Step-level log</strong></td>
+                <td>Shows expected vs actual per step — pinpoints the exact failure boundary.</td>
+            </tr>
+            <tr>
+                <td><strong>Tosca Report</strong></td>
+                <td>HTML/PDF export for non-technical stakeholders.</td>
+            </tr>
+            <tr>
+                <td><strong>JUnit XML</strong></td>
+                <td>CI-native results format produced by ToscaCI for pipeline integration.</td>
+            </tr>
+            <tr>
+                <td><strong>Defect tracker integration</strong></td>
+                <td>Auto-creates tickets in Jira/ADO/ServiceNow with step detail and screenshots.</td>
+            </tr>
+            <tr>
+                <td><strong>TQL on results</strong></td>
+                <td>Query execution history programmatically to spot trends and flaky tests.</td>
+            </tr>
+        </table>
+        </div>
+
+        <div style="margin-top: 40px; padding: 20px; background: #ecf0f1; border-radius: 5px;">
+            <h3>🎓 Learning Path</h3>
+            <p><strong>Beginner:</strong> Master sections 1, 2, 3, 10</p>
+            <p><strong>Intermediate:</strong> Understand sections 4, 5, 6, 9</p>
+            <p><strong>Advanced:</strong> Deep dive into sections 7, 8</p>
+        </div>
+
+    </div>
+</body>
+</html>

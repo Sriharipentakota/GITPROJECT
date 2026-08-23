@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JavaScript Data Types: Complete Guide</title>
+    <link rel="stylesheet" href="/guides/guide-base.css">
+</head>
+<body>
+    <div class="container">
+        <h1>🔢 JavaScript Data Types: Complete Guide</h1>
+        <p style="font-size: 1.1em; color: #7f8c8d; margin-bottom: 20px;">
+            A comprehensive journey from fundamental concepts to advanced techniques
+        </p>
+
+        <div class="toc">
+            <h3>📚 Table of Contents</h3>
+            <ul>
+                <li><a href="#section1">1. What is a Data Type?</a></li>
+                <li><a href="#section2">2. The Primitive Types</a></li>
+                <li><a href="#section3">3. Reference Types (Objects)</a></li>
+                <li><a href="#section4">4. typeof and Its Quirks</a></li>
+                <li><a href="#section5">5. Type Coercion (Implicit vs Explicit)</a></li>
+                <li><a href="#section6">6. Truthy and Falsy Values</a></li>
+                <li><a href="#section7">7. Value vs Reference Comparison</a></li>
+                <li><a href="#section8">8. NaN and Numeric Edge Cases</a></li>
+                <li><a href="#section9">9. Common Pitfalls</a></li>
+                <li><a href="#section10">10. Best Practices</a></li>
+            </ul>
+        </div>
+
+        <!-- SECTION 1 -->
+        <h2 id="section1"><span class="level beginner">BEGINNER</span>1. What is a Data Type?</h2>
+
+        <p>Every value in JavaScript belongs to a <strong>data type</strong> — a category that determines what the value looks like and what operations are valid on it. JavaScript has <strong>8 built-in types</strong>, split into two families: <em>primitives</em> (7 of them) and <em>objects</em> (everything else).</p>
+
+        <div class="example">
+            <strong>Real-world analogy:</strong> Think of types as different container shapes. A number is a measuring cup, a string is an envelope, a boolean is a light switch. You can't pour liquid into an envelope — likewise, JavaScript restricts what operations make sense for each type.
+        </div>
+
+        <h3>Why Types Matter</h3>
+        <ul style="margin: 15px 0; margin-left: 20px;">
+            <li><strong>Correctness:</strong> Knowing a value's type prevents subtle bugs (like adding a string to a number)</li>
+            <li><strong>Memory & performance:</strong> Primitives and objects are stored differently</li>
+            <li><strong>API design:</strong> Function behavior often depends on the type of what's passed in</li>
+        </ul>
+
+        <h3>Dynamic Typing</h3>
+        <p>JavaScript is <strong>dynamically typed</strong> — a variable's type isn't declared up front, it's determined by whatever value currently sits in it, and it can change over time.</p>
+
+        <pre>let value = 42;          // value is currently a number
+console.log(typeof value); // "number"
+
+value = "hello";         // now it's a string
+console.log(typeof value); // "string"
+
+value = true;            // now it's a boolean
+console.log(typeof value); // "boolean"</pre>
+
+        <div class="note">
+            <strong>💡 Tip:</strong> This is different from statically typed languages (like Java or C#) where a variable is locked to one type forever. Dynamic typing gives flexibility but also means you need to be careful about what a variable currently holds.
+        </div>
+
+        <!-- SECTION 2 -->
+        <h2 id="section2"><span class="level beginner">BEGINNER</span>2. The Primitive Types</h2>
+
+        <p>Primitives are <strong>immutable</strong> (a primitive value itself can never be changed, only replaced) and are compared/copied <strong>by value</strong>. JavaScript has exactly 7 primitive types.</p>
+
+        <h3>1. string</h3>
+        <pre>const single = 'Hello';
+const double = "World";
+const template = `Hello, ${double}!`;   // template literal — supports interpolation
+
+console.log(template);         // "Hello, World!"
+console.log(typeof template);  // "string"</pre>
+
+        <h3>2. number</h3>
+        <p>JavaScript has only ONE numeric type for regular numbers — no separate int/float/double like other languages. It's a 64-bit floating point (IEEE 754) value.</p>
+        <pre>const integer = 42;
+const float = 3.14;
+const negative = -17;
+const scientific = 2.5e6;     // 2,500,000
+const infinity = Infinity;
+const notANumber = NaN;
+
+console.log(typeof integer);  // "number"</pre>
+
+        <h3>3. boolean</h3>
+        <pre>const isLoggedIn = true;
+const hasError = false;
+
+console.log(typeof isLoggedIn); // "boolean"</pre>
+
+        <h3>4. undefined</h3>
+        <p>Represents a variable that has been declared but not yet assigned a value. It's also what a function returns by default, and what you get accessing a missing object property.</p>
+        <pre>let x;
+console.log(x);          // undefined
+console.log(typeof x);   // "undefined"
+
+function noReturn() {}
+console.log(noReturn()); // undefined
+
+const obj = {};
+console.log(obj.missingProp); // undefined</pre>
+
+        <h3>5. null</h3>
+        <p><code>null</code> represents an <em>intentional</em> absence of value — you assign it deliberately to say "this should have no value."</p>
+        <pre>let selectedUser = null; // explicitly "nothing selected yet"
+console.log(selectedUser);      // null
+console.log(typeof selectedUser); // "object" — see Section 4 for why!</pre>
+
+        <h3>6. bigint</h3>
+        <p>For integers larger than <code>Number.MAX_SAFE_INTEGER</code> (2^53 - 1). Append <code>n</code> to a numeric literal, or use the <code>BigInt()</code> function.</p>
+        <pre>const huge = 9007199254740993n;
+const fromFn = BigInt("123456789012345678901234567890");
+
+console.log(typeof huge);      // "bigint"
+console.log(huge + 1n);        // 9007199254740994n — must mix with other BigInts, not numbers
+
+// console.log(huge + 1);      // ❌ TypeError: Cannot mix BigInt and other types</pre>
+
+        <h3>7. symbol</h3>
+        <p>A <code>Symbol</code> is a guaranteed-unique value, typically used as a "hidden" object property key to avoid naming collisions.</p>
+        <pre>const id1 = Symbol("id");
+const id2 = Symbol("id");
+
+console.log(id1 === id2);   // false — every symbol is unique, even with the same description
+console.log(typeof id1);    // "symbol"
+
+const user = { name: "Alice", [id1]: "internal-id-123" };
+console.log(user[id1]);     // "internal-id-123"</pre>
+
+        <div class="table-wrap">
+        <table class="table-compact">
+            <tr>
+                <th>Type</th>
+                <th>Example</th>
+                <th>typeof result</th>
+                <th>Mutable?</th>
+            </tr>
+            <tr>
+                <td>string</td>
+                <td><code>"hi"</code></td>
+                <td>"string"</td>
+                <td>❌ No</td>
+            </tr>
+            <tr>
+                <td>number</td>
+                <td><code>42</code></td>
+                <td>"number"</td>
+                <td>❌ No</td>
+            </tr>
+            <tr>
+                <td>boolean</td>
+                <td><code>true</code></td>
+                <td>"boolean"</td>
+                <td>❌ No</td>
+            </tr>
+            <tr>
+                <td>undefined</td>
+                <td><code>undefined</code></td>
+                <td>"undefined"</td>
+                <td>❌ No</td>
+            </tr>
+            <tr>
+                <td>null</td>
+                <td><code>null</code></td>
+                <td>"object" (quirk)</td>
+                <td>❌ No</td>
+            </tr>
+            <tr>
+                <td>bigint</td>
+                <td><code>10n</code></td>
+                <td>"bigint"</td>
+                <td>❌ No</td>
+            </tr>
+            <tr>
+                <td>symbol</td>
+                <td><code>Symbol()</code></td>
+                <td>"symbol"</td>
+                <td>❌ No</td>
+            </tr>
+        </table>
+        </div>
+
+        <!-- SECTION 3 -->
+        <h2 id="section3"><span class="level beginner">BEGINNER</span>3. Reference Types (Objects)</h2>
+
+        <p>Everything that is not a primitive is an <strong>object</strong> — this includes plain objects, arrays, functions, dates, maps, sets, and regular expressions. Objects are <strong>mutable</strong> and are stored/compared <strong>by reference</strong>.</p>
+
+        <h3>Object Literal</h3>
+        <pre>const person = { name: "Bob", age: 30 };
+console.log(typeof person); // "object"</pre>
+
+        <h3>Array</h3>
+        <pre>const numbers = [1, 2, 3];
+console.log(typeof numbers);        // "object" — yes, really!
+console.log(Array.isArray(numbers)); // true — use this to detect arrays</pre>
+
+        <h3>Function</h3>
+        <pre>function greet() { return "hi"; }
+console.log(typeof greet); // "function" — the ONE exception that gets its own typeof result</pre>
+
+        <h3>Date, Map, Set, RegExp</h3>
+        <pre>const now = new Date();
+const map = new Map();
+const set = new Set([1, 2, 3]);
+const pattern = /[a-z]+/;
+
+console.log(typeof now, typeof map, typeof set, typeof pattern);
+// "object" "object" "object" "object" — all are reference types</pre>
+
+        <div class="example">
+            <strong>Key distinction:</strong> Primitives hold their value directly. Objects hold a <em>reference</em> (a memory address) — the variable doesn't contain the object itself, it contains a pointer to where the object lives.
+        </div>
+
+        <!-- SECTION 4 -->
+        <h2 id="section4"><span class="level intermediate">INTERMEDIATE</span>4. typeof and Its Quirks</h2>
+
+        <p>The <code>typeof</code> operator returns a string describing a value's type. It's extremely useful, but has a few well-known historical quirks you must memorize.</p>
+
+        <pre>typeof "hello"      // "string"
+typeof 42            // "number"
+typeof true           // "boolean"
+typeof undefined      // "undefined"
+typeof Symbol()       // "symbol"
+typeof 10n            // "bigint"
+typeof {}             // "object"
+typeof []             // "object"   ← arrays are objects
+typeof function(){}   // "function" ← special-cased, not "object"
+typeof null           // "object"   ← famous bug!</pre>
+
+        <div class="warning">
+            <strong>⚠️ The null Bug:</strong> <code>typeof null === "object"</code> is a bug from JavaScript's very first version (1995) that was never fixed because doing so would break too much existing code on the web. <code>null</code> is NOT actually an object — treat it as its own special "intentional empty" primitive. To check for null specifically, use <code>value === null</code>.
+        </div>
+
+        <h3>Reliable Type-Checking Recipes</h3>
+        <pre>// Arrays
+Array.isArray([1, 2, 3]);          // true
+
+// null
+value === null;                    // true only for null
+
+// NaN
+Number.isNaN(NaN);                 // true — safe, unlike global isNaN()
+
+// Plain object (not array, not null)
+typeof value === "object" && value !== null && !Array.isArray(value);
+
+// Any "is nothing" check
+value == null;   // true for BOTH null and undefined (the one good use of ==)</pre>
+
+        <!-- SECTION 5 -->
+        <h2 id="section5"><span class="level intermediate">INTERMEDIATE</span>5. Type Coercion (Implicit vs Explicit)</h2>
+
+        <p>JavaScript will often convert values between types automatically. This is <strong>implicit coercion</strong>. You can also convert values yourself on purpose — <strong>explicit coercion</strong> — which is almost always the safer, more readable choice.</p>
+
+        <h3>Implicit Coercion</h3>
+        <pre>"5" + 3        // "53"   — + treats it as string concatenation because one side is a string
+"5" - 3        // 2      — minus forces both sides to numbers
+"5" * "2"      // 10     — * also forces numbers
+true + 1       // 2      — true becomes 1
+false + 1      // 1      — false becomes 0
+"5" == 5       // true   — loose equality coerces types before comparing
+[] + []        // ""     — both arrays convert to strings, then concatenate
+[] + {}        // "[object Object]" — quirky but explainable once you know the rules</pre>
+
+        <h3>Explicit Coercion</h3>
+        <pre>Number("42");        // 42
+Number("42px");      // NaN — must be a clean numeric string
+String(99);          // "99"
+String(null);        // "null"
+Boolean(1);           // true
+Boolean(0);           // false
+parseInt("42px", 10); // 42 — parses as much as it can, unlike Number()
+parseFloat("3.14m");  // 3.14</pre>
+
+        <div class="comparison">
+            <div>
+                <strong>❌ Relying on implicit coercion:</strong>
+                <pre>function addToCart(qty) {
+    return qty * 2; // if qty is "3" (string from
+                     // a form input), this "works"
+                     // by accident: "3" * 2 = 6
+}</pre>
+            </div>
+            <div>
+                <strong>✅ Explicit and predictable:</strong>
+                <pre>function addToCart(qty) {
+    const n = Number(qty);
+    if (Number.isNaN(n)) {
+        throw new Error("Invalid quantity");
+    }
+    return n * 2;
+}</pre>
+            </div>
+        </div>
+
+        <!-- SECTION 6 -->
+        <h2 id="section6"><span class="level beginner">BEGINNER</span>6. Truthy and Falsy Values</h2>
+
+        <p>When a value is used where a boolean is expected (an <code>if</code> condition, <code>&&</code>, <code>||</code>, ternary), JavaScript coerces it to <code>true</code> or <code>false</code>. There are exactly <strong>6 falsy values</strong> — everything else is truthy.</p>
+
+        <div class="table-wrap">
+        <table>
+            <tr>
+                <th>Falsy Value</th>
+                <th>Notes</th>
+            </tr>
+            <tr><td><code>false</code></td><td>The boolean itself</td></tr>
+            <tr><td><code>0</code> (and <code>-0</code>)</td><td>Numeric zero</td></tr>
+            <tr><td><code>""</code></td><td>Empty string</td></tr>
+            <tr><td><code>null</code></td><td>Intentional absence</td></tr>
+            <tr><td><code>undefined</code></td><td>Unassigned</td></tr>
+            <tr><td><code>NaN</code></td><td>Not-a-Number</td></tr>
+        </table>
+        </div>
+
+        <div class="warning">
+            <strong>⚠️ Common Pitfall:</strong> <code>[]</code> (empty array) and <code>{}</code> (empty object) are BOTH truthy! Beginners often expect them to be falsy because they "look empty," but any object — even an empty one — is truthy.
+        </div>
+
+        <pre>if ([])  console.log("runs");   // ✅ runs — [] is truthy
+if ({})  console.log("runs");   // ✅ runs — {} is truthy
+if (0)   console.log("skipped"); // ❌ skipped — 0 is falsy
+if ("0") console.log("runs");   // ✅ runs — non-empty string is truthy, even "0"!</pre>
+
+        <!-- SECTION 7 -->
+        <h2 id="section7"><span class="level advanced">ADVANCED</span>7. Value vs Reference Comparison</h2>
+
+        <p>Primitives are compared by their actual value. Objects are compared by <em>identity</em> — whether they are literally the same object in memory, not whether their contents look the same.</p>
+
+        <pre>// Primitives — compared by value
+console.log(5 === 5);           // true
+console.log("hi" === "hi");     // true
+
+// Objects — compared by reference
+console.log({ a: 1 } === { a: 1 }); // false — two different objects, same shape
+console.log([1,2] === [1,2]);       // false — two different arrays
+
+const obj1 = { a: 1 };
+const obj2 = obj1;               // obj2 points to the SAME object
+console.log(obj1 === obj2);      // true — same reference</pre>
+
+        <div class="example">
+            <strong>To compare object contents</strong>, you need a deep-equality check — either write one, use a library (like Lodash's <code>isEqual</code>), or for simple flat objects: <code>JSON.stringify(a) === JSON.stringify(b)</code> (imperfect — key order and special values like <code>undefined</code>/functions can trip it up).
+        </div>
+
+        <!-- SECTION 8 -->
+        <h2 id="section8"><span class="level advanced">ADVANCED</span>8. NaN and Numeric Edge Cases</h2>
+
+        <p><code>NaN</code> ("Not a Number") is the result of an invalid numeric operation. It has one very strange property: it is the ONLY value in JavaScript that is not equal to itself.</p>
+
+        <pre>console.log(NaN === NaN);          // false!!
+console.log(0 / 0);                // NaN
+console.log("abc" * 2);            // NaN
+console.log(Number("abc"));        // NaN
+
+// Detecting NaN correctly
+console.log(Number.isNaN(NaN));    // true — the reliable way
+console.log(isNaN("abc"));         // true — but isNaN() coerces first, so it's less strict
+console.log(Number.isNaN("abc"));  // false — "abc" is not NaN itself, it's a non-numeric string</pre>
+
+        <h3>Other Numeric Edge Cases</h3>
+        <pre>console.log(0.1 + 0.2);              // 0.30000000000000004 — floating point imprecision
+console.log(0.1 + 0.2 === 0.3);       // false!
+console.log(Number.MAX_SAFE_INTEGER); // 9007199254740991
+console.log(1 / 0);                   // Infinity
+console.log(-1 / 0);                  // -Infinity
+console.log(Object.is(NaN, NaN));     // true — Object.is treats NaN as equal to itself
+console.log(Object.is(0, -0));        // false — but distinguishes +0 from -0 (unlike ===)</pre>
+
+        <div class="note">
+            <strong>💡 Tip:</strong> Never compare floating-point numbers with <code>===</code> when precision matters. Instead check if the difference is smaller than a tiny tolerance: <code>Math.abs(a - b) &lt; Number.EPSILON</code>.
+        </div>
+
+        <!-- SECTION 9 -->
+        <h2 id="section9"><span class="level advanced">ADVANCED</span>9. Common Pitfalls</h2>
+
+        <h3>1. Confusing null and undefined</h3>
+        <pre>let a;          // undefined — JS did this
+let b = null;   // null — YOU did this on purpose
+
+console.log(a == b);   // true (loose — both are "nothing")
+console.log(a === b);  // false (strict — different types)</pre>
+
+        <h3>2. Array/Object typeof Confusion</h3>
+        <pre>function isPlainObject(val) {
+    return typeof val === "object" && val !== null && !Array.isArray(val);
+}
+console.log(isPlainObject([]));   // false — correctly excludes arrays
+console.log(isPlainObject(null)); // false — correctly excludes null
+console.log(isPlainObject({}));   // true</pre>
+
+        <h3>3. String Numbers From User Input</h3>
+        <pre>const input = "42";        // HTML inputs always give strings
+console.log(input + 1);   // "421" — string concatenation, not addition!
+console.log(Number(input) + 1); // 43 — correct after explicit conversion</pre>
+
+        <h3>4. BigInt vs Number Mixing</h3>
+        <pre>const big = 10n;
+const small = 5;
+// console.log(big + small);  // ❌ TypeError
+console.log(big + BigInt(small)); // ✅ 15n</pre>
+
+        <!-- SECTION 10 -->
+        <h2 id="section10"><span class="level intermediate">INTERMEDIATE</span>10. Best Practices</h2>
+
+        <h3>1. Prefer === and !== over == and !=</h3>
+        <pre>// ✅ Predictable
+if (value === 5) { }
+
+// ❌ Coercion surprises
+if (value == "5") { } // true for value = 5, but also weird edge cases</pre>
+
+        <h3>2. Convert Types Explicitly</h3>
+        <pre>const qty = Number(formInput.value);
+if (Number.isNaN(qty)) {
+    throw new Error("Invalid input");
+}</pre>
+
+        <h3>3. Use Number.isNaN, Not Global isNaN</h3>
+        <pre>Number.isNaN("hello");  // false — correctly does not coerce first
+isNaN("hello");          // true  — coerces "hello" to NaN first, then checks</pre>
+
+        <h3>4. Use Array.isArray to Detect Arrays</h3>
+        <pre>Array.isArray(value); // reliable
+// typeof value === "object" is NOT enough — it's also true for arrays</pre>
+
+        <h3>5. Check for null/undefined Together When Appropriate</h3>
+        <pre>if (value == null) { /* catches both null and undefined */ }
+// equivalent, more explicit alternative:
+if (value === null || value === undefined) { }</pre>
+
+        <h3>6. Guard Against NaN Propagation</h3>
+        <pre>function safeDivide(a, b) {
+    if (b === 0) return null;
+    const result = a / b;
+    return Number.isNaN(result) ? null : result;
+}</pre>
+
+        <!-- SUMMARY -->
+        <h2 style="margin-top: 40px;">📋 Quick Reference Summary</h2>
+
+        <div class="table-wrap">
+        <table>
+            <tr>
+                <th>Concept</th>
+                <th>Key Points</th>
+            </tr>
+            <tr>
+                <td><strong>Primitives</strong></td>
+                <td>string, number, boolean, undefined, null, bigint, symbol. Immutable, compared by value.</td>
+            </tr>
+            <tr>
+                <td><strong>Reference types</strong></td>
+                <td>Object, Array, Function, Date, Map, Set. Mutable, compared by reference.</td>
+            </tr>
+            <tr>
+                <td><strong>typeof quirks</strong></td>
+                <td><code>typeof null === "object"</code> (bug); arrays are "object" too — use <code>Array.isArray()</code>.</td>
+            </tr>
+            <tr>
+                <td><strong>Coercion</strong></td>
+                <td>Implicit happens automatically (can surprise you); explicit (<code>Number()</code>, <code>String()</code>) is safer.</td>
+            </tr>
+            <tr>
+                <td><strong>Falsy values</strong></td>
+                <td>Exactly 6: <code>false, 0, "", null, undefined, NaN</code>. Everything else, including <code>[]</code> and <code>{}</code>, is truthy.</td>
+            </tr>
+            <tr>
+                <td><strong>NaN</strong></td>
+                <td>Not equal to itself. Detect with <code>Number.isNaN()</code>, never <code>=== NaN</code>.</td>
+            </tr>
+        </table>
+        </div>
+
+        <div style="margin-top: 40px; padding: 20px; background: #ecf0f1; border-radius: 5px;">
+            <h3>🎓 Learning Path</h3>
+            <p><strong>Beginner:</strong> Master sections 1, 2, 3, 6</p>
+            <p><strong>Intermediate:</strong> Understand sections 4, 5, 10</p>
+            <p><strong>Advanced:</strong> Deep dive into sections 7, 8, 9</p>
+        </div>
+
+    </div>
+</body>
+</html>

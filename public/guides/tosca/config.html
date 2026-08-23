@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tosca Configuration Parameters: Complete Guide</title>
+    <link rel="stylesheet" href="/guides/guide-base.css">
+</head>
+<body>
+    <div class="container">
+        <h1>⚙️ Tosca Configuration Parameters: Complete Guide</h1>
+        <p style="font-size: 1.1em; color: #7f8c8d; margin-bottom: 20px;">
+            Reusable named values that let you switch environments by changing one setting, not hundreds of steps
+        </p>
+
+        <div class="toc">
+            <h3>📚 Table of Contents</h3>
+            <ul>
+                <li><a href="#section1">1. What Are Configuration Parameters?</a></li>
+                <li><a href="#section2">2. Reference Syntax</a></li>
+                <li><a href="#section3">3. Parameter Scopes and Precedence</a></li>
+                <li><a href="#section4">4. Switching Environments with Parameters</a></li>
+                <li><a href="#section5">5. Parameter Container Definitions (PCDs)</a></li>
+                <li><a href="#section6">6. Attaching a PCD to an Execution List</a></li>
+                <li><a href="#section7">7. Parameters vs Buffers</a></li>
+                <li><a href="#section8">8. Sensitive Parameters (Passwords, Secrets)</a></li>
+                <li><a href="#section9">9. Common Pitfalls</a></li>
+                <li><a href="#section10">10. Best Practices</a></li>
+            </ul>
+        </div>
+
+        <!-- SECTION 1 -->
+        <h2 id="section1"><span class="level beginner">BEGINNER</span>1. What Are Configuration Parameters?</h2>
+
+        <h3>Definition</h3>
+        <p><strong>Configuration Parameters</strong> (often just "parameters" or "Config Params") are reusable, named values that can be referenced anywhere in a test suite using the syntax <code>{P:ParameterName}</code>. They act like global or local constants — store a URL, a username, a database connection string, or an environment flag once, and reference it everywhere it's needed.</p>
+
+        <div class="example">
+            <strong>Real-world analogy:</strong> Config Parameters work like environment variables in software development. You define <code>DATABASE_URL=postgres://prod/db</code> once; every service that needs it reads the variable — you don't embed the connection string inside each service's code. Swapping environments means changing one variable, not editing dozens of files.
+        </div>
+
+        <!-- SECTION 2 -->
+        <h2 id="section2"><span class="level beginner">BEGINNER</span>2. Reference Syntax</h2>
+
+        <pre>// Reference syntax
+{P:ParameterName}         → resolves parameter value
+{P:BaseURL}/login         → concatenation supported
+{B:BufferName}            → read a captured buffer value
+{B:BufferName|default}    → buffer with fallback</pre>
+
+        <p>Parameter references can be embedded inside larger strings, combined with literal text, and even combined with Buffer references in the same value.</p>
+
+        <pre>// A single value combining a parameter and literal text
+Navigate: {P:BaseURL}/dashboard
+Enter URL in SearchBar: {P:BaseURL}/api/search</pre>
+
+        <!-- SECTION 3 -->
+        <h2 id="section3"><span class="level beginner">BEGINNER</span>3. Parameter Scopes and Precedence</h2>
+
+        <p>Parameters live in a hierarchy, and a parameter defined at a lower (more specific) level overrides a same-named parameter defined at a higher (broader) level:</p>
+
+        <div class="table-wrap">
+        <table class="table-compact">
+            <tr>
+                <th>Scope</th>
+                <th>Applies To</th>
+                <th>Precedence</th>
+            </tr>
+            <tr>
+                <td>Global Parameter</td>
+                <td>Entire workspace — all Test Cases</td>
+                <td>Lowest (overridden by anything more specific)</td>
+            </tr>
+            <tr>
+                <td>Folder Parameter</td>
+                <td>A folder and everything nested inside it</td>
+                <td>Middle</td>
+            </tr>
+            <tr>
+                <td>TestCase-level Parameter</td>
+                <td>One specific Test Case only</td>
+                <td>Highest — always wins if defined</td>
+            </tr>
+        </table>
+        </div>
+
+        <pre>// Parameter scopes (precedence: local > folder > global)
+Global Parameter:  MyWorkspace → Parameters → BaseURL = https://prod.example.com
+Folder Parameter:  QA_Env → Parameters → BaseURL = https://qa.example.com
+TestCase Param:    TC001 → Parameters → BaseURL = https://local.example.com</pre>
+
+        <div class="note">
+            <strong>💡 Tip:</strong> When a Test Step resolves <code>{P:BaseURL}</code>, Tosca looks for the closest-scoped definition first — TestCase, then containing Folder, then Global — and uses the first one it finds. This lets you define sensible defaults globally while allowing surgical overrides where needed.
+        </div>
+
+        <!-- SECTION 4 -->
+        <h2 id="section4"><span class="level intermediate">INTERMEDIATE</span>4. Switching Environments with Parameters</h2>
+
+        <pre>// Global parameter
+BaseURL = https://qa.example.com
+
+// Test step using parameter
+Navigate: {P:BaseURL}/dashboard
+Enter URL in SearchBar: {P:BaseURL}/api/search
+
+// To switch to staging — change ONE parameter:
+BaseURL = https://staging.example.com
+// All test steps pointing to {P:BaseURL} now hit staging</pre>
+
+        <div class="example">
+            <strong>Why this is transformative for maintenance:</strong> without parameters, "switching to staging" means finding and editing every literal URL scattered across hundreds of Test Steps. With parameters, it's a single field edit — the same underlying principle as the Module abstraction, applied to data instead of UI structure.
+        </div>
+
+        <!-- SECTION 5 -->
+        <h2 id="section5"><span class="level intermediate">INTERMEDIATE</span>5. Parameter Container Definitions (PCDs)</h2>
+
+        <p>A <strong>PCD (Parameter Container Definition)</strong> is a template that groups related parameters together — for example, a "Browser" PCD containing URL, browser type, and timeout — so an entire configuration bundle can be swapped as one unit rather than editing individual parameters one at a time.</p>
+
+        <pre>// PCD (Parameter Container Definition) example
+PCD: BrowserConfig
+  BaseURL      = https://qa.example.com
+  Browser      = Chrome
+  Timeout      = 30000
+  Username     = test_user</pre>
+
+        <pre>PCD: QA_Config
+  BaseURL  = https://qa.example.com
+  Username = qa_admin
+  Password = qa_pass123
+
+PCD: Staging_Config
+  BaseURL  = https://staging.example.com
+  Username = stg_admin
+  Password = stg_pass456</pre>
+
+        <!-- SECTION 6 -->
+        <h2 id="section6"><span class="level intermediate">INTERMEDIATE</span>6. Attaching a PCD to an Execution List</h2>
+
+        <pre>// Attach PCD to Execution List
+ExecutionList → Properties → PCD = QA_Config
+// → All {P:BaseURL} in this run resolve to QA values</pre>
+
+        <p>Because the PCD is attached at the Execution List level, the exact same Test Cases can run against QA today and Staging tomorrow purely by swapping which PCD is attached — no edits to any Test Case or Module required.</p>
+
+        <div class="table-wrap">
+        <table>
+            <tr>
+                <th>Without PCDs</th>
+                <th>With PCDs</th>
+            </tr>
+            <tr>
+                <td>Edit multiple individual Global/Folder parameters per environment switch</td>
+                <td>Swap one PCD reference on the Execution List</td>
+            </tr>
+            <tr>
+                <td>Risk of forgetting to update one related parameter</td>
+                <td>All related parameters travel together as one unit</td>
+            </tr>
+        </table>
+        </div>
+
+        <!-- SECTION 7 -->
+        <h2 id="section7"><span class="level advanced">ADVANCED</span>7. Parameters vs Buffers</h2>
+
+        <p>Parameters and Buffers both use a curly-brace reference syntax, and it's easy for newcomers to conflate them. The distinguishing factor is <em>when the value is known</em>.</p>
+
+        <div class="comparison">
+            <div>
+                <strong>{P:Parameter} — known before run:</strong>
+                <pre>Defined ahead of time in TCM
+Same value for the whole run
+  (or per environment/PCD)
+Example: {P:BaseURL}, {P:TestUser}</pre>
+            </div>
+            <div>
+                <strong>{B:Buffer} — known during run:</strong>
+                <pre>Captured live from the application
+  via an Output step
+Value differs every execution
+Example: {B:OrderID}, {B:AuthToken}</pre>
+            </div>
+        </div>
+
+        <div class="warning">
+            <strong>⚠️ Common Pitfall:</strong> Attempting to hard-code a dynamically generated value (like an auto-incrementing order number) as a Parameter will always be wrong the moment the real application generates a different number. Values that only exist once the application runs must be captured with a Buffer, not stored as a Parameter.
+        </div>
+
+        <!-- SECTION 8 -->
+        <h2 id="section8"><span class="level advanced">ADVANCED</span>8. Sensitive Parameters (Passwords, Secrets)</h2>
+
+        <p>Parameters holding credentials or secrets deserve special handling. Tosca supports marking parameters so their values are masked in logs and the TCM UI, reducing the risk of secrets leaking into execution reports, screenshots, or shared repositories.</p>
+
+        <pre>// Conceptual masked parameter
+Parameter: Password  (marked as "Encrypted"/"Hidden")
+  Value stored encrypted in repository
+  Displayed as ******** in TCM UI and execution logs
+  Resolved to real value only at execution time</pre>
+
+        <div class="note">
+            <strong>💡 Tip:</strong> Even with masking, avoid granting broad repository read access to anyone who doesn't need it — encrypted-at-rest is not the same guarantee as access-controlled. Combine parameter masking with proper repository permissions for genuinely sensitive credentials.
+        </div>
+
+        <!-- SECTION 9 -->
+        <h2 id="section9"><span class="level intermediate">INTERMEDIATE</span>9. Common Pitfalls</h2>
+
+        <ul style="margin: 15px 0; margin-left: 20px;">
+            <li><strong>Literal URLs/credentials scattered in Test Steps:</strong> defeats the entire purpose of parameters and makes environment switching a manual hunt-and-replace exercise.</li>
+            <li><strong>Overriding at the wrong scope:</strong> setting an override at the Global level when it was only meant for one Test Case, silently affecting unrelated tests.</li>
+            <li><strong>Forgetting precedence rules:</strong> being surprised that a Global change had no effect because a Folder or TestCase-level override was already in place.</li>
+            <li><strong>Storing secrets as plain, unmasked parameters:</strong> exposing credentials in logs and screenshots unnecessarily.</li>
+        </ul>
+
+        <!-- SECTION 10 -->
+        <h2 id="section10"><span class="level beginner">BEGINNER</span>10. Best Practices</h2>
+
+        <h3>1. Default to Parameters, Never Literals for Environment Data</h3>
+        <p>URLs, hostnames, credentials, and environment flags should always be Parameters, never literal values baked into Test Steps.</p>
+
+        <h3>2. Group Related Parameters into PCDs</h3>
+        <p>If two or more parameters always change together (e.g. BaseURL and its matching Username/Password), bundle them into a PCD.</p>
+
+        <h3>3. Use Consistent Naming</h3>
+        <pre>BaseURL, ApiBaseURL, DbConnectionString
+TestUser, TestPassword, AdminUser, AdminPassword</pre>
+
+        <h3>4. Mask Sensitive Parameters</h3>
+        <p>Mark passwords, API keys, and tokens as encrypted/hidden parameters rather than plain text.</p>
+
+        <h3>5. Document Scope Intent</h3>
+        <p>When overriding a parameter at Folder or TestCase level, add a short description explaining why — future maintainers will otherwise be puzzled why a Global change "isn't taking effect" for that branch.</p>
+
+        <!-- SUMMARY -->
+        <h2 style="margin-top: 40px;">📋 Quick Reference Summary</h2>
+
+        <div class="table-wrap">
+        <table>
+            <tr>
+                <th>Concept</th>
+                <th>Key Points</th>
+            </tr>
+            <tr>
+                <td><strong>Configuration Parameter</strong></td>
+                <td>Reusable named constant referenced as {P:Name} anywhere in the suite.</td>
+            </tr>
+            <tr>
+                <td><strong>Scope precedence</strong></td>
+                <td>TestCase overrides Folder overrides Global.</td>
+            </tr>
+            <tr>
+                <td><strong>PCD</strong></td>
+                <td>Groups related parameters into a swappable configuration bundle.</td>
+            </tr>
+            <tr>
+                <td><strong>Attaching a PCD</strong></td>
+                <td>Set at the Execution List level to target an environment for that run.</td>
+            </tr>
+            <tr>
+                <td><strong>Parameters vs Buffers</strong></td>
+                <td>Parameters are known before the run; Buffers are captured during the run.</td>
+            </tr>
+            <tr>
+                <td><strong>Sensitive parameters</strong></td>
+                <td>Should be marked encrypted/hidden to avoid leaking secrets into logs.</td>
+            </tr>
+        </table>
+        </div>
+
+        <div style="margin-top: 40px; padding: 20px; background: #ecf0f1; border-radius: 5px;">
+            <h3>🎓 Learning Path</h3>
+            <p><strong>Beginner:</strong> Master sections 1, 2, 3, 10</p>
+            <p><strong>Intermediate:</strong> Understand sections 4, 5, 6, 9</p>
+            <p><strong>Advanced:</strong> Deep dive into sections 7, 8</p>
+        </div>
+
+    </div>
+</body>
+</html>

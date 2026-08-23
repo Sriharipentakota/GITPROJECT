@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JavaScript Scope: Complete Guide</title>
+    <link rel="stylesheet" href="/guides/guide-base.css">
+</head>
+<body>
+    <div class="container">
+        <h1>🔭 JavaScript Scope: Complete Guide</h1>
+        <p style="font-size: 1.1em; color: #7f8c8d; margin-bottom: 20px;">
+            A comprehensive journey from fundamental concepts to advanced techniques
+        </p>
+
+        <div class="toc">
+            <h3>📚 Table of Contents</h3>
+            <ul>
+                <li><a href="#section1">1. What is Scope?</a></li>
+                <li><a href="#section2">2. Global Scope</a></li>
+                <li><a href="#section3">3. Function Scope</a></li>
+                <li><a href="#section4">4. Block Scope</a></li>
+                <li><a href="#section5">5. The Scope Chain</a></li>
+                <li><a href="#section6">6. Variable Shadowing</a></li>
+                <li><a href="#section7">7. Hoisting</a></li>
+                <li><a href="#section8">8. The Temporal Dead Zone (TDZ)</a></li>
+                <li><a href="#section9">9. Common Pitfalls</a></li>
+                <li><a href="#section10">10. Best Practices</a></li>
+            </ul>
+        </div>
+
+        <!-- SECTION 1 -->
+        <h2 id="section1"><span class="level beginner">BEGINNER</span>1. What is Scope?</h2>
+
+        <p><strong>Scope</strong> determines WHERE in your code a variable is visible and accessible. JavaScript has three scope levels: <strong>global</strong>, <strong>function</strong>, and <strong>block</strong>.</p>
+
+        <div class="example">
+            <strong>Real-world analogy:</strong> Scope is like a building with nested rooms. The global scope is the lobby — everyone can see it. A function is a private office — only people inside can access what's there. A block is a mini-closet inside the office.
+        </div>
+
+        <pre>const globalVar = "I'm everywhere";
+
+function myFunction() {
+    const functionVar = "I'm only in this function";
+    if (true) {
+        const blockVar = "I'm only in this block";
+        console.log(blockVar); // works
+    }
+    // console.log(blockVar); // ❌ ReferenceError — out of scope here
+}</pre>
+
+        <!-- SECTION 2 -->
+        <h2 id="section2"><span class="level beginner">BEGINNER</span>2. Global Scope</h2>
+
+        <p>Variables declared outside of any function or block belong to the <strong>global scope</strong> and can be accessed from anywhere in the program.</p>
+
+        <pre>const appName = "Mastery Lab"; // global
+
+function showApp() {
+    console.log(appName); // accessible — reaches out to global scope
+}
+
+showApp(); // "Mastery Lab"
+console.log(appName); // "Mastery Lab"</pre>
+
+        <div class="warning">
+            <strong>⚠️ Accidental Globals:</strong> Assigning to a variable WITHOUT <code>var</code>/<code>let</code>/<code>const</code> inside a function creates an accidental global (in non-strict mode) — a common and hard-to-trace source of bugs.
+        </div>
+
+        <pre>function leaky() {
+    leakedVar = "oops"; // no declaration keyword — becomes global!
+}
+leaky();
+console.log(leakedVar); // "oops" — accessible from OUTSIDE the function!
+
+// 'use strict' at the top of a file/function prevents this and throws instead</pre>
+
+        <!-- SECTION 3 -->
+        <h2 id="section3"><span class="level beginner">BEGINNER</span>3. Function Scope</h2>
+
+        <p>Variables declared with <code>var</code> (or any variable declared with a parameter/<code>let</code>/<code>const</code> directly inside a function body) are scoped to the ENTIRE enclosing function — accessible anywhere inside it, including nested blocks.</p>
+
+        <pre>function calculate() {
+    var result = 0;      // function-scoped
+
+    if (true) {
+        var result2 = 10; // var IGNORES the if-block — still function-scoped!
+    }
+
+    console.log(result);  // 0
+    console.log(result2); // 10 — accessible even though declared inside the if block
+}
+calculate();
+// console.log(result); // ❌ ReferenceError — not accessible outside the function</pre>
+
+        <!-- SECTION 4 -->
+        <h2 id="section4"><span class="level beginner">BEGINNER</span>4. Block Scope</h2>
+
+        <p>A <strong>block</strong> is any code between curly braces <code>{}</code> — <code>if</code>, <code>for</code>, <code>while</code>, or even a bare <code>{}</code>. <code>let</code> and <code>const</code> are confined to the block they're declared in.</p>
+
+        <pre>if (true) {
+    let blockScoped = "only visible in this block";
+    const alsoBlockScoped = "same here";
+    console.log(blockScoped); // works
+}
+// console.log(blockScoped);     // ❌ ReferenceError
+// console.log(alsoBlockScoped); // ❌ ReferenceError</pre>
+
+        <div class="comparison">
+            <div>
+                <strong>var — leaks out of blocks:</strong>
+                <pre>for (var i = 0; i < 3; i++) {
+    // loop body
+}
+console.log(i); // 3 — i survives the loop!</pre>
+            </div>
+            <div>
+                <strong>let — stays confined:</strong>
+                <pre>for (let j = 0; j < 3; j++) {
+    // loop body
+}
+// console.log(j); // ❌ ReferenceError</pre>
+            </div>
+        </div>
+
+        <!-- SECTION 5 -->
+        <h2 id="section5"><span class="level intermediate">INTERMEDIATE</span>5. The Scope Chain</h2>
+
+        <p>When JavaScript can't find a variable in the current scope, it looks OUTWARD through each enclosing scope until it reaches the global scope. This lookup path is called the <strong>scope chain</strong>. Inner scopes can read outer variables, but never the reverse.</p>
+
+        <pre>const level1 = "global";
+
+function outer() {
+    const level2 = "outer function";
+
+    function inner() {
+        const level3 = "inner function";
+
+        console.log(level3); // ✅ found in inner's own scope
+        console.log(level2); // ✅ found by looking up to outer
+        console.log(level1); // ✅ found by looking all the way up to global
+    }
+
+    inner();
+    // console.log(level3); // ❌ ReferenceError — inner's scope is not visible to outer
+}
+
+outer();</pre>
+
+        <div class="note">
+            <strong>💡 Tip:</strong> The scope chain is determined by WHERE a function is physically WRITTEN in the code (lexical scoping), not by where or how it's later called. This is why it's also called "static scoping."
+        </div>
+
+        <!-- SECTION 6 -->
+        <h2 id="section6"><span class="level intermediate">INTERMEDIATE</span>6. Variable Shadowing</h2>
+
+        <p><strong>Shadowing</strong> happens when an inner scope declares a variable with the SAME name as one in an outer scope. The inner variable "shadows" (hides) the outer one — for code inside that inner scope only.</p>
+
+        <pre>let color = "blue"; // global
+
+function paint() {
+    let color = "red"; // shadows the global 'color' — only inside paint()
+    console.log(color); // "red"
+}
+
+paint();
+console.log(color); // "blue" — global 'color' is completely unaffected</pre>
+
+        <div class="warning">
+            <strong>⚠️ Confusing Shadowing:</strong> Shadowing the SAME name across nested scopes makes code harder to read — it's not always obvious which "color" a given line refers to. Prefer distinct names when possible.
+        </div>
+
+        <pre>// Illegal shadowing: can't re-declare a let with var in the same scope
+let x = 1;
+// var x = 2; // ❌ SyntaxError: Identifier 'x' has already been declared
+
+// But a var CAN be shadowed by a let in an inner block — perfectly legal
+var y = 1;
+if (true) {
+    let y = 2; // fine — different scope
+    console.log(y); // 2
+}
+console.log(y); // 1</pre>
+
+        <!-- SECTION 7 -->
+        <h2 id="section7"><span class="level advanced">ADVANCED</span>7. Hoisting</h2>
+
+        <p><strong>Hoisting</strong> is JavaScript's behavior of processing declarations before executing code line by line. Different declaration types are hoisted differently.</p>
+
+        <pre>// var — hoisted AND initialized with undefined
+console.log(a); // undefined (not an error!)
+var a = 5;
+console.log(a); // 5
+
+// Function declarations — FULLY hoisted (name + body)
+sayHi(); // "Hi!" — works even though called before the definition
+function sayHi() {
+    console.log("Hi!");
+}
+
+// Function EXPRESSIONS are not fully hoisted — only the variable declaration is
+// greet(); // ❌ TypeError: greet is not a function
+var greet = function() {
+    console.log("Hello");
+};</pre>
+
+        <div class="example">
+            <strong>Mental model:</strong> JavaScript effectively splits <code>var x = 5;</code> into two steps: the declaration (<code>var x;</code>) is moved to the top of its scope, but the assignment (<code>x = 5;</code>) stays exactly where it was written.
+        </div>
+
+        <!-- SECTION 8 -->
+        <h2 id="section8"><span class="level advanced">ADVANCED</span>8. The Temporal Dead Zone (TDZ)</h2>
+
+        <p><code>let</code> and <code>const</code> ARE hoisted (unlike the popular myth that they aren't) — but they are NOT initialized. The span between the start of the scope and the actual declaration line is called the <strong>Temporal Dead Zone</strong>: accessing the variable there throws a <code>ReferenceError</code>.</p>
+
+        <pre>console.log(typeof x); // "undefined" — var, hoisted with a default value
+var x = 5;
+
+// console.log(y); // ❌ ReferenceError: Cannot access 'y' before initialization
+let y = 10; // y is in the TDZ until this line runs
+
+function demo() {
+    // TDZ for 'z' starts here
+    console.log(z); // ❌ ReferenceError
+    let z = 1;      // TDZ for 'z' ends here
+}</pre>
+
+        <div class="note">
+            <strong>💡 Tip:</strong> The TDZ is actually a SAFETY feature — it turns a class of "used a variable before it made sense" bugs into an immediate, loud error instead of a silent <code>undefined</code> that only manifests as unexpected behavior later.
+        </div>
+
+        <!-- SECTION 9 -->
+        <h2 id="section9"><span class="level advanced">ADVANCED</span>9. Common Pitfalls</h2>
+
+        <h3>1. var in Loops with Closures</h3>
+        <pre>// ❌ All callbacks share ONE function-scoped i
+const fns = [];
+for (var i = 0; i < 3; i++) {
+    fns.push(() => console.log(i));
+}
+fns[0](); // 3 (not 0!) — by the time it runs, the loop already finished, i === 3
+
+// ✅ let creates a fresh binding PER iteration
+const fixed = [];
+for (let i = 0; i < 3; i++) {
+    fixed.push(() => console.log(i));
+}
+fixed[0](); // 0</pre>
+
+        <h3>2. Assuming Block Scope for var</h3>
+        <pre>if (true) {
+    var leaked = "I escape the block";
+}
+console.log(leaked); // "I escape the block" — surprising if you expected block scope</pre>
+
+        <h3>3. Relying on Hoisting for Readability</h3>
+        <pre>// Technically works, but confusing to read
+console.log(total); // undefined
+calculate();
+var total;
+function calculate() { total = 100; }
+
+// ✅ Much clearer — declare before use
+let total2;
+function calculate2() { total2 = 100; }
+calculate2();
+console.log(total2);</pre>
+
+        <h3>4. Global Namespace Pollution</h3>
+        <pre>// ❌ Many loose globals collide easily across scripts
+var currentUser = "Alice";
+var currentPage = "home";
+
+// ✅ Namespace under one object, or use ES modules
+const AppState = { currentUser: "Alice", currentPage: "home" };</pre>
+
+        <!-- SECTION 10 -->
+        <h2 id="section10"><span class="level intermediate">INTERMEDIATE</span>10. Best Practices</h2>
+
+        <h3>1. Default to const, Use let When Reassignment Is Needed</h3>
+        <pre>// ✅ Signals intent clearly
+const MAX_RETRIES = 3;
+let attempts = 0;
+attempts++;</pre>
+
+        <h3>2. Avoid var Entirely in Modern Code</h3>
+        <pre>// ✅ Block scoping avoids leaks and closure bugs
+for (let i = 0; i < items.length; i++) { }
+
+// ❌ Legacy, function-scoped, hoists oddly
+for (var i = 0; i < items.length; i++) { }</pre>
+
+        <h3>3. Declare Variables at the Top of Their Scope</h3>
+        <pre>// ✅ No ambiguity about hoisting/TDZ
+function process(data) {
+    let result = null;
+    let errors = [];
+    // ... rest of the logic
+}</pre>
+
+        <h3>4. Minimize Global Variables</h3>
+        <pre>// ✅ Wrap related state in a module/object/closure
+const Counter = (() => {
+    let count = 0;
+    return { increment: () => ++count, get: () => count };
+})();</pre>
+
+        <h3>5. Avoid Shadowing When It Hurts Readability</h3>
+        <pre>// ✅ Distinct names avoid ambiguity
+function processUser(user) {
+    const userId = user.id;
+}
+
+// ❌ Shadowed name at multiple levels is confusing
+function processUser(user) {
+    const user2 = { ...user, verified: true }; // should just pick a clearer name than reusing 'user'
+}</pre>
+
+        <!-- SUMMARY -->
+        <h2 style="margin-top: 40px;">📋 Quick Reference Summary</h2>
+
+        <div class="table-wrap">
+        <table>
+            <tr>
+                <th>Concept</th>
+                <th>Key Points</th>
+            </tr>
+            <tr>
+                <td><strong>Global scope</strong></td>
+                <td>Accessible everywhere; avoid polluting it with loose variables.</td>
+            </tr>
+            <tr>
+                <td><strong>Function scope</strong></td>
+                <td><code>var</code> is confined to the nearest function, ignoring inner blocks.</td>
+            </tr>
+            <tr>
+                <td><strong>Block scope</strong></td>
+                <td><code>let</code>/<code>const</code> are confined to their <code>{}</code>.</td>
+            </tr>
+            <tr>
+                <td><strong>Scope chain</strong></td>
+                <td>Lookup travels outward — inner → enclosing → global — stops at first match.</td>
+            </tr>
+            <tr>
+                <td><strong>Hoisting</strong></td>
+                <td><code>var</code> hoists as <code>undefined</code>; functions hoist fully; <code>let</code>/<code>const</code> hoist into the TDZ.</td>
+            </tr>
+            <tr>
+                <td><strong>TDZ</strong></td>
+                <td>Accessing <code>let</code>/<code>const</code> before their declaration line throws <code>ReferenceError</code>.</td>
+            </tr>
+        </table>
+        </div>
+
+        <div style="margin-top: 40px; padding: 20px; background: #ecf0f1; border-radius: 5px;">
+            <h3>🎓 Learning Path</h3>
+            <p><strong>Beginner:</strong> Master sections 1, 2, 3, 4</p>
+            <p><strong>Intermediate:</strong> Understand sections 5, 6, 10</p>
+            <p><strong>Advanced:</strong> Deep dive into sections 7, 8, 9</p>
+        </div>
+
+    </div>
+</body>
+</html>

@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tosca TBox Scanning & Modules: Complete Guide</title>
+    <link rel="stylesheet" href="/guides/guide-base.css">
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Tosca TBox Scanning & Modules: Complete Guide</h1>
+        <p style="font-size: 1.1em; color: #7f8c8d; margin-bottom: 20px;">
+            How Tosca turns a live application into a reusable, maintainable model
+        </p>
+
+        <div class="toc">
+            <h3>📚 Table of Contents</h3>
+            <ul>
+                <li><a href="#section1">1. What Is TBox?</a></li>
+                <li><a href="#section2">2. The Scanning Workflow</a></li>
+                <li><a href="#section3">3. Anatomy of a Module</a></li>
+                <li><a href="#section4">4. ActionModes: Input, Output, Verify, Wait, Count</a></li>
+                <li><a href="#section5">5. Classic Modules vs Checkpoint Attributes</a></li>
+                <li><a href="#section6">6. Common TBox Engines</a></li>
+                <li><a href="#section7">7. XScan and Anchoring Strategies</a></li>
+                <li><a href="#section8">8. Module Folders, Inheritance & Reuse</a></li>
+                <li><a href="#section9">9. Common Pitfalls When Scanning</a></li>
+                <li><a href="#section10">10. Best Practices</a></li>
+            </ul>
+        </div>
+
+        <!-- SECTION 1 -->
+        <h2 id="section1"><span class="level beginner">BEGINNER</span>1. What Is TBox?</h2>
+
+        <h3>Definition</h3>
+        <p>The <strong>TBox</strong> is Tosca's recognition engine — the component that knows how to "see" and interact with a specific technology's control tree. There isn't one universal TBox; there's a family of TBox engines, each specialised for a UI technology (web browsers, WinForms, SAP GUI, Java Swing, mobile, PDF, and more).</p>
+
+        <div class="example">
+            <strong>Real-world analogy:</strong> Think of TBox engines like different pairs of glasses. TBox Web lets Tosca "see" HTML DOM elements clearly. TBox SAP lets it "see" SAP GUI screen fields. Put on the wrong pair of glasses and the same physical pixels look like meaningless shapes — Tosca needs the matching TBox to correctly identify controls in that technology.
+        </div>
+
+        <h3>What Scanning Actually Produces</h3>
+        <p>When you scan an application, TBox inspects its live control tree and produces a <strong>Module</strong> — a persisted, structured record of each control's type, hierarchy path, and identifying technical properties. The Module is stored in the repository as a first-class asset, independent of whether the application is currently running.</p>
+
+        <!-- SECTION 2 -->
+        <h2 id="section2"><span class="level beginner">BEGINNER</span>2. The Scanning Workflow</h2>
+
+        <p>Scanning is an interactive process performed once per screen (or reused/updated as the screen evolves):</p>
+
+        <pre>1. Open TCM → Modules section → right-click → Scan Application
+2. Choose TBox engine (Web, WinForms, SAP…)
+3. Hover control → green highlight → click to add to module
+4. Rename Module Attribute with a business-friendly name
+5. Set ActionMode: Input / Output / Verify / Wait / Count</pre>
+
+        <h3>Walkthrough: Scanning a Login Page</h3>
+        <div class="example">
+            <strong>Step by step:</strong>
+            <pre>1. Launch the application under test (e.g. open the login page in Chrome)
+2. In TCM, right-click the Modules folder → Scan Application
+3. TCM shows a translucent overlay; hover the username field → it highlights green
+4. Click it → TBox records: control type = TextBox, XPath/selector, hierarchy
+5. Repeat for the password field and the Login button
+6. Stop scanning → TCM creates Module "LoginPage" with 3 attributes
+7. Rename attributes: txtUser → Username, txtPass → Password, btnGo → LoginButton</pre>
+        </div>
+
+        <h3>Resulting Module Structure</h3>
+        <pre>Module: LoginPage
+├── Attribute: Username
+│     TechnicalParam: Value
+│     ActionMode: Input
+│     BusinessParam: Username
+├── Attribute: Password
+│     TechnicalParam: Value
+│     ActionMode: Input
+│     BusinessParam: Password
+└── Attribute: LoginButton
+      TechnicalParam: (none needed)
+      ActionMode: Input  ← click action</pre>
+
+        <div class="note">
+            <strong>💡 Tip:</strong> You don't need to scan every control on a screen up front. Scan what your first test cases need; come back and extend the Module later as new test cases require new attributes. Modules grow incrementally with the test suite.
+        </div>
+
+        <!-- SECTION 3 -->
+        <h2 id="section3"><span class="level beginner">BEGINNER</span>3. Anatomy of a Module</h2>
+
+        <p>A Module is a tree of <strong>Module Attributes</strong>, each attribute corresponding to one recognised control. Each attribute carries several pieces of metadata:</p>
+
+        <div class="table-wrap">
+        <table class="table-compact">
+            <tr>
+                <th>Property</th>
+                <th>Meaning</th>
+                <th>Example</th>
+            </tr>
+            <tr>
+                <td>Technical Parameter</td>
+                <td>Engine-level property read/written on the control</td>
+                <td>Value, Checked, SelectedItem, Text</td>
+            </tr>
+            <tr>
+                <td>Business Parameter</td>
+                <td>Human-readable name mapped to the technical parameter</td>
+                <td>Username, OrderQty</td>
+            </tr>
+            <tr>
+                <td>ActionMode</td>
+                <td>What the engine does with the value at execution time</td>
+                <td>Input, Output, Verify, Wait, Count</td>
+            </tr>
+            <tr>
+                <td>Identification properties</td>
+                <td>The selector data used to relocate the control at runtime</td>
+                <td>XPath, ID, Name, control index</td>
+            </tr>
+        </table>
+        </div>
+
+        <h3>Business Parameter Mapping</h3>
+        <pre>// Technical Parameter (TBox-defined, maps to control property)
+Module: UsernameField
+  TechnicalParameter: Value   ← what you type into the field
+
+// Business Parameter (created by tester, maps to technical param)
+Module: UsernameField
+  BusinessParameter: Username → maps to → Value
+
+// Test Step uses business parameter
+Step: Enter credentials
+  Username = "alice@test.com"</pre>
+
+        <!-- SECTION 4 -->
+        <h2 id="section4"><span class="level intermediate">INTERMEDIATE</span>4. ActionModes: Input, Output, Verify, Wait, Count</h2>
+
+        <p>The <strong>ActionMode</strong> set on a Module Attribute determines what happens to that attribute when a Test Step using it executes. This is the single most important setting to understand when scanning, because it decides whether a step performs an action, reads a value, or makes an assertion.</p>
+
+        <div class="table-wrap">
+        <table class="table-compact">
+            <tr>
+                <th>ActionMode</th>
+                <th>Behaviour</th>
+                <th>Typical Use</th>
+            </tr>
+            <tr>
+                <td>Input</td>
+                <td>Writes the supplied value into the control (type text, click, select)</td>
+                <td>Filling a text box, clicking a button, choosing a dropdown item</td>
+            </tr>
+            <tr>
+                <td>Output</td>
+                <td>Reads the control's current value and stores it into a Buffer</td>
+                <td>Capturing a generated order ID, a confirmation number</td>
+            </tr>
+            <tr>
+                <td>Verify</td>
+                <td>Reads the control's value and asserts it equals the expected value; fails the step on mismatch</td>
+                <td>Checking a welcome message, a validation error, a total price</td>
+            </tr>
+            <tr>
+                <td>Wait</td>
+                <td>Pauses execution until the control reaches a specified condition or state</td>
+                <td>Waiting for a spinner to disappear, an element to become visible</td>
+            </tr>
+            <tr>
+                <td>Count</td>
+                <td>Counts the number of matching controls</td>
+                <td>Verifying a search returns exactly 5 results</td>
+            </tr>
+        </table>
+        </div>
+
+        <pre>ActionMode:
+  Input   → write value into control
+  Output  → read value from control into Buffer
+  Verify  → assert control value equals expected
+  Wait    → pause until control meets condition
+  Count   → count matching controls</pre>
+
+        <div class="warning">
+            <strong>⚠️ Common Pitfall:</strong> The same Module Attribute can be reused with different ActionModes in different test steps. Forgetting to switch ActionMode from Input to Verify on a step that is meant to be an assertion is one of the most common causes of a test case that "passes" without ever actually checking anything.
+        </div>
+
+        <!-- SECTION 5 -->
+        <h2 id="section5"><span class="level intermediate">INTERMEDIATE</span>5. Classic Modules vs Checkpoint Attributes</h2>
+
+        <p>Tosca practitioners often distinguish between attributes used to <em>drive</em> the application (Classic, ActionMode = Input) and attributes used to <em>assert</em> against it (Checkpoint, ActionMode = Verify). Both live in the same Module — the distinction is about intent and usage, not a different asset type.</p>
+
+        <pre>Classic Module Attribute (ActionMode = Input):
+  → performs an action (type, click, select)
+
+Checkpoint Attribute (ActionMode = Verify):
+  → asserts the control's current value
+  → test step fails if actual ≠ expected
+
+// Usage in test step
+Step: Verify welcome message
+  WelcomeLabel [Verify] = "Welcome, Alice"
+  ↓ TOSCA checks the DOM text matches "Welcome, Alice"</pre>
+
+        <div class="comparison">
+            <div>
+                <strong>Classic (Input) usage:</strong>
+                <pre>Module: LoginPage
+Step: LoginPage.Username [Input]
+  Value = "alice@test.com"
+→ Types text into the field</pre>
+            </div>
+            <div>
+                <strong>Checkpoint (Verify) usage:</strong>
+                <pre>Module: Dashboard
+Step: Dashboard.WelcomeLabel [Verify]
+  Value = "Welcome, Alice"
+→ Fails step if text doesn't match</pre>
+            </div>
+        </div>
+
+        <!-- SECTION 6 -->
+        <h2 id="section6"><span class="level intermediate">INTERMEDIATE</span>6. Common TBox Engines</h2>
+
+        <p>Tosca ships dozens of TBox engines. Knowing which one matches your application under test is a prerequisite to a successful scan.</p>
+
+        <div class="table-wrap">
+        <table class="table-compact">
+            <tr>
+                <th>TBox Engine</th>
+                <th>Technology Covered</th>
+            </tr>
+            <tr>
+                <td>TBox Web</td>
+                <td>HTML/DOM in Chrome, Edge, Firefox</td>
+            </tr>
+            <tr>
+                <td>TBox WinForms / WPF</td>
+                <td>Windows desktop applications</td>
+            </tr>
+            <tr>
+                <td>TBox SAP</td>
+                <td>SAP GUI screens and transactions</td>
+            </tr>
+            <tr>
+                <td>TBox Java</td>
+                <td>Java Swing / SWT desktop applications</td>
+            </tr>
+            <tr>
+                <td>TBox Mobile</td>
+                <td>Native iOS (XCUITest) and Android (UIAutomator2) apps</td>
+            </tr>
+            <tr>
+                <td>TBox PDF</td>
+                <td>PDF document content and form fields</td>
+            </tr>
+            <tr>
+                <td>TBox Mainframe</td>
+                <td>Terminal-emulated 3270/5250 screens</td>
+            </tr>
+        </table>
+        </div>
+
+        <div class="note">
+            <strong>💡 Tip:</strong> A single Test Case can chain steps from multiple TBox engines — for example, submit a form in TBox Web, then verify the resulting record in TBox SAP. This cross-technology reach is one of Tosca's biggest differentiators against single-technology frameworks.
+        </div>
+
+        <!-- SECTION 7 -->
+        <h2 id="section7"><span class="level advanced">ADVANCED</span>7. XScan and Anchoring Strategies</h2>
+
+        <p>Not every control has a stable, unique identifier (e.g. dynamically generated IDs in some web frameworks). Tosca's engines resolve this using a combination of identification properties and, where necessary, <strong>anchoring</strong> — identifying a control relative to a nearby, more stable sibling or parent element.</p>
+
+        <pre>// Example: a row of "Delete" buttons with no unique IDs, one per grid row
+// Anchor strategy: locate by the sibling "Order Number" cell text, then
+// navigate relative to it to find that row's Delete button
+
+Module Attribute: DeleteButton
+  Anchor: nearest preceding cell with text = {P:OrderNumber}
+  Relative path: ../following-sibling::td[last()]/button</pre>
+
+        <div class="example">
+            <strong>When to anchor:</strong> repeating grid rows, dynamically generated element IDs, list items without stable attributes. Anchoring trades a small amount of setup complexity for a Module Attribute that keeps working even as row order or generated IDs shift between runs.
+        </div>
+
+        <h3>XScan for Bulk/Automated Scanning</h3>
+        <p>For applications with many repetitive screens, Tosca's <strong>XScan</strong> feature can scan structurally similar screens in bulk (for example, every SAP transaction screen sharing a template), dramatically speeding up initial Module creation on large legacy estates.</p>
+
+        <!-- SECTION 8 -->
+        <h2 id="section8"><span class="level advanced">ADVANCED</span>8. Module Folders, Inheritance & Reuse</h2>
+
+        <p>Modules are organised in folders that typically mirror the application's screen/page structure. Common patterns for larger projects:</p>
+
+        <pre>Modules/
+├── Common/
+│   ├── NavigationMenu
+│   └── HeaderBar
+├── Login/
+│   └── LoginPage
+├── Orders/
+│   ├── OrderListPage
+│   └── OrderDetailPage
+└── Admin/
+    └── UserManagementPage</pre>
+
+        <p>Shared elements that appear on many screens (a header, a navigation bar, a cookie banner) should be scanned once into a "Common" Module and referenced by every Test Case that needs them, rather than being re-scanned per page.</p>
+
+        <div class="warning">
+            <strong>⚠️ Common Pitfall:</strong> Re-scanning the same shared control (e.g. a global search bar) into multiple different Modules creates duplicate attributes that all need to be fixed independently when the control changes — exactly the maintenance problem Tosca's model is meant to eliminate. Always check whether a shared Module already exists before scanning a new one.
+        </div>
+
+        <!-- SECTION 9 -->
+        <h2 id="section9"><span class="level intermediate">INTERMEDIATE</span>9. Common Pitfalls When Scanning</h2>
+
+        <ul style="margin: 15px 0; margin-left: 20px;">
+            <li><strong>Scanning too much, too early:</strong> capturing every control on a screen before you know which ones your test cases actually need bloats the Module and makes it harder to navigate.</li>
+            <li><strong>Leaving default technical names:</strong> attributes named <code>TextBox1</code>, <code>Button2</code> instead of <code>Username</code>, <code>LoginButton</code> destroy the business-readability benefit of the model.</li>
+            <li><strong>Wrong ActionMode by default:</strong> newly scanned attributes often default to Input — remember to switch to Verify/Output where the test step's intent is to assert or capture, not act.</li>
+            <li><strong>Ignoring dynamic content:</strong> scanning a control whose identifying property changes on every page load (e.g. a session-specific ID) without anchoring produces a Module Attribute that only works once.</li>
+        </ul>
+
+        <!-- SECTION 10 -->
+        <h2 id="section10"><span class="level beginner">BEGINNER</span>10. Best Practices</h2>
+
+        <h3>1. Rename Every Attribute Immediately</h3>
+        <p>Never leave scan-generated technical names in place. Rename to the business term a tester or stakeholder would use.</p>
+
+        <h3>2. Set ActionMode Deliberately</h3>
+        <p>Decide, for each attribute, whether it will primarily be used to act, capture, or assert — and set a sensible default ActionMode accordingly.</p>
+
+        <h3>3. Group Shared Controls into Common Modules</h3>
+        <p>Headers, navigation, and cross-cutting widgets belong in a shared Module, scanned once.</p>
+
+        <h3>4. Use Anchoring for Repeating Elements</h3>
+        <p>Don't fight dynamic IDs with hard-coded selectors — use relative/anchored identification instead.</p>
+
+        <h3>5. Revisit and Extend Modules Over Time</h3>
+        <pre>// Good ongoing practice:
+Sprint 1: Scan LoginPage with 3 attributes needed for TC001
+Sprint 3: Extend LoginPage with "Remember Me" checkbox for TC015
+Sprint 5: Extend LoginPage with "Forgot Password" link for TC022
+// Module evolves incrementally alongside real test needs</pre>
+
+        <!-- SUMMARY -->
+        <h2 style="margin-top: 40px;">📋 Quick Reference Summary</h2>
+
+        <div class="table-wrap">
+        <table>
+            <tr>
+                <th>Concept</th>
+                <th>Key Points</th>
+            </tr>
+            <tr>
+                <td><strong>TBox</strong></td>
+                <td>Technology-specific recognition engine (Web, WinForms, SAP, Mobile, etc.).</td>
+            </tr>
+            <tr>
+                <td><strong>Module</strong></td>
+                <td>Persisted model of a screen's controls, built by scanning.</td>
+            </tr>
+            <tr>
+                <td><strong>Module Attribute</strong></td>
+                <td>One recognised control with technical param, business param, and ActionMode.</td>
+            </tr>
+            <tr>
+                <td><strong>ActionMode</strong></td>
+                <td>Input / Output / Verify / Wait / Count — determines runtime behaviour of the step.</td>
+            </tr>
+            <tr>
+                <td><strong>Anchoring</strong></td>
+                <td>Locates a control relative to a stable sibling/parent when direct IDs are unreliable.</td>
+            </tr>
+            <tr>
+                <td><strong>Common Modules</strong></td>
+                <td>Shared UI elements scanned once, reused across many screens' test cases.</td>
+            </tr>
+        </table>
+        </div>
+
+        <div style="margin-top: 40px; padding: 20px; background: #ecf0f1; border-radius: 5px;">
+            <h3>🎓 Learning Path</h3>
+            <p><strong>Beginner:</strong> Master sections 1, 2, 3, 10</p>
+            <p><strong>Intermediate:</strong> Understand sections 4, 5, 6, 9</p>
+            <p><strong>Advanced:</strong> Deep dive into sections 7, 8</p>
+        </div>
+
+    </div>
+</body>
+</html>

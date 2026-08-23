@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tosca Test Suites & Execution Lists: Complete Guide</title>
+    <link rel="stylesheet" href="/guides/guide-base.css">
+</head>
+<body>
+    <div class="container">
+        <h1>▶️ Tosca Test Suites & Execution Lists: Complete Guide</h1>
+        <p style="font-size: 1.1em; color: #7f8c8d; margin-bottom: 20px;">
+            Grouping, ordering, and running your test cases with control over setup, teardown, and error handling
+        </p>
+
+        <div class="toc">
+            <h3>📚 Table of Contents</h3>
+            <ul>
+                <li><a href="#section1">1. Test Suites vs Execution Lists</a></li>
+                <li><a href="#section2">2. Anatomy of an Execution List</a></li>
+                <li><a href="#section3">3. Building Your First Execution List</a></li>
+                <li><a href="#section4">4. Test Events: Setup and Teardown</a></li>
+                <li><a href="#section5">5. Result States</a></li>
+                <li><a href="#section6">6. Partial Runs and Re-Running Failures</a></li>
+                <li><a href="#section7">7. ExecutionEntries and Ordering</a></li>
+                <li><a href="#section8">8. Error Handling and Execution Conditions</a></li>
+                <li><a href="#section9">9. Common Pitfalls</a></li>
+                <li><a href="#section10">10. Best Practices</a></li>
+            </ul>
+        </div>
+
+        <!-- SECTION 1 -->
+        <h2 id="section1"><span class="level beginner">BEGINNER</span>1. Test Suites vs Execution Lists</h2>
+
+        <h3>Two Different Groupings, Two Different Purposes</h3>
+        <p>Tosca deliberately separates <em>organising</em> test cases from <em>running</em> them. A <strong>Test Suite</strong> is a logical grouping of Test Cases used for organisation and reporting; it lives in the <em>TestCases</em> section and can be linked to Requirements for traceability. An <strong>Execution List</strong> is the ordered queue of Test Cases that Tosca actually executes in one run; it lives under the <em>Execution</em> section.</p>
+
+        <div class="table-wrap">
+        <table class="table-compact">
+            <tr>
+                <th>Aspect</th>
+                <th>Test Suite</th>
+                <th>Execution List</th>
+            </tr>
+            <tr>
+                <td>Location in TCM</td>
+                <td>TestCases section</td>
+                <td>Execution section</td>
+            </tr>
+            <tr>
+                <td>Primary purpose</td>
+                <td>Organisation, requirement traceability, reporting scope</td>
+                <td>Actual execution — the ordered run queue</td>
+            </tr>
+            <tr>
+                <td>Can be run directly?</td>
+                <td>Not on its own</td>
+                <td>Yes — right-click → Run</td>
+            </tr>
+            <tr>
+                <td>Contains setup/teardown?</td>
+                <td>No</td>
+                <td>Yes — via Test Events</td>
+            </tr>
+        </table>
+        </div>
+
+        <div class="example">
+            <strong>Real-world analogy:</strong> A Test Suite is like a playlist you curate on a music app — a labeled grouping for browsing. An Execution List is like pressing "Play" — an actual ordered performance, with a defined start, defined stops between tracks (Test Events), and a recorded listening history (results).
+        </div>
+
+        <!-- SECTION 2 -->
+        <h2 id="section2"><span class="level beginner">BEGINNER</span>2. Anatomy of an Execution List</h2>
+
+        <pre>ExecutionList: Regression_Sprint12
+├── [Test Event: Setup]  ← runs before every TC
+│   └── TC_ClearTestData
+├── TC001_Login
+├── TC020_PlaceOrder
+├── TC021_CancelOrder
+├── [Test Event: Teardown]  ← runs after every TC
+│   └── TC_Logout
+└── ExecutionCondition: OnError=Continue</pre>
+
+        <p>Each item in the list — a Test Case, a folder of Test Cases, or a Test Event — becomes an <strong>ExecutionEntry</strong> when the list runs. Every entry gets its own result state, log, and (optionally) screenshots.</p>
+
+        <!-- SECTION 3 -->
+        <h2 id="section3"><span class="level beginner">BEGINNER</span>3. Building Your First Execution List</h2>
+
+        <div class="example">
+            <strong>Step by step in TCM:</strong>
+            <pre>1. Right-click the Execution folder → New ExecutionList → name it "DailySmoke"
+2. Drag Test Cases (or entire folders) from TestCases into the list
+3. Reorder entries by drag-and-drop if sequence matters
+4. Set properties: agent, browser/device config, error handling
+5. Right-click the ExecutionList → Run
+6. Review results under Execution → [list name] → Results</pre>
+        </div>
+
+        <h3>Running from the Command Line</h3>
+        <pre>// Running an Execution List
+- Right-click ExecutionList → Run
+- Or: Tosca CI command line
+  ToscaCI run --executionList "Regression_Sprint12"</pre>
+
+        <!-- SECTION 4 -->
+        <h2 id="section4"><span class="level intermediate">INTERMEDIATE</span>4. Test Events: Setup and Teardown</h2>
+
+        <p><strong>Test Events</strong> are special entries that wrap every Test Case in the list with common setup/teardown logic, so you don't need to embed the same login/logout or environment-reset steps into every Test Case individually.</p>
+
+        <pre>ExecutionList: DailySmoke
+  Test Event (Before each): TC_OpenBrowser
+  Test Event (After each):  TC_CloseBrowser
+
+  Entry 1: TC001_Login
+  Entry 2: TC002_Search
+  Entry 3: TC003_Checkout
+
+// Execution Order:
+// TC_OpenBrowser → TC001_Login → TC_CloseBrowser
+// TC_OpenBrowser → TC002_Search → TC_CloseBrowser
+// TC_OpenBrowser → TC003_Checkout → TC_CloseBrowser</pre>
+
+        <div class="table-wrap">
+        <table class="table-compact">
+            <tr>
+                <th>Test Event Type</th>
+                <th>Runs</th>
+                <th>Typical Use</th>
+            </tr>
+            <tr>
+                <td>Before each</td>
+                <td>Before every Test Case in the list</td>
+                <td>Open browser, reset test data, log in</td>
+            </tr>
+            <tr>
+                <td>After each</td>
+                <td>After every Test Case in the list</td>
+                <td>Log out, close browser, clean up created records</td>
+            </tr>
+            <tr>
+                <td>Before/after list</td>
+                <td>Once, at the start/end of the whole run</td>
+                <td>One-time environment provisioning or teardown</td>
+            </tr>
+        </table>
+        </div>
+
+        <div class="note">
+            <strong>💡 Tip:</strong> Test Events keep individual Test Cases focused purely on the business scenario they verify, while the Execution List owns cross-cutting run mechanics like environment prep.
+        </div>
+
+        <!-- SECTION 5 -->
+        <h2 id="section5"><span class="level intermediate">INTERMEDIATE</span>5. Result States</h2>
+
+        <p>After a run, every ExecutionEntry is assigned one of a fixed set of result states, visible in the Execution → Results view:</p>
+
+        <pre>// Result states
+Passed   ✓  all steps succeeded
+Failed   ✗  at least one step failed
+Error    !  unexpected exception
+Skipped  –  marked to skip or condition not met</pre>
+
+        <div class="table-wrap">
+        <table class="table-compact">
+            <tr>
+                <th>State</th>
+                <th>Meaning</th>
+                <th>Typical Cause</th>
+            </tr>
+            <tr>
+                <td>Passed</td>
+                <td>Every step, including all Verify assertions, succeeded</td>
+                <td>Expected outcome</td>
+            </tr>
+            <tr>
+                <td>Failed</td>
+                <td>A Verify/Checkpoint step's actual value didn't match expected</td>
+                <td>Genuine functional defect, or stale expected value</td>
+            </tr>
+            <tr>
+                <td>Error</td>
+                <td>An unexpected exception occurred (element not found, timeout, connection lost)</td>
+                <td>Environment issue, broken selector, unrecovered popup</td>
+            </tr>
+            <tr>
+                <td>Skipped</td>
+                <td>The entry was deliberately excluded or a Condition prevented execution</td>
+                <td>Steering condition evaluated false; manually marked to skip</td>
+            </tr>
+        </table>
+        </div>
+
+        <!-- SECTION 6 -->
+        <h2 id="section6"><span class="level intermediate">INTERMEDIATE</span>6. Partial Runs and Re-Running Failures</h2>
+
+        <pre>// Select specific entries to run
+Right-click entry → Mark for execution → Run Marked
+
+// Re-run only failed entries
+After full run → Filter by Status = Failed
+Right-click failed entries → Re-run</pre>
+
+        <div class="example">
+            <strong>When this matters:</strong> a 300-test-case nightly regression that has 4 failures shouldn't require a full 2-hour re-run to confirm a fix. Marking and re-running just the 4 failed entries turns verification into a 2-minute check.
+        </div>
+
+        <!-- SECTION 7 -->
+        <h2 id="section7"><span class="level advanced">ADVANCED</span>7. ExecutionEntries and Ordering</h2>
+
+        <p>Internally, every item dragged into an Execution List becomes an <strong>ExecutionEntry</strong> — a lightweight reference back to the underlying Test Case, plus run-specific metadata (order position, agent assignment, last result). This indirection is what allows the same Test Case to appear in multiple Execution Lists (e.g. both "Smoke" and "Full Regression") without duplicating its steps.</p>
+
+        <pre>TestCase: TC001_Login (single definition)
+  ├── Referenced by ExecutionEntry in "DailySmoke"
+  ├── Referenced by ExecutionEntry in "Full_Regression"
+  └── Referenced by ExecutionEntry in "PreRelease_Gate"
+
+// Editing TC001_Login's steps updates behaviour
+// in all three Execution Lists simultaneously</pre>
+
+        <p>Ordering matters when later entries assume state left behind by earlier ones (e.g. a "Create User" entry must run before an "Edit User" entry that expects that user to exist). Where entries must be order-independent, design each Test Case to set up and tear down its own state.</p>
+
+        <!-- SECTION 8 -->
+        <h2 id="section8"><span class="level advanced">ADVANCED</span>8. Error Handling and Execution Conditions</h2>
+
+        <p>Execution Lists expose configuration for how the run should behave when an entry fails, and which agent/environment to target:</p>
+
+        <div class="table-wrap">
+        <table class="table-compact">
+            <tr>
+                <th>Setting</th>
+                <th>Options</th>
+                <th>Effect</th>
+            </tr>
+            <tr>
+                <td>ExecutionCondition (OnError)</td>
+                <td>Continue / Stop</td>
+                <td>Whether remaining entries still run after a failure</td>
+            </tr>
+            <tr>
+                <td>ExecutionMode</td>
+                <td>Local / Distributed (DEX)</td>
+                <td>Run on this machine, or dispatch across agent pool</td>
+            </tr>
+            <tr>
+                <td>Retry count</td>
+                <td>0–N</td>
+                <td>Automatically re-attempt a failed entry before marking it Failed</td>
+            </tr>
+        </table>
+        </div>
+
+        <div class="warning">
+            <strong>⚠️ Common Pitfall:</strong> Setting OnError=Stop on a large nightly regression means one early failure prevents hundreds of unrelated, healthy Test Cases from ever running — hiding real information about the state of the build. Most CI regression lists should use Continue, reserving Stop for critical smoke gates where there is no value in continuing past a broken build.
+        </div>
+
+        <!-- SECTION 9 -->
+        <h2 id="section9"><span class="level intermediate">INTERMEDIATE</span>9. Common Pitfalls</h2>
+
+        <ul style="margin: 15px 0; margin-left: 20px;">
+            <li><strong>Confusing Test Suites with Execution Lists:</strong> trying to "run" a Test Suite directly — Test Suites organise, Execution Lists execute.</li>
+            <li><strong>No Test Events, duplicated setup:</strong> embedding login/logout steps in every Test Case instead of using Before/After Test Events on the Execution List.</li>
+            <li><strong>Order-dependent entries without documentation:</strong> a later entry silently depends on data created by an earlier one, breaking as soon as someone reorders or partially re-runs the list.</li>
+            <li><strong>Ignoring Error vs Failed distinction:</strong> treating every non-Passed result as "the feature is broken" when many Error results are actually environment or automation issues, not product defects.</li>
+        </ul>
+
+        <!-- SECTION 10 -->
+        <h2 id="section10"><span class="level beginner">BEGINNER</span>10. Best Practices</h2>
+
+        <h3>1. Use Test Events for Cross-Cutting Setup</h3>
+        <p>Keep environment prep and teardown out of individual Test Cases; centralise it in Before/After Test Events.</p>
+
+        <h3>2. Separate Smoke from Full Regression Lists</h3>
+        <pre>ExecutionList: Smoke_Gate       (5 min, blocks bad deploys)
+ExecutionList: Full_Regression (2 hrs, runs nightly)</pre>
+
+        <h3>3. Choose OnError Deliberately</h3>
+        <p>Use Stop only for gates where continuing has no value; use Continue for broad regression runs so you get complete information.</p>
+
+        <h3>4. Re-Run Failures, Not Everything</h3>
+        <p>After investigating a failure and applying a fix, re-run just the failed entries to confirm before triggering a full re-run.</p>
+
+        <h3>5. Design Test Cases to Be Order-Independent Where Possible</h3>
+        <p>Minimise hidden dependencies between entries so the list can be partially run, reordered, or parallelised via DEX without breaking.</p>
+
+        <!-- SUMMARY -->
+        <h2 style="margin-top: 40px;">📋 Quick Reference Summary</h2>
+
+        <div class="table-wrap">
+        <table>
+            <tr>
+                <th>Concept</th>
+                <th>Key Points</th>
+            </tr>
+            <tr>
+                <td><strong>Test Suite</strong></td>
+                <td>Logical grouping for organisation/reporting; not directly executable.</td>
+            </tr>
+            <tr>
+                <td><strong>Execution List</strong></td>
+                <td>Ordered, runnable queue of Test Cases with agent/error-handling config.</td>
+            </tr>
+            <tr>
+                <td><strong>Test Event</strong></td>
+                <td>Setup/teardown wrapper run before/after every entry, or once per list.</td>
+            </tr>
+            <tr>
+                <td><strong>Result states</strong></td>
+                <td>Passed / Failed / Error / Skipped — each with a distinct root cause profile.</td>
+            </tr>
+            <tr>
+                <td><strong>ExecutionEntry</strong></td>
+                <td>A reference to a Test Case within a specific Execution List's run queue.</td>
+            </tr>
+            <tr>
+                <td><strong>OnError setting</strong></td>
+                <td>Continue keeps running remaining entries; Stop halts the whole list.</td>
+            </tr>
+        </table>
+        </div>
+
+        <div style="margin-top: 40px; padding: 20px; background: #ecf0f1; border-radius: 5px;">
+            <h3>🎓 Learning Path</h3>
+            <p><strong>Beginner:</strong> Master sections 1, 2, 3, 10</p>
+            <p><strong>Intermediate:</strong> Understand sections 4, 5, 6, 9</p>
+            <p><strong>Advanced:</strong> Deep dive into sections 7, 8</p>
+        </div>
+
+    </div>
+</body>
+</html>

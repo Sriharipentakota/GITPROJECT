@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JavaScript Loops: Complete Guide</title>
+    <link rel="stylesheet" href="/guides/guide-base.css">
+</head>
+<body>
+    <div class="container">
+        <h1>🔁 JavaScript Loops: Complete Guide</h1>
+        <p style="font-size: 1.1em; color: #7f8c8d; margin-bottom: 20px;">
+            A comprehensive journey from fundamental concepts to advanced techniques
+        </p>
+
+        <div class="toc">
+            <h3>📚 Table of Contents</h3>
+            <ul>
+                <li><a href="#section1">1. What is a Loop?</a></li>
+                <li><a href="#section2">2. The for Loop</a></li>
+                <li><a href="#section3">3. while and do...while</a></li>
+                <li><a href="#section4">4. for...of (Iterating Values)</a></li>
+                <li><a href="#section5">5. for...in (Iterating Keys)</a></li>
+                <li><a href="#section6">6. break and continue</a></li>
+                <li><a href="#section7">7. Labeled Loops</a></li>
+                <li><a href="#section8">8. Loops vs Array Methods</a></li>
+                <li><a href="#section9">9. Common Pitfalls</a></li>
+                <li><a href="#section10">10. Best Practices</a></li>
+            </ul>
+        </div>
+
+        <!-- SECTION 1 -->
+        <h2 id="section1"><span class="level beginner">BEGINNER</span>1. What is a Loop?</h2>
+
+        <p>A <strong>loop</strong> repeats a block of code as long as a condition remains true, avoiding the need to copy-paste the same statement over and over.</p>
+
+        <div class="example">
+            <strong>Real-world analogy:</strong> A loop is like a washing machine cycle. It keeps spinning until the timer reaches zero. <code>break</code> is the emergency stop button. <code>continue</code> is skipping one step and moving straight to the next.
+        </div>
+
+        <h3>The Five Loop Forms</h3>
+        <ul style="margin: 15px 0; margin-left: 20px;">
+            <li><code>for</code> — when you know how many times to repeat</li>
+            <li><code>while</code> — repeat while a condition holds, checked BEFORE each run</li>
+            <li><code>do...while</code> — like while, but checked AFTER — runs at least once</li>
+            <li><code>for...of</code> — iterate over the VALUES of an iterable (arrays, strings, Maps, Sets)</li>
+            <li><code>for...in</code> — iterate over the KEYS of an object</li>
+        </ul>
+
+        <!-- SECTION 2 -->
+        <h2 id="section2"><span class="level beginner">BEGINNER</span>2. The for Loop</h2>
+
+        <p>The classic <code>for</code> loop has three parts separated by semicolons: initialization, condition, and update.</p>
+
+        <pre>for (let i = 0; i < 3; i++) {
+    console.log(i);
+}
+// Output: 0  1  2
+
+// Anatomy:
+// for ( INIT ; CONDITION ; UPDATE ) { BODY }
+//       let i=0   i<3       i++</pre>
+
+        <h3>Counting Down</h3>
+        <pre>for (let i = 5; i > 0; i--) {
+    console.log(i);
+}
+// Output: 5 4 3 2 1</pre>
+
+        <h3>Stepping by More Than 1</h3>
+        <pre>for (let i = 0; i <= 10; i += 2) {
+    console.log(i);
+}
+// Output: 0 2 4 6 8 10</pre>
+
+        <h3>Nested Loops</h3>
+        <pre>for (let i = 1; i <= 3; i++) {
+    for (let j = 1; j <= 3; j++) {
+        console.log(`${i}-${j}`);
+    }
+}
+// Output: "1-1" "1-2" "1-3" "2-1" "2-2" "2-3" "3-1" "3-2" "3-3"</pre>
+
+        <div class="note">
+            <strong>💡 Tip:</strong> Always declare the loop counter with <code>let</code>, not <code>var</code>. <code>let</code> gives each iteration its own binding, which matters a great deal once closures are involved (see Section 9).
+        </div>
+
+        <!-- SECTION 3 -->
+        <h2 id="section3"><span class="level beginner">BEGINNER</span>3. while and do...while</h2>
+
+        <p>Use <code>while</code> when you don't know in advance how many iterations you'll need — you just keep going until a condition becomes false.</p>
+
+        <pre>let n = 3;
+while (n > 0) {
+    console.log(n);
+    n--;
+}
+// Output: 3 2 1</pre>
+
+        <h3>do...while — Runs At Least Once</h3>
+        <p><code>do...while</code> checks its condition AFTER running the body, guaranteeing at least one execution — useful for things like "keep asking until valid input."</p>
+
+        <pre>let attempts = 0;
+do {
+    attempts++;
+    console.log("Attempt", attempts);
+} while (attempts < 3);
+// Output: "Attempt 1" "Attempt 2" "Attempt 3"
+
+// Even if the condition starts false, the body still runs once:
+let x = 10;
+do {
+    console.log("ran"); // "ran" — this DOES print
+} while (x < 5);</pre>
+
+        <div class="warning">
+            <strong>⚠️ Infinite Loop Danger:</strong> If you forget to update the condition variable inside a <code>while</code> loop, it never becomes false — the loop runs forever and freezes your program (or browser tab).
+        </div>
+
+        <pre>// ❌ INFINITE LOOP — n is never decremented
+let n = 5;
+while (n > 0) {
+    console.log(n);
+    // forgot: n--;
+}</pre>
+
+        <!-- SECTION 4 -->
+        <h2 id="section4"><span class="level beginner">BEGINNER</span>4. for...of (Iterating Values)</h2>
+
+        <p><code>for...of</code> iterates over the actual VALUES of any <strong>iterable</strong> — arrays, strings, Maps, Sets, and more.</p>
+
+        <pre>const fruits = ["apple", "banana", "cherry"];
+for (const fruit of fruits) {
+    console.log(fruit);
+}
+// Output: "apple" "banana" "cherry"
+
+// Works on strings too — iterates characters
+for (const char of "abc") {
+    console.log(char);
+}
+// Output: "a" "b" "c"
+
+// Works on Map — [key, value] pairs
+const scores = new Map([["alice", 90], ["bob", 75]]);
+for (const [name, score] of scores) {
+    console.log(name, score);
+}
+// Output: "alice" 90   "bob" 75</pre>
+
+        <h3>Getting the Index Too</h3>
+        <pre>const items = ["a", "b", "c"];
+for (const [index, value] of items.entries()) {
+    console.log(index, value);
+}
+// Output: 0 "a"   1 "b"   2 "c"</pre>
+
+        <!-- SECTION 5 -->
+        <h2 id="section5"><span class="level intermediate">INTERMEDIATE</span>5. for...in (Iterating Keys)</h2>
+
+        <p><code>for...in</code> iterates over the ENUMERABLE KEYS of an object (including inherited ones). It's meant for plain objects, not arrays.</p>
+
+        <pre>const person = { name: "Alice", age: 30, city: "NYC" };
+
+for (const key in person) {
+    console.log(key, person[key]);
+}
+// Output: "name" "Alice"   "age" 30   "city" "NYC"</pre>
+
+        <div class="warning">
+            <strong>⚠️ Don't Use for...in on Arrays:</strong> On an array, <code>for...in</code> gives you STRING INDICES ("0", "1", "2"), not values — and it can also pick up inherited/non-index properties. Always use <code>for...of</code> or array methods for arrays instead.
+        </div>
+
+        <pre>const arr = ["x", "y", "z"];
+
+for (const key in arr) {
+    console.log(key, typeof key); // "0" "string", "1" "string", "2" "string"
+}
+
+for (const val of arr) {
+    console.log(val); // "x", "y", "z" — this is what you actually want
+}</pre>
+
+        <div class="table-wrap">
+        <table class="table-compact">
+            <tr>
+                <th>Loop</th>
+                <th>Iterates over</th>
+                <th>Use it for</th>
+            </tr>
+            <tr><td><code>for...of</code></td><td>Values</td><td>Arrays, strings, Maps, Sets</td></tr>
+            <tr><td><code>for...in</code></td><td>Keys</td><td>Plain objects</td></tr>
+        </table>
+        </div>
+
+        <!-- SECTION 6 -->
+        <h2 id="section6"><span class="level intermediate">INTERMEDIATE</span>6. break and continue</h2>
+
+        <p><code>break</code> exits the loop entirely — no further iterations run. <code>continue</code> skips only the REST of the current iteration and jumps to the next one.</p>
+
+        <h3>break</h3>
+        <pre>for (let i = 0; i < 10; i++) {
+    if (i === 3) break;
+    console.log(i);
+}
+// Output: 0 1 2  (stops entirely once i reaches 3)</pre>
+
+        <h3>continue</h3>
+        <pre>for (let i = 0; i < 6; i++) {
+    if (i % 2 === 0) continue; // skip even numbers
+    console.log(i);
+}
+// Output: 1 3 5</pre>
+
+        <h3>Finding an Item (break as a Shortcut)</h3>
+        <pre>const users = [{id:1}, {id:2}, {id:3}];
+let found = null;
+
+for (const user of users) {
+    if (user.id === 2) {
+        found = user;
+        break; // stop searching once found — no need to check the rest
+    }
+}
+console.log(found); // {id: 2}</pre>
+
+        <!-- SECTION 7 -->
+        <h2 id="section7"><span class="level advanced">ADVANCED</span>7. Labeled Loops</h2>
+
+        <p>A <strong>label</strong> lets <code>break</code> or <code>continue</code> target an OUTER loop from inside a nested loop — otherwise they only affect the innermost loop.</p>
+
+        <pre>outer: for (let i = 0; i < 3; i++) {
+    for (let j = 0; j < 3; j++) {
+        if (j === 1) break outer; // exits BOTH loops immediately
+        console.log(i, j);
+    }
+}
+// Output: 0 0   (then stops entirely — outer loop is also exited)</pre>
+
+        <pre>// Without the label, break only exits the inner loop:
+for (let i = 0; i < 3; i++) {
+    for (let j = 0; j < 3; j++) {
+        if (j === 1) break; // only exits the inner "j" loop
+        console.log(i, j);
+    }
+}
+// Output: 0 0   1 0   2 0  (outer loop keeps going)</pre>
+
+        <div class="note">
+            <strong>💡 Tip:</strong> Labeled loops are rare in modern code. Most of the time, extracting the nested loops into a separate function and using a plain <code>return</code> to escape both levels is clearer.
+        </div>
+
+        <!-- SECTION 8 -->
+        <h2 id="section8"><span class="level advanced">ADVANCED</span>8. Loops vs Array Methods</h2>
+
+        <p>Modern JavaScript often prefers array methods (<code>map</code>, <code>filter</code>, <code>forEach</code>, <code>reduce</code>) over manual loops for readability — but each has trade-offs.</p>
+
+        <div class="comparison">
+            <div>
+                <strong>Manual for loop:</strong>
+                <pre>const doubled = [];
+for (let i = 0; i < nums.length; i++) {
+    doubled.push(nums[i] * 2);
+}</pre>
+            </div>
+            <div>
+                <strong>Array method (map):</strong>
+                <pre>const doubled = nums.map(n => n * 2);</pre>
+            </div>
+        </div>
+
+        <div class="table-wrap">
+        <table class="table-compact">
+            <tr>
+                <th>Situation</th>
+                <th>Prefer</th>
+            </tr>
+            <tr><td>Transforming every element into a new array</td><td><code>map</code></td></tr>
+            <tr><td>Need to <code>break</code> early / stop searching</td><td><code>for</code> or <code>for...of</code> (array methods can't <code>break</code>)</td></tr>
+            <tr><td>Async operations that need sequential <code>await</code></td><td><code>for...of</code> (not <code>forEach</code> — see pitfalls)</td></tr>
+            <tr><td>Simple "do this for each item"</td><td><code>forEach</code> or <code>for...of</code></td></tr>
+        </table>
+        </div>
+
+        <!-- SECTION 9 -->
+        <h2 id="section9"><span class="level advanced">ADVANCED</span>9. Common Pitfalls</h2>
+
+        <h3>1. The Classic var-in-Loop Closure Bug</h3>
+        <pre>// ❌ BUG: all callbacks share the SAME var i
+const callbacks = [];
+for (var i = 0; i < 3; i++) {
+    callbacks.push(() => console.log(i));
+}
+callbacks[0](); // 3 (not 0!)
+callbacks[1](); // 3 (not 1!)
+callbacks[2](); // 3 (not 2!)
+
+// ✅ FIX: let creates a NEW binding for each iteration
+const fixed = [];
+for (let i = 0; i < 3; i++) {
+    fixed.push(() => console.log(i));
+}
+fixed[0](); // 0
+fixed[1](); // 1
+fixed[2](); // 2</pre>
+
+        <h3>2. forEach Does Not Await Async Callbacks</h3>
+        <pre>// ❌ WRONG — forEach fires all callbacks without waiting
+async function processAll(ids) {
+    ids.forEach(async (id) => {
+        await process(id); // forEach doesn't care about this promise!
+    });
+    console.log("Done"); // logs BEFORE processing actually finishes
+}
+
+// ✅ CORRECT — for...of properly awaits each iteration
+async function processAll(ids) {
+    for (const id of ids) {
+        await process(id);
+    }
+    console.log("Done"); // logs only after all are processed
+}</pre>
+
+        <h3>3. Modifying an Array While Looping Over It</h3>
+        <pre>const arr = [1, 2, 3, 4];
+// ❌ Removing items while iterating shifts indices, skips elements
+for (let i = 0; i < arr.length; i++) {
+    if (arr[i] % 2 === 0) arr.splice(i, 1); // BUG: skips the item after the removed one
+}
+
+// ✅ Iterate backwards, or use filter to build a new array
+const filtered = arr.filter(n => n % 2 !== 0);</pre>
+
+        <h3>4. off-by-one Errors</h3>
+        <pre>const arr = [10, 20, 30];
+// ❌ i <= arr.length reads one index too far
+for (let i = 0; i <= arr.length; i++) {
+    console.log(arr[i]); // last iteration logs undefined
+}
+// ✅ Correct bound
+for (let i = 0; i < arr.length; i++) {
+    console.log(arr[i]);
+}</pre>
+
+        <!-- SECTION 10 -->
+        <h2 id="section10"><span class="level intermediate">INTERMEDIATE</span>10. Best Practices</h2>
+
+        <h3>1. Use let, Never var, for Loop Counters</h3>
+        <pre>// ✅ Good
+for (let i = 0; i < 10; i++) { }
+
+// ❌ Avoid — leaks scope, breaks closures
+for (var i = 0; i < 10; i++) { }</pre>
+
+        <h3>2. Prefer for...of Over Index-Based Loops When You Don't Need the Index</h3>
+        <pre>// ✅ Cleaner
+for (const item of items) { console.log(item); }
+
+// Only reach for index-based when you actually need i
+for (let i = 0; i < items.length; i++) { console.log(i, items[i]); }</pre>
+
+        <h3>3. Cache Length in Very Hot Loops (Micro-Optimization)</h3>
+        <pre>// Rarely necessary in modern engines, but occasionally seen:
+const len = arr.length;
+for (let i = 0; i < len; i++) { }</pre>
+
+        <h3>4. Never Use for...in on Arrays</h3>
+        <pre>// ✅ Correct
+for (const item of arr) { }
+
+// ❌ Wrong tool — gives string indices, may include extras
+for (const key in arr) { }</pre>
+
+        <h3>5. Extract Complex Loop Bodies Into Named Functions</h3>
+        <pre>// ✅ Readable
+for (const order of orders) {
+    processOrder(order);
+}
+
+function processOrder(order) {
+    // ...validation, calculation, side effects
+}</pre>
+
+        <!-- SUMMARY -->
+        <h2 style="margin-top: 40px;">📋 Quick Reference Summary</h2>
+
+        <div class="table-wrap">
+        <table>
+            <tr>
+                <th>Concept</th>
+                <th>Key Points</th>
+            </tr>
+            <tr>
+                <td><strong>for</strong></td>
+                <td>Known iteration count. Three parts: init; condition; update.</td>
+            </tr>
+            <tr>
+                <td><strong>while / do...while</strong></td>
+                <td>Condition-driven. <code>do...while</code> always runs at least once.</td>
+            </tr>
+            <tr>
+                <td><strong>for...of</strong></td>
+                <td>Iterates VALUES of arrays, strings, Maps, Sets.</td>
+            </tr>
+            <tr>
+                <td><strong>for...in</strong></td>
+                <td>Iterates KEYS of plain objects — avoid on arrays.</td>
+            </tr>
+            <tr>
+                <td><strong>break / continue</strong></td>
+                <td><code>break</code> exits the loop; <code>continue</code> skips to the next iteration.</td>
+            </tr>
+            <tr>
+                <td><strong>let vs var in loops</strong></td>
+                <td><code>let</code> gives each iteration its own binding — essential for correct closures.</td>
+            </tr>
+        </table>
+        </div>
+
+        <div style="margin-top: 40px; padding: 20px; background: #ecf0f1; border-radius: 5px;">
+            <h3>🎓 Learning Path</h3>
+            <p><strong>Beginner:</strong> Master sections 1, 2, 3, 4</p>
+            <p><strong>Intermediate:</strong> Understand sections 5, 6, 10</p>
+            <p><strong>Advanced:</strong> Deep dive into sections 7, 8, 9</p>
+        </div>
+
+    </div>
+</body>
+</html>

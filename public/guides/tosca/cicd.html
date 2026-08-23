@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tosca CI/CD Integration: Complete Guide</title>
+    <link rel="stylesheet" href="/guides/guide-base.css">
+</head>
+<body>
+    <div class="container">
+        <h1>🔄 Tosca CI/CD Integration: Complete Guide</h1>
+        <p style="font-size: 1.1em; color: #7f8c8d; margin-bottom: 20px;">
+            Wiring Tosca into build pipelines with ToscaCI so automated tests gate every deployment
+        </p>
+
+        <div class="toc">
+            <h3>📚 Table of Contents</h3>
+            <ul>
+                <li><a href="#section1">1. What Is ToscaCI?</a></li>
+                <li><a href="#section2">2. ToscaCI Command-Line Basics</a></li>
+                <li><a href="#section3">3. Exit Codes and Pipeline Gating</a></li>
+                <li><a href="#section4">4. Jenkins Pipeline Integration</a></li>
+                <li><a href="#section5">5. Azure DevOps Pipeline Integration</a></li>
+                <li><a href="#section6">6. GitHub Actions Integration</a></li>
+                <li><a href="#section7">7. The Smoke-Gate-Then-Regression Pattern</a></li>
+                <li><a href="#section8">8. Artifacts, Logs, and Failure Diagnostics in CI</a></li>
+                <li><a href="#section9">9. Common Pitfalls</a></li>
+                <li><a href="#section10">10. Best Practices</a></li>
+            </ul>
+        </div>
+
+        <!-- SECTION 1 -->
+        <h2 id="section1"><span class="level beginner">BEGINNER</span>1. What Is ToscaCI?</h2>
+
+        <h3>Definition</h3>
+        <p><strong>ToscaCI</strong> is a command-line tool that triggers Tosca Execution Lists from a build server without ever opening TCM's graphical interface. It is the bridge between Tosca's GUI-driven test authoring and the fully automated, headless world of CI/CD pipelines.</p>
+
+        <div class="example">
+            <strong>Real-world analogy:</strong> ToscaCI in a pipeline is like a quality inspector on a factory assembly line. After each assembly stage (deploy), the inspector runs automated checks (Tosca tests). If the checks pass, the product moves to the next station. If they fail, the line halts and the fault is logged — defects never reach the customer.
+        </div>
+
+        <p>Jenkins, Azure DevOps, GitHub Actions, and GitLab CI all use ToscaCI the same way: as a command-line step invoked after deployment, blocking (or informing) the rest of the pipeline based on the test outcome.</p>
+
+        <!-- SECTION 2 -->
+        <h2 id="section2"><span class="level beginner">BEGINNER</span>2. ToscaCI Command-Line Basics</h2>
+
+        <pre>// ToscaCI basic run
+ToscaCI.exe run
+  --workspace "http://toscaserver:8080/Tricentis/Tosca"
+  --executionList "Smoke_Tests"
+  --resultdir "C:\CI\Results"
+  --timeout 600</pre>
+
+        <div class="table-wrap">
+        <table class="table-compact">
+            <tr>
+                <th>Argument</th>
+                <th>Purpose</th>
+            </tr>
+            <tr>
+                <td>--workspace</td>
+                <td>The Tosca repository/workspace connection to use</td>
+            </tr>
+            <tr>
+                <td>--executionList</td>
+                <td>Which Execution List to run</td>
+            </tr>
+            <tr>
+                <td>--resultdir</td>
+                <td>Where to write result files (JUnit XML, logs, screenshots)</td>
+            </tr>
+            <tr>
+                <td>--timeout</td>
+                <td>Maximum seconds to wait before considering the run stuck</td>
+            </tr>
+        </table>
+        </div>
+
+        <!-- SECTION 3 -->
+        <h2 id="section3"><span class="level beginner">BEGINNER</span>3. Exit Codes and Pipeline Gating</h2>
+
+        <p>ToscaCI communicates the outcome of a run back to the CI server through its process <strong>exit code</strong> — the same mechanism every command-line tool uses to signal success or failure to a shell or pipeline runner.</p>
+
+        <pre>// Exit codes
+0  → All tests passed
+1  → One or more tests failed
+2  → Execution error (agent unavailable, config issue)</pre>
+
+        <div class="note">
+            <strong>💡 Tip:</strong> Every mainstream CI system treats a non-zero exit code from a pipeline step as "this stage failed," automatically halting or flagging the pipeline — no custom parsing logic is needed just to gate the build on Tosca's outcome.
+        </div>
+
+        <!-- SECTION 4 -->
+        <h2 id="section4"><span class="level intermediate">INTERMEDIATE</span>4. Jenkins Pipeline Integration</h2>
+
+        <pre>// Jenkins pipeline (Declarative)
+stage('TOSCA Smoke') {
+  steps {
+    bat 'ToscaCI.exe run --executionList "Smoke" --resultdir ".\\results"'
+    junit '.\\results\\ExecutionResults.xml'
+  }
+  post { failure { archiveArtifacts '.\\results\\*.png' } }
+}</pre>
+
+        <p>This declarative stage runs the smoke Execution List, publishes the JUnit-format results natively into Jenkins' Test Results UI, and — only on failure — archives any captured screenshots as build artifacts for investigation.</p>
+
+        <!-- SECTION 5 -->
+        <h2 id="section5"><span class="level intermediate">INTERMEDIATE</span>5. Azure DevOps Pipeline Integration</h2>
+
+        <pre># azure-pipelines.yml
+stages:
+- stage: Deploy
+  jobs:
+  - job: DeployToQA
+    steps:
+    - script: deploy.sh --env qa
+
+- stage: SmokeTest
+  dependsOn: Deploy
+  jobs:
+  - job: ToscaSmoke
+    steps:
+    - task: CmdLine@2
+      inputs:
+        script: |
+          ToscaCI.exe run \
+            --executionList "Smoke_QA" \
+            --resultdir "$(Build.ArtifactStagingDirectory)"
+    - task: PublishTestResults@2
+      inputs:
+        testResultsFormat: JUnit
+        testResultsFiles: '**\ExecutionResults.xml'</pre>
+
+        <p>Here the <code>SmokeTest</code> stage depends on <code>Deploy</code> completing first, and the built-in <code>PublishTestResults</code> task consumes ToscaCI's JUnit output natively — the same pattern used for any other test framework in Azure DevOps.</p>
+
+        <!-- SECTION 6 -->
+        <h2 id="section6"><span class="level intermediate">INTERMEDIATE</span>6. GitHub Actions Integration</h2>
+
+        <pre># .github/workflows/tosca.yml
+name: TOSCA Regression
+on: [push]
+jobs:
+  tosca:
+    runs-on: windows-latest
+    steps:
+      - name: Run TOSCA via DEX Cloud
+        run: |
+          ToscaCI.exe run \
+            --executionEnvironment "Cloud" \
+            --executionList "Full_Regression" \
+            --resultdir "${{ github.workspace }}/results"
+      - name: Publish results
+        uses: dorny/test-reporter@v1
+        with:
+          name: TOSCA Results
+          path: results/ExecutionResults.xml
+          reporter: java-junit</pre>
+
+        <div class="example">
+            <strong>Note the DEX integration:</strong> combining <code>--executionEnvironment "Cloud"</code> with ToscaCI lets a GitHub Actions runner trigger a full parallel regression on Tosca Cloud agents on every push, without the CI runner itself needing to host any test execution capability — see the Distributed Execution (DEX) guide for the agent-side details.
+        </div>
+
+        <!-- SECTION 7 -->
+        <h2 id="section7"><span class="level advanced">ADVANCED</span>7. The Smoke-Gate-Then-Regression Pattern</h2>
+
+        <p>A common enterprise pattern chains two Tosca stages with different purposes: a fast smoke gate that blocks obviously broken deployments quickly, followed by a slower full regression that runs only if the smoke gate passes.</p>
+
+        <pre>Deploy → Smoke TOSCA run (gate) → Full Regression TOSCA run → Publish report</pre>
+
+        <div class="table-wrap">
+        <table class="table-compact">
+            <tr>
+                <th>Stage</th>
+                <th>Duration</th>
+                <th>Purpose</th>
+            </tr>
+            <tr>
+                <td>Smoke gate</td>
+                <td>Minutes</td>
+                <td>Catch catastrophic deployment failures fast, before investing in a long run</td>
+            </tr>
+            <tr>
+                <td>Full regression</td>
+                <td>Tens of minutes to hours</td>
+                <td>Comprehensive feature coverage, typically parallelised via DEX</td>
+            </tr>
+        </table>
+        </div>
+
+        <div class="example">
+            <strong>Why gate first:</strong> the smoke gate runs in minutes and blocks a bad deployment before spending 30+ minutes on the full suite — avoiding wasted compute and faster feedback for the team when something is fundamentally broken.
+        </div>
+
+        <!-- SECTION 8 -->
+        <h2 id="section8"><span class="level advanced">ADVANCED</span>8. Artifacts, Logs, and Failure Diagnostics in CI</h2>
+
+        <p>A CI-triggered Tosca run should leave behind enough evidence for someone to diagnose a failure without re-running the pipeline. This typically means archiving three categories of output as pipeline artifacts:</p>
+
+        <div class="table-wrap">
+        <table class="table-compact">
+            <tr>
+                <th>Artifact Type</th>
+                <th>Purpose</th>
+            </tr>
+            <tr>
+                <td>JUnit XML (ExecutionResults.xml)</td>
+                <td>Machine-readable pass/fail summary consumed by the CI's native test reporting UI</td>
+            </tr>
+            <tr>
+                <td>Screenshots</td>
+                <td>Visual evidence of the application state at the moment of failure</td>
+            </tr>
+            <tr>
+                <td>Tosca execution logs</td>
+                <td>Full step-level detail for deep debugging beyond what fits in the JUnit summary</td>
+            </tr>
+        </table>
+        </div>
+
+        <div class="warning">
+            <strong>⚠️ Common Pitfall:</strong> Publishing only the JUnit summary and discarding screenshots/logs after the pipeline run means a failure investigated a day later has no visual evidence — the team is stuck re-running the whole regression just to see what actually happened.
+        </div>
+
+        <!-- SECTION 9 -->
+        <h2 id="section9"><span class="level intermediate">INTERMEDIATE</span>9. Common Pitfalls</h2>
+
+        <ul style="margin: 15px 0; margin-left: 20px;">
+            <li><strong>No smoke gate before full regression:</strong> running a 2-hour regression against a deployment that's fundamentally broken, wasting compute and delaying feedback.</li>
+            <li><strong>Discarding evidence on success only:</strong> archiving screenshots/logs conditionally in a way that also accidentally discards them for genuine flaky failures.</li>
+            <li><strong>Hard-coding environment details in the ToscaCI call:</strong> instead of using pipeline variables/parameters, making the same script unusable across QA, Staging, and Production pipelines.</li>
+            <li><strong>Ignoring exit code 2 (execution error):</strong> treating it the same as exit code 1 (test failures) when it actually signals an infrastructure/agent problem needing different triage.</li>
+        </ul>
+
+        <!-- SECTION 10 -->
+        <h2 id="section10"><span class="level beginner">BEGINNER</span>10. Best Practices</h2>
+
+        <h3>1. Always Gate with a Fast Smoke Suite First</h3>
+        <p>Reserve full regression for after a smoke gate confirms the deployment is fundamentally healthy.</p>
+
+        <h3>2. Publish JUnit XML Natively</h3>
+        <pre>junit '.\results\ExecutionResults.xml'
+// or PublishTestResults@2 / test-reporter@v1
+// — use your CI's built-in JUnit support, don't build custom parsing</pre>
+
+        <h3>3. Archive Screenshots and Logs on Failure</h3>
+        <p>Make failure evidence available without requiring a pipeline re-run to reproduce.</p>
+
+        <h3>4. Parameterise Environment and Execution List by Pipeline Stage</h3>
+        <p>Use pipeline variables for <code>--workspace</code>, <code>--executionList</code>, and PCD selection rather than hard-coding a single environment into the script.</p>
+
+        <h3>5. Distinguish Exit Code 1 from Exit Code 2</h3>
+        <p>Route test failures (1) to the QA team's triage process, and execution errors (2) to the automation/infrastructure team — they need different responses.</p>
+
+        <!-- SUMMARY -->
+        <h2 style="margin-top: 40px;">📋 Quick Reference Summary</h2>
+
+        <div class="table-wrap">
+        <table>
+            <tr>
+                <th>Concept</th>
+                <th>Key Points</th>
+            </tr>
+            <tr>
+                <td><strong>ToscaCI</strong></td>
+                <td>Command-line tool that triggers Execution Lists from build servers.</td>
+            </tr>
+            <tr>
+                <td><strong>Exit codes</strong></td>
+                <td>0 = all passed, 1 = test failures, 2 = execution/infrastructure error.</td>
+            </tr>
+            <tr>
+                <td><strong>JUnit XML</strong></td>
+                <td>Standard results format consumed natively by Jenkins, Azure DevOps, GitHub Actions.</td>
+            </tr>
+            <tr>
+                <td><strong>Smoke-then-regression</strong></td>
+                <td>Fast gate blocks bad deploys before investing in a long full regression run.</td>
+            </tr>
+            <tr>
+                <td><strong>DEX + CI</strong></td>
+                <td>--executionEnvironment "Cloud"/"DEX" lets CI trigger parallel runs across agent pools.</td>
+            </tr>
+            <tr>
+                <td><strong>Artifacts</strong></td>
+                <td>Archive JUnit XML, screenshots, and logs so failures are diagnosable after the fact.</td>
+            </tr>
+        </table>
+        </div>
+
+        <div style="margin-top: 40px; padding: 20px; background: #ecf0f1; border-radius: 5px;">
+            <h3>🎓 Learning Path</h3>
+            <p><strong>Beginner:</strong> Master sections 1, 2, 3, 10</p>
+            <p><strong>Intermediate:</strong> Understand sections 4, 5, 6, 9</p>
+            <p><strong>Advanced:</strong> Deep dive into sections 7, 8</p>
+        </div>
+
+    </div>
+</body>
+</html>
