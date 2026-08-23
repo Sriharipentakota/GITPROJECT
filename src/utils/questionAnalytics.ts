@@ -13,16 +13,43 @@ export type AllAnalytics = Record<string, PathAnalytics>; // key: pathId
 
 const STORAGE_KEY = 'jml_question_analytics_v1';
 
+// ── In-memory cache + debounced persistence ─────────────────────────────────
+// recordQuestionEvent() fires on every single "Check Answer"/"Skip" click —
+// the most frequent interaction in the app. Reading this key with
+// JSON.parse and re-serializing it with JSON.stringify on every one of those
+// clicks means the cost is proportional to the size of *all* analytics ever
+// recorded (every question, every concept, every path), not to the one event
+// being logged — so the longer someone actually uses the app, the slower each
+// click gets. A cache avoids re-parsing unchanged data on every read, and a
+// short debounced write avoids re-serializing the whole (growing) blob to
+// localStorage synchronously inside the click handler; flushOnUnload keeps a
+// debounced write from ever being lost if the tab closes first.
+let cache: AllAnalytics | null = null;
+let flushTimer: ReturnType<typeof setTimeout> | null = null;
+
 function load(): AllAnalytics {
+  if (cache) return cache;
   try {
-    return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+    cache = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
   } catch {
-    return {};
+    cache = {};
   }
+  return cache!;
 }
 
-function save(data: AllAnalytics) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+function flush() {
+  if (flushTimer) { clearTimeout(flushTimer); flushTimer = null; }
+  if (cache) localStorage.setItem(STORAGE_KEY, JSON.stringify(cache));
+}
+
+function scheduleFlush() {
+  if (flushTimer) return;
+  flushTimer = setTimeout(flush, 600);
+}
+
+if (typeof window !== 'undefined') {
+  window.addEventListener('pagehide', flush);
+  window.addEventListener('beforeunload', flush);
 }
 
 export function recordQuestionEvent(
@@ -43,8 +70,9 @@ export function recordQuestionEvent(
     totalTimeMs: entry.totalTimeMs + Math.max(0, timeMs),
     timedCount: entry.timedCount + 1,
   };
-  data[pathId] = { ...pathData, [key]: next };
-  save(data);
+  pathData[key] = next;
+  data[pathId] = pathData;
+  scheduleFlush();
 }
 
 export function loadQuestionAnalytics(): AllAnalytics {

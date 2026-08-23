@@ -256,7 +256,15 @@ export default function Analytics({ allProgress, missionProgress }: Props) {
   return (
     <div className="analytics-root">
       <style>{`
-        .analytics-root { padding: 24px; max-width: 1100px; margin: 0 auto; font-family: inherit; }
+        /* color is set explicitly here (not just inherited from body) because the
+           theme attribute lives on .app (data-theme={theme} in App.tsx), and this
+           component sits below it in the tree — body itself never gets that
+           attribute, so body's own "color: var(--tx)" resolves against the
+           unthemed :root default instead of the active theme. Every other
+           component in App.css re-declares "color: var(--tx)" at each usage site
+           for the same reason; this was the one place that relied on inheritance
+           and silently rendered near-white text in light mode. */
+        .analytics-root { padding: 24px; max-width: 1100px; margin: 0 auto; font-family: inherit; color: var(--tx); }
         .analytics-header { margin-bottom: 28px; }
         .analytics-header h1 { font-size: 1.75rem; font-weight: 700; margin: 0 0 4px; }
         .analytics-header p { font-size: 0.9rem; opacity: 0.65; margin: 0; }
@@ -304,17 +312,20 @@ export default function Analytics({ allProgress, missionProgress }: Props) {
         .analytics-dist-item { flex: 1; min-width: 110px; background: var(--kpi-bg, #f4f6fa); border-radius: 10px; padding: 14px 16px; border: 1px solid var(--kpi-border, #e2e6ef); text-align: center; }
         .analytics-dist-num { font-size: 1.6rem; font-weight: 700; }
         .analytics-dist-label { font-size: 0.72rem; opacity: 0.6; text-transform: uppercase; letter-spacing: 0.04em; margin-top: 2px; }
-        .analytics-note { font-size: 0.78rem; opacity: 0.5; text-align: center; margin-top: 8px; padding-top: 16px; border-top: 1px solid var(--kpi-border, #e2e6ef); }
+        .analytics-note { font-size: 0.78rem; opacity: 0.68; text-align: center; margin-top: 8px; padding-top: 16px; border-top: 1px solid var(--kpi-border, #e2e6ef); }
         @media (max-width: 800px) {
           .analytics-summary-row { grid-template-columns: repeat(2, 1fr); }
           .analytics-paths-row { grid-template-columns: 1fr; }
           .analytics-missions-row { grid-template-columns: 1fr; }
         }
-        @media (prefers-color-scheme: dark) {
-          .analytics-root { --kpi-bg: #1e2230; --kpi-border: #2d3348; --track-bg: #2d3348; }
-        }
-        :root[data-theme="dark"] .analytics-root { --kpi-bg: #1e2230; --kpi-border: #2d3348; --track-bg: #2d3348; }
-        :root[data-theme="light"] .analytics-root { --kpi-bg: #f4f6fa; --kpi-border: #e2e6ef; --track-bg: #dde2ed; }
+        /* Theme lives on .app (data-theme="..."), not on :root/<html> — these
+           must be plain attribute selectors, not :root[data-theme=...], or they
+           never match and --kpi-bg/--kpi-border/--track-bg silently fall back to
+           their light-only defaults above regardless of the active theme. App.tsx
+           always sets an explicit data-theme on .app (it's never unset), so no
+           prefers-color-scheme fallback is needed here. */
+        [data-theme="dark"] .analytics-root  { --kpi-bg: #1e2230; --kpi-border: #2d3348; --track-bg: #2d3348; }
+        [data-theme="light"] .analytics-root { --kpi-bg: #f4f6fa; --kpi-border: #e2e6ef; --track-bg: #dde2ed; }
       `}</style>
 
       {/* Header */}
@@ -420,7 +431,7 @@ export default function Analytics({ allProgress, missionProgress }: Props) {
                   <span className="analytics-path-title">{meta.label}</span>
                 </div>
                 {insight.totalAnswered === 0 && insight.totalSkipped === 0 ? (
-                  <p style={{ opacity: 0.55, fontSize: '0.82rem' }}>No quiz activity recorded yet.</p>
+                  <p style={{ opacity: 0.68, fontSize: '0.82rem' }}>No quiz activity recorded yet.</p>
                 ) : (
                   <>
                     <div className="analytics-chips" style={{ marginBottom: 12 }}>
@@ -432,7 +443,7 @@ export default function Analytics({ allProgress, missionProgress }: Props) {
                       )}
                     </div>
                     {insight.struggleQuestions.length === 0 ? (
-                      <p style={{ opacity: 0.55, fontSize: '0.8rem' }}>No repeat-attempt struggle points yet.</p>
+                      <p style={{ opacity: 0.68, fontSize: '0.8rem' }}>No repeat-attempt struggle points yet.</p>
                     ) : (
                       <div>
                         <div style={{ fontSize: '0.75rem', fontWeight: 700, opacity: 0.7, marginBottom: 6 }}>Top struggle points</div>
@@ -445,7 +456,7 @@ export default function Analytics({ allProgress, missionProgress }: Props) {
                             <div style={{ opacity: 0.85, marginBottom: 2 }}>
                               {sq.question.length > 70 ? sq.question.slice(0, 70) + '…' : sq.question}
                             </div>
-                            <div style={{ opacity: 0.55, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                            <div style={{ opacity: 0.68, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                               <span>{sq.conceptTitle}</span>
                               <span style={{ color: '#ef4444', fontWeight: 700 }}>{Math.round(sq.wrongRate * 100)}% wrong</span>
                               <span>{sq.attempts} attempts</span>
@@ -472,7 +483,7 @@ export default function Analytics({ allProgress, missionProgress }: Props) {
           </span>
         </div>
         {globalNeedsAttention.length === 0 ? (
-          <p style={{ opacity: 0.55, fontSize: '0.88rem' }}>No concepts need attention — great progress!</p>
+          <p style={{ opacity: 0.68, fontSize: '0.88rem' }}>No concepts need attention — great progress!</p>
         ) : (
           <div className="analytics-concept-list">
             {globalNeedsAttention.map(c => (
@@ -499,7 +510,7 @@ export default function Analytics({ allProgress, missionProgress }: Props) {
           </span>
         </div>
         {globalMastered.length === 0 ? (
-          <p style={{ opacity: 0.55, fontSize: '0.88rem' }}>No mastered concepts yet — keep going!</p>
+          <p style={{ opacity: 0.68, fontSize: '0.88rem' }}>No mastered concepts yet — keep going!</p>
         ) : (
           <div className="analytics-concept-list">
             {globalMastered.map(c => (
@@ -526,7 +537,7 @@ export default function Analytics({ allProgress, missionProgress }: Props) {
               <div className="analytics-mission-group" key={pathId}>
                 <div className="analytics-mission-group-title">{label} Missions</div>
                 {missions.length === 0 && (
-                  <div style={{ fontSize: '0.8rem', opacity: 0.5 }}>No missions available</div>
+                  <div style={{ fontSize: '0.8rem', opacity: 0.68 }}>No missions available</div>
                 )}
                 {missions.map(({ mission, prog }) => {
                   const status = prog?.status ?? 'not-started';
