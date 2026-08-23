@@ -40,8 +40,11 @@ export default function Header({
           {sidebarOpen ? '✕' : '☰'}
         </button>
         <div className="header-logo">{currentPath?.icon ?? '⚡'}</div>
-        <div>
-          <h1 className="header-title">Mastery Lab</h1>
+        <div className="header-brand-text">
+          <h1 className="header-title">
+            <span className="header-title-full">Mastery Lab</span>
+            <span className="header-title-short">Lab</span>
+          </h1>
           <p className="header-sub">{currentPath?.label ?? 'Learning'} · {conceptCount} concepts · {totalQs.toLocaleString()} Qs</p>
         </div>
       </div>

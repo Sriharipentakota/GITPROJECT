@@ -21,7 +21,7 @@
   background: var(--sb);
   border-bottom: 1px solid var(--bd);
   position: relative; z-index: 40;
-  width: 100%;
+  width: 100%; overflow: hidden;
 }
 /* Gradient accent line along the top */
 .header::before {
@@ -50,8 +50,24 @@
   background: var(--ac-glow); border: 1px solid var(--ac-ring);
   display: flex; align-items: center; justify-content: center;
 }
+.header-brand-text { min-width: 0; }
+.header-title,
+.header-sub {
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
 .header-title { font-size: clamp(0.85rem, 1.5vw + 0.6rem, 0.95rem); font-weight: 700; color: var(--tx); line-height: 1.2; letter-spacing: -0.2px; }
 .header-sub   { font-size: 11px; color: var(--dm); margin-top: 1px; }
+/* On very narrow phones the hamburger + logo + 3 header-right icon buttons
+   alone consume ~300px, leaving too little room for "Mastery Lab" to render
+   without mangling it down to 1-2 letters. Below 400px, fall back to just
+   "Lab" (always fits) and drop the now-redundant subtitle line (its info is
+   already surfaced in the sidebar path switcher and dashboard). */
+.header-title-short { display: none; }
+@media (max-width: 399px) {
+  .header-title-full { display: none; }
+  .header-title-short { display: inline; }
+  .header-sub { display: none; }
+}
 
 /* Center path switcher — hidden on mobile (the bottom nav bar covers path switching) */
 .path-tabs {
@@ -108,7 +124,14 @@
 .header-stat-val   { font-weight: 700; font-size: 13px; }
 .header-stat-label { color: var(--dm); }
 
-.save-status-wrap { display: flex; align-items: center; min-width: 70px; justify-content: flex-end; }
+/* No reserved width on mobile — the 70px anti-jank reserve (below) competes
+   too heavily with the brand text + 3 icon buttons on a narrow header; the
+   indicator is empty most of the time anyway, so let it take 0px until it
+   has content there. */
+.save-status-wrap { display: flex; align-items: center; min-width: 0; flex-shrink: 0; justify-content: flex-end; }
+@media (min-width: 769px) {
+  .save-status-wrap { min-width: 70px; }
+}
 .save-indicator {
   display: inline-flex; align-items: center; gap: 5px;
   font-size: 12px; font-weight: 600; padding: 4px 10px;
