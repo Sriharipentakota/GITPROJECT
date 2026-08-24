@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TypeScript tsconfig & Compiler Configuration: Complete Guide</title>
+    <link rel="stylesheet" href="/guides/guide-base.css">
+</head>
+<body>
+    <div class="container">
+        <h1>⚙️ TypeScript tsconfig & Compiler Configuration: Complete Guide</h1>
+        <p style="font-size: 1.1em; color: #7f8c8d; margin-bottom: 20px;">
+            A comprehensive journey from fundamental concepts to advanced techniques
+        </p>
+
+        <div class="toc">
+            <h3>📚 Table of Contents</h3>
+            <ul>
+                <li><a href="#section1">1. What is tsconfig.json?</a></li>
+                <li><a href="#section2">2. target and lib</a></li>
+                <li><a href="#section3">3. module and moduleResolution</a></li>
+                <li><a href="#section4">4. The strict Family of Flags</a></li>
+                <li><a href="#section5">5. Included Files: include, exclude, files</a></li>
+                <li><a href="#section6">6. Output Control: outDir, rootDir, declaration</a></li>
+                <li><a href="#section7">7. Interop Flags: esModuleInterop and skipLibCheck</a></li>
+                <li><a href="#section8">8. Path Mapping with baseUrl and paths</a></li>
+                <li><a href="#section9">9. Project References and extends</a></li>
+                <li><a href="#section10">10. Best Practices</a></li>
+            </ul>
+        </div>
+
+        <!-- SECTION 1 -->
+        <h2 id="section1"><span class="level intermediate">INTERMEDIATE</span>1. What is tsconfig.json?</h2>
+
+        <h3>Definition</h3>
+        <p><code>tsconfig.json</code> is the configuration file that tells the TypeScript compiler (<code>tsc</code>) which files to compile and how strictly to check them. Its presence in a directory also marks that directory as the root of a TypeScript project for editors and tools.</p>
+
+        <div class="example">
+            <strong>Real-world analogy:</strong> tsconfig.json is like a recipe's oven settings — it doesn't change the ingredients (your code), but it controls temperature and timing (strictness, target JS version) that determine how the final dish comes out.
+        </div>
+
+        <pre>// Generate a starter tsconfig.json
+// npx tsc --init
+
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "strict": true,
+    "outDir": "./dist",
+    "rootDir": "./src"
+  },
+  "include": ["src/**/*"]
+}</pre>
+
+        <div class="note">
+            <strong>💡 Tip:</strong> Running plain <code>tsc</code> with no arguments compiles the entire project according to the nearest <code>tsconfig.json</code>, walking up from the current directory.
+        </div>
+
+        <!-- SECTION 2 -->
+        <h2 id="section2"><span class="level intermediate">INTERMEDIATE</span>2. target and lib</h2>
+
+        <h3>target — Which JavaScript Version to Emit</h3>
+        <p><code>target</code> controls both the JavaScript syntax the compiler outputs (e.g. whether classes compile down to functions) and which built-in APIs TypeScript assumes exist without extra libraries.</p>
+
+        <pre>{
+  "compilerOptions": {
+    "target": "ES2022"   // modern - classes, async/await, optional chaining all native
+  }
+}
+
+// class Foo {} compiled with target: "ES5" becomes verbose constructor-function code;
+// compiled with target: "ES2022" it stays as class Foo {}</pre>
+
+        <h3>lib — Which Type Declarations to Include</h3>
+        <p><code>lib</code> lets you add or override the ambient type declarations available (like DOM APIs or newer array methods), independent of the compiled JS syntax.</p>
+
+        <pre>{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"]
+    // DOM types (document, window) are only included if you add them here,
+    // typically needed for browser-facing code but not for a Node.js backend
+  }
+}</pre>
+
+        <!-- SECTION 3 -->
+        <h2 id="section3"><span class="level intermediate">INTERMEDIATE</span>3. module and moduleResolution</h2>
+
+        <h3>module — The Output Module Format</h3>
+        <pre>{
+  "compilerOptions": {
+    "module": "ESNext"      // keeps import/export as-is - for bundlers (Vite, esbuild, webpack)
+    // "module": "CommonJS" // compiles to require()/module.exports - classic Node.js
+    // "module": "NodeNext" // follows Node's own ESM/CJS resolution rules based on package.json
+  }
+}</pre>
+
+        <h3>moduleResolution — How Import Paths Are Located</h3>
+        <pre>{
+  "compilerOptions": {
+    "module": "ESNext",
+    "moduleResolution": "bundler"   // modern default recommended for apps using a bundler
+    // "moduleResolution": "node10" // classic Node.js CommonJS-style resolution (older name: "node")
+    // "moduleResolution": "nodenext" // pairs with "module": "NodeNext"
+  }
+}</pre>
+
+        <div class="table-wrap">
+        <table class="table-compact">
+            <tr>
+                <th>Setup</th>
+                <th>module</th>
+                <th>moduleResolution</th>
+            </tr>
+            <tr>
+                <td>Frontend app with Vite/webpack</td>
+                <td>ESNext</td>
+                <td>bundler</td>
+            </tr>
+            <tr>
+                <td>Node.js backend (CommonJS)</td>
+                <td>CommonJS</td>
+                <td>node10</td>
+            </tr>
+            <tr>
+                <td>Node.js backend (native ESM)</td>
+                <td>NodeNext</td>
+                <td>nodenext</td>
+            </tr>
+        </table>
+        </div>
+
+        <!-- SECTION 4 -->
+        <h2 id="section4"><span class="level advanced">ADVANCED</span>4. The strict Family of Flags</h2>
+
+        <p><code>strict: true</code> is a shorthand that enables an entire family of individually toggleable safety checks at once.</p>
+
+        <pre>{
+  "compilerOptions": {
+    "strict": true
+    // Equivalent to enabling all of the following individually:
+    // "noImplicitAny": true,
+    // "strictNullChecks": true,
+    // "strictFunctionTypes": true,
+    // "strictBindCallApply": true,
+    // "strictPropertyInitialization": true,
+    // "noImplicitThis": true,
+    // "useUnknownInCatchVariables": true,
+    // "alwaysStrict": true
+  }
+}</pre>
+
+        <h3>What Each Key Flag Actually Does</h3>
+        <pre>// noImplicitAny: true
+function process(data) { /* ❌ Error: 'data' implicitly has an 'any' type */ }
+
+// strictNullChecks: true
+let name: string = null;   // ❌ Error - null not assignable to string
+
+// strictPropertyInitialization: true
+class User {
+    name: string;   // ❌ Error - not initialized in constructor or at declaration
+    constructor() {}
+}</pre>
+
+        <div class="warning">
+            <strong>⚠️ Common Pitfall:</strong> Turning on <code>strict: true</code> for an existing loosely-typed codebase can surface hundreds of errors at once. New projects should enable it from day one; existing ones often migrate incrementally by enabling individual sub-flags first.
+        </div>
+
+        <!-- SECTION 5 -->
+        <h2 id="section5"><span class="level intermediate">INTERMEDIATE</span>5. Included Files: include, exclude, files</h2>
+
+        <pre>{
+  "compilerOptions": { "target": "ES2022" },
+  "include": ["src/**/*"],           // glob patterns of files to compile
+  "exclude": ["node_modules", "dist", "**/*.test.ts"],  // subtract from include
+  "files": ["src/main.ts"]           // exact file list, used for small/simple projects
+}</pre>
+
+        <div class="note">
+            <strong>💡 Tip:</strong> <code>node_modules</code>, <code>bower_components</code>, and the configured <code>outDir</code> are excluded by default even without an explicit <code>exclude</code> entry — you rarely need to list <code>node_modules</code> yourself.
+        </div>
+
+        <!-- SECTION 6 -->
+        <h2 id="section6"><span class="level intermediate">INTERMEDIATE</span>6. Output Control: outDir, rootDir, declaration</h2>
+
+        <pre>{
+  "compilerOptions": {
+    "rootDir": "./src",       // where your source .ts files live
+    "outDir": "./dist",       // where compiled .js files are written
+    "declaration": true,      // also emit matching .d.ts files
+    "declarationMap": true,   // enable "go to definition" into the original .ts source
+    "sourceMap": true         // emit .js.map files for debugging compiled output
+  }
+}
+
+// src/utils.ts -> dist/utils.js + dist/utils.d.ts + dist/utils.js.map</pre>
+
+        <div class="example">
+            <strong>Real-world use case:</strong> Library authors publishing to npm typically set <code>declaration: true</code> so consumers get full type information for the package without needing the original TypeScript source.
+        </div>
+
+        <!-- SECTION 7 -->
+        <h2 id="section7"><span class="level advanced">ADVANCED</span>7. Interop Flags: esModuleInterop and skipLibCheck</h2>
+
+        <h3>esModuleInterop</h3>
+        <pre>{
+  "compilerOptions": {
+    "esModuleInterop": true,       // allows `import express from "express"` for CJS packages
+    "allowSyntheticDefaultImports": true   // usually implied by esModuleInterop
+  }
+}
+
+// Without esModuleInterop:
+import * as express from "express";
+// With esModuleInterop: true:
+import express from "express";</pre>
+
+        <h3>skipLibCheck</h3>
+        <pre>{
+  "compilerOptions": {
+    "skipLibCheck": true   // skips type-checking of all .d.ts files, including node_modules
+  }
+}</pre>
+
+        <div class="warning">
+            <strong>⚠️ Common Pitfall:</strong> <code>skipLibCheck</code> is nearly always turned on in real projects — without it, type conflicts between different versions of the same <code>@types</code> package pulled in by different dependencies can produce errors you have no control over.
+        </div>
+
+        <!-- SECTION 8 -->
+        <h2 id="section8"><span class="level advanced">ADVANCED</span>8. Path Mapping with baseUrl and paths</h2>
+
+        <p><code>paths</code> lets you define custom import aliases, resolved by the compiler (and, separately, by your bundler/runtime, which needs its own matching alias configuration).</p>
+
+        <pre>{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@components/*": ["src/components/*"],
+      "@utils/*": ["src/utils/*"]
+    }
+  }
+}</pre>
+
+        <pre>// Without path mapping
+import { Button } from "../../../components/Button";
+
+// With path mapping
+import { Button } from "@components/Button";</pre>
+
+        <div class="note">
+            <strong>💡 Tip:</strong> <code>paths</code> only affects type-checking and editor navigation — bundlers like Vite or webpack need their own alias configuration (e.g. <code>resolve.alias</code>) to actually resolve these imports at build/runtime.
+        </div>
+
+        <!-- SECTION 9 -->
+        <h2 id="section9"><span class="level advanced">ADVANCED</span>9. Project References and extends</h2>
+
+        <h3>extends — Sharing a Base Config</h3>
+        <pre>// tsconfig.base.json
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "strict": true,
+    "skipLibCheck": true
+  }
+}
+
+// tsconfig.json
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "./dist"
+  },
+  "include": ["src/**/*"]
+}</pre>
+
+        <h3>Project References — Multi-Package Builds</h3>
+        <pre>// packages/app/tsconfig.json
+{
+  "compilerOptions": { "composite": true },
+  "references": [
+    { "path": "../shared" }
+  ]
+}
+
+// Build with:
+// tsc --build</pre>
+
+        <div class="example">
+            <strong>Real-world use case:</strong> Monorepos with multiple packages (e.g. <code>shared</code>, <code>api</code>, <code>web</code>) use project references so <code>tsc --build</code> only recompiles packages whose dependencies actually changed, dramatically speeding up incremental builds.
+        </div>
+
+        <!-- SECTION 10 -->
+        <h2 id="section10"><span class="level advanced">ADVANCED</span>10. Best Practices</h2>
+
+        <h3>1. Start New Projects with strict: true</h3>
+        <pre>// ✅ Good
+{ "compilerOptions": { "strict": true } }</pre>
+
+        <h3>2. Always Enable skipLibCheck</h3>
+        <pre>// ✅ Good - avoids noise from third-party type conflicts
+{ "compilerOptions": { "skipLibCheck": true } }</pre>
+
+        <h3>3. Match module/moduleResolution to Your Actual Runtime</h3>
+        <pre>// ✅ Good - pick the row from the table in section 3 that matches your setup</pre>
+
+        <h3>4. Use extends to Share Config Across a Monorepo</h3>
+        <pre>// ✅ Good
+{ "extends": "../../tsconfig.base.json" }</pre>
+
+        <h3>5. Emit Declarations When Publishing a Library</h3>
+        <pre>// ✅ Good
+{ "compilerOptions": { "declaration": true, "declarationMap": true } }</pre>
+
+        <h3>6. Keep include/exclude Precise</h3>
+        <pre>// ✅ Good - avoids accidentally compiling test files into a production build
+{ "include": ["src/**/*"], "exclude": ["**/*.test.ts", "**/*.spec.ts"] }</pre>
+
+        <!-- SUMMARY -->
+        <h2 style="margin-top: 40px;">📋 Quick Reference Summary</h2>
+
+        <div class="table-wrap">
+        <table>
+            <tr>
+                <th>Option</th>
+                <th>Key Points</th>
+            </tr>
+            <tr>
+                <td><strong>target</strong></td>
+                <td>JavaScript version emitted and assumed available (e.g. ES2022)</td>
+            </tr>
+            <tr>
+                <td><strong>lib</strong></td>
+                <td>Which ambient type declarations (DOM, ESNext APIs) are available</td>
+            </tr>
+            <tr>
+                <td><strong>module / moduleResolution</strong></td>
+                <td>Output module format and how import specifiers are resolved</td>
+            </tr>
+            <tr>
+                <td><strong>strict</strong></td>
+                <td>Enables the full family of type-safety flags (noImplicitAny, strictNullChecks, etc.)</td>
+            </tr>
+            <tr>
+                <td><strong>outDir / rootDir / declaration</strong></td>
+                <td>Controls compiled output location and whether .d.ts files are emitted</td>
+            </tr>
+            <tr>
+                <td><strong>esModuleInterop</strong></td>
+                <td>Smooths CommonJS/ES module default-import differences</td>
+            </tr>
+            <tr>
+                <td><strong>skipLibCheck</strong></td>
+                <td>Skips type-checking .d.ts files; avoids third-party type conflicts</td>
+            </tr>
+            <tr>
+                <td><strong>baseUrl / paths</strong></td>
+                <td>Defines import aliases for the type checker (bundler needs matching config)</td>
+            </tr>
+            <tr>
+                <td><strong>extends / references</strong></td>
+                <td>Share base config and enable fast incremental multi-package builds</td>
+            </tr>
+        </table>
+        </div>
+
+        <div style="margin-top: 40px; padding: 20px; background: #ecf0f1; border-radius: 5px;">
+            <h3>🎓 Learning Path</h3>
+            <p><strong>Beginner:</strong> Not applicable - this is an advanced-tier guide</p>
+            <p><strong>Intermediate:</strong> Master sections 1, 2, 3, 5, 6</p>
+            <p><strong>Advanced:</strong> Deep dive into sections 4, 7, 8, 9, 10</p>
+        </div>
+
+    </div>
+</body>
+</html>

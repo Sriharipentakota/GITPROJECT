@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { CONCEPTS } from '../data/concepts';
 import { PLAYWRIGHT_CONCEPTS } from '../data/playwrightConcepts';
 import { TOSCA_CONCEPTS } from '../data/toscaConcepts';
+import { TYPESCRIPT_CONCEPTS } from '../data/typescriptConcepts';
 import { PATHS } from '../data/paths';
 import { MISSIONS } from '../data/missions';
 import type { Progress } from '../types';
@@ -23,6 +24,7 @@ const PATH_CONCEPTS: Record<string, typeof CONCEPTS> = {
   javascript: CONCEPTS,
   playwright: PLAYWRIGHT_CONCEPTS,
   tosca: TOSCA_CONCEPTS,
+  typescript: TYPESCRIPT_CONCEPTS,
 };
 
 // Ensure MISSIONS is referenced (used for type validation; totals come from props)

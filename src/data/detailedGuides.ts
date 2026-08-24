@@ -61,6 +61,23 @@ const DETAILED_GUIDES: Record<string, Record<string, string>> = {
     requirements: '/guides/tosca/requirements.html',
     workspace: '/guides/tosca/workspace.html',
   },
+  typescript: {
+    typebasics: '/guides/typescript/typebasics.html',
+    interfaces: '/guides/typescript/interfaces.html',
+    functiontypes: '/guides/typescript/functiontypes.html',
+    arraystuples: '/guides/typescript/arraystuples.html',
+    uniontypes: '/guides/typescript/uniontypes.html',
+    narrowing: '/guides/typescript/narrowing.html',
+    classes: '/guides/typescript/classes.html',
+    generics: '/guides/typescript/generics.html',
+    advancedtypes: '/guides/typescript/advancedtypes.html',
+    inference: '/guides/typescript/inference.html',
+    modules: '/guides/typescript/modules.html',
+    decorators: '/guides/typescript/decorators.html',
+    asynctypes: '/guides/typescript/asynctypes.html',
+    errorhandling: '/guides/typescript/errorhandling.html',
+    tsconfig: '/guides/typescript/tsconfig.html',
+  },
 };
 
 export function getDetailedGuideUrl(pathId: string, conceptId: string): string | null {

@@ -6,8 +6,6 @@ const NAV_ITEMS: { id: AppView; icon: string; label: string }[] = [
   { id: 'learn',        icon: '📚', label: 'Learn'       },
   { id: 'skillmap',     icon: '🗺️', label: 'Skill Map'   },
   { id: 'missions',     icon: '🎯', label: 'Missions'    },
-  { id: 'analytics',   icon: '📈', label: 'Analytics'   },
-  { id: 'achievements', icon: '🏆', label: 'Achievements' },
 ];
 
 interface Props {

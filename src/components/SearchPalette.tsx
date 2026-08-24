@@ -2,8 +2,14 @@ import { useState, useEffect, useRef, useMemo } from 'react';
 import { CONCEPTS } from '../data/concepts';
 import { PLAYWRIGHT_CONCEPTS } from '../data/playwrightConcepts';
 import { TOSCA_CONCEPTS } from '../data/toscaConcepts';
+import { TYPESCRIPT_CONCEPTS } from '../data/typescriptConcepts';
 import { MISSIONS } from '../data/missions';
 import { SKILLS } from '../data/skillMap';
+import { PATHS } from '../data/paths';
+
+function pathLabelFor(pathId: string): string {
+  return PATHS.find(p => p.id === pathId)?.label ?? pathId;
+}
 
 interface Props {
   isOpen: boolean;
@@ -31,13 +37,14 @@ function buildIndex(): SearchResult[] {
   for (const c of TOSCA_CONCEPTS) {
     results.push({ type: 'concept', id: c.id, pathId: 'tosca', icon: c.icon, title: c.title, subtitle: 'Tosca' });
   }
+  for (const c of TYPESCRIPT_CONCEPTS) {
+    results.push({ type: 'concept', id: c.id, pathId: 'typescript', icon: c.icon, title: c.title, subtitle: 'TypeScript' });
+  }
   for (const m of MISSIONS) {
-    const pathLabel = m.path === 'javascript' ? 'JavaScript' : m.path === 'playwright' ? 'Playwright' : 'Tosca';
-    results.push({ type: 'mission', id: m.id, pathId: m.path, icon: m.icon, title: m.title, subtitle: `Mission · ${pathLabel} · ${m.difficulty}` });
+    results.push({ type: 'mission', id: m.id, pathId: m.path, icon: m.icon, title: m.title, subtitle: `Mission · ${pathLabelFor(m.path)} · ${m.difficulty}` });
   }
   for (const s of SKILLS) {
-    const pathLabel = s.path === 'javascript' ? 'JavaScript' : s.path === 'playwright' ? 'Playwright' : 'Tosca';
-    results.push({ type: 'skill', id: s.id, pathId: s.path, icon: '⚙️', title: s.label, subtitle: `Skill · ${pathLabel} · ${s.category}` });
+    results.push({ type: 'skill', id: s.id, pathId: s.path, icon: '⚙️', title: s.label, subtitle: `Skill · ${pathLabelFor(s.path)} · ${s.category}` });
   }
   return results;
 }

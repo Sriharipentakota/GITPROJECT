@@ -13,7 +13,7 @@ const DIFFICULTY_COLORS: Record<string, string> = {
   Advanced: '#ef4444',
 };
 
-const PATH_OPTIONS = ['All', 'JavaScript', 'Playwright', 'Tosca'];
+const PATH_OPTIONS = ['All', 'JavaScript', 'Playwright', 'Tosca', 'TypeScript'];
 const DIFFICULTY_OPTIONS = ['All', 'Beginner', 'Intermediate', 'Advanced'];
 
 export default function MissionList({ missionProgress, onSelectMission }: Props) {

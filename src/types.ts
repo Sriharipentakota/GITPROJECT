@@ -46,7 +46,7 @@ export interface InProgressState {
 
 export type SaveStatus = 'idle' | 'saving' | 'saved';
 
-export type AppView = 'dashboard' | 'learn' | 'skillmap' | 'missions' | 'analytics' | 'achievements';
+export type AppView = 'dashboard' | 'learn' | 'skillmap' | 'missions';
 
 export interface Task {
   id: number;

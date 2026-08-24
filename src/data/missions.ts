@@ -9,7 +9,7 @@ export interface MissionTask {
 export interface Mission {
   id: string;
   title: string;
-  path: 'javascript' | 'playwright' | 'tosca';
+  path: 'javascript' | 'playwright' | 'tosca' | 'typescript';
   difficulty: 'beginner' | 'intermediate' | 'advanced';
   estimatedMinutes: number;
   tags: string[];
@@ -601,5 +601,149 @@ export const MISSIONS: Mission[] = [
       'At least 15 testable requirements are catalogued with IDs. The RTM has both By Requirement and By Test Case views. All five coverage metrics are calculated with traffic-light status. Every gap has a Gap Record with risk rating and remediation plan. The executive summary is audit-ready and consistent with all underlying data.',
     solutionNotes:
       'The RTM is a living document — it must be updated every sprint as new requirements are added and new test cases are written. Automate the metrics calculation (even a spreadsheet formula) so the summary is never out of date. Auditors look for three things: completeness (every requirement has an ID), consistency (metrics match the matrix), and accountability (gaps have named owners and dates).',
+  },
+
+  // ─── TypeScript Missions ───────────────────────────────────────────────────
+  {
+    id: 'ts-api-client',
+    title: 'Build a Type-Safe API Client',
+    path: 'typescript',
+    difficulty: 'intermediate',
+    estimatedMinutes: 45,
+    tags: ['generics', 'interfaces', 'utility types', 'type inference'],
+    icon: '🔷',
+    scenario:
+      'Your team\'s frontend currently calls the backend with plain `fetch()` and casts every response `as any`, so typos in response handling only surface as runtime bugs. Your mission is to build a small, fully generic `ApiClient` that infers the correct response shape at every call site, with zero `any` in its public surface.',
+    description:
+      'Design a generic ApiClient class whose get/post methods are parameterized by the expected response type, using interfaces to describe each endpoint\'s shape and utility types to derive request payload types from response types.',
+    objectives: [
+      'Define interfaces describing at least two real resource shapes (e.g. User, Post)',
+      'Implement a generic `get<T>(url: string): Promise<T>` method with no `any` in its signature',
+      'Derive a "create" payload type from a resource interface using `Omit<>` so callers can\'t supply a server-generated `id`',
+      'Use a discriminated union to type a `Result<T>` success/failure return value instead of throwing on expected failures',
+    ],
+    requiredSkills: ['Interfaces & Type Aliases', 'Generics', 'Advanced & Utility Types'],
+    tasks: [
+      {
+        id: 1,
+        title: 'Define the resource interfaces',
+        description:
+          'Create a `User` interface (`id: number`, `name: string`, `email: string`) and a `Post` interface (`id: number`, `title: string`, `body: string`, `authorId: number`). Export both.',
+        hint: 'Keep them as plain interfaces — no optional fields yet. `id` should be a `number` on both, since that is what the server assigns.',
+        validation:
+          'Both interfaces compile with strict mode on. Attempting to assign an object missing any required field to a `User` or `Post` variable produces a compile error.',
+      },
+      {
+        id: 2,
+        title: 'Write a fully generic get<T>() method',
+        description:
+          'On an `ApiClient` class, implement `async get<T>(url: string): Promise<T>` that calls `fetch(url)`, parses the JSON body, and returns it typed as `T`. Do not use `any` anywhere in the method signature or body — the one unavoidable cast (`response.json()` is typed `Promise<any>` by `lib.dom.d.ts`) must be written as `as unknown as T`, never a bare `as T` or `any`.',
+        hint: '`const data = (await response.json()) as unknown as T; return data;` — going through `unknown` first is the type-safe way to perform a cast the compiler cannot verify on its own.',
+        validation:
+          '`const user = await client.get<User>("/users/1")` — `user` is inferred as `User`, and `user.notAField` is a compile error.',
+      },
+      {
+        id: 3,
+        title: 'Derive a create-payload type with Omit<>',
+        description:
+          'Define `type CreateUserPayload = Omit<User, "id">` and implement `async post<T, P>(url: string, payload: P): Promise<T>`. Calling `client.post<User, CreateUserPayload>("/users", { name, email })` should type-check, but including an `id` field in the payload object literal should be a compile error.',
+        hint: '`Omit<User, "id">` produces every field of `User` except `id`. Object literals assigned to a type with `Omit` are checked structurally — an extra `id` property triggers excess-property-check errors.',
+        validation:
+          'A `CreateUserPayload` object literal with an `id` field fails to compile. One without `id` compiles and the post() call type-checks end to end.',
+      },
+      {
+        id: 4,
+        title: 'Model failures with a discriminated union Result<T>',
+        description:
+          'Define `type Result<T> = { ok: true; data: T } | { ok: false; error: string }`. Change `get<T>` to catch fetch/parse errors and return `Result<T>` instead of throwing. At the call site, narrow on `result.ok` before accessing `.data` or `.error`.',
+        hint: 'The literal types `true`/`false` on the `ok` field are what make this a discriminated union — TypeScript narrows the whole object based on which branch of the union `ok` matches.',
+        validation:
+          'Accessing `result.data` before checking `result.ok === true` is a compile error. After the check, TypeScript narrows correctly inside each branch.',
+      },
+      {
+        id: 5,
+        title: 'Wire it together end to end',
+        description:
+          'Write a small script that fetches a `User`, creates a `Post` for that user via the typed `post<T,P>()`, and handles both success and failure via the `Result<T>` pattern — with no `any`, no unchecked casts besides the one documented `as unknown as T`, and `strict: true` passing cleanly.',
+        hint: 'This task is really a compile check — if every earlier task is done correctly, this composition should just fall into place with full inference and no additional annotations needed at the call site.',
+        validation:
+          'Running `tsc --noEmit` on the file reports zero errors, and there is no occurrence of the bare `any` keyword anywhere in the file.',
+      },
+    ],
+    completionCriteria:
+      'ApiClient exposes fully generic get<T>/post<T,P> methods with no `any` in any public signature, a Result<T> discriminated union replaces thrown errors for expected failure cases, and Omit<> is used to derive at least one request-payload type from a response type. `tsc --noEmit --strict` passes with zero errors.',
+    solutionNotes:
+      'The core lesson is that generics let one implementation serve many call sites without sacrificing type safety — the alternative (typing get() to return `any` and casting at each call site) pushes the same unsafe cast into every caller instead of writing it once, deliberately, in one place.',
+  },
+  {
+    id: 'ts-state-machine',
+    title: 'Model a Type-Safe UI State Machine',
+    path: 'typescript',
+    difficulty: 'advanced',
+    estimatedMinutes: 50,
+    tags: ['discriminated unions', 'narrowing', 'generics', 'exhaustiveness'],
+    icon: '🔀',
+    scenario:
+      'A data-loading component in your app currently tracks `isLoading`, `data`, and `error` as three separate, independently-settable booleans/fields — which allows impossible states like `isLoading: true` and `error: "failed"` being true at once. Your mission is to replace that with a single discriminated-union state that makes impossible states unrepresentable, and to make the compiler enforce that every state is handled.',
+    description:
+      'Design a generic RequestState<T> discriminated union (idle/loading/success/error), a reducer-style transition function typed so illegal transitions are compile errors, and an exhaustive render function that fails to compile if a new state is ever added and left unhandled.',
+    objectives: [
+      'Define `RequestState<T>` as a discriminated union with a literal `status` field distinguishing 4 states',
+      'Write a `transition()` function whose parameter types make invalid state transitions a compile error',
+      'Write a render/handling function that switches on `status` and uses a `never`-typed exhaustiveness check in the default case',
+      'Prove the exhaustiveness check works by intentionally adding a 5th state and observing the compile error, then handle it',
+    ],
+    requiredSkills: ['Union & Intersection Types', 'Type Narrowing & Guards', 'Generics'],
+    tasks: [
+      {
+        id: 1,
+        title: 'Define the RequestState<T> discriminated union',
+        description:
+          'Define `type RequestState<T> = { status: "idle" } | { status: "loading" } | { status: "success"; data: T } | { status: "error"; error: string }`. Note that `data` only exists on the `success` variant and `error` only exists on the `error` variant — this is intentional.',
+        hint: 'Because each variant has its own literal `status` value, TypeScript can narrow the whole union down to exactly one variant once you check `status` — that narrowing is what makes `data`/`error` safely accessible only where they actually exist.',
+        validation:
+          'Accessing `.data` on a `RequestState<T>` value without first narrowing on `status === "success"` is a compile error.',
+      },
+      {
+        id: 2,
+        title: 'Write a transition() function with legal-transition typing',
+        description:
+          'Implement `function transition<T>(current: RequestState<T>, event: { type: "FETCH" } | { type: "RESOLVE"; data: T } | { type: "REJECT"; error: string } | { type: "RESET" }): RequestState<T>`. FETCH is only valid from `idle` or `error`; RESOLVE/REJECT are only valid from `loading`; RESET is valid from any state. Invalid combinations should return the current state unchanged (not throw).',
+        hint: 'A `switch` on `event.type` nested with a check on `current.status` is the clearest way to encode "this event is only legal from these states."',
+        validation:
+          'transition({status:"idle"}, {type:"RESOLVE", data:...}) returns the state unchanged, since RESOLVE is invalid from idle. transition({status:"loading"}, {type:"RESOLVE", data:X}) returns {status:"success", data:X}.',
+      },
+      {
+        id: 3,
+        title: 'Write an exhaustive render function using never',
+        description:
+          'Implement `function render<T>(state: RequestState<T>): string` with a `switch (state.status)` covering all 4 cases, and a `default` branch that assigns `state` to a variable typed `never` (e.g. `const _exhaustive: never = state;`) and throws. If every real case is handled, TypeScript proves the default is unreachable and `state` is legitimately `never` there.',
+        hint: 'If you forget a case, TypeScript will NOT let you assign the remaining un-narrowed union to a `never`-typed variable — the assignment itself becomes the compile error that tells you a case is missing.',
+        validation:
+          'render() correctly produces a distinct string for each of the 4 states, and the `never` assignment in the default branch compiles cleanly only because all 4 cases are handled above it.',
+      },
+      {
+        id: 4,
+        title: 'Break exhaustiveness on purpose, then fix it',
+        description:
+          'Add a 5th variant, `{ status: "cancelled" }`, to the `RequestState<T>` union. Do NOT add a case for it in render() yet — confirm this produces a compile error at the `never` assignment (this is the exhaustiveness check doing its job). Then add the missing case to render() and confirm the error disappears.',
+        hint: 'This step has no "correct" code beyond demonstrating the failure and the fix — the point is seeing the compiler catch a genuinely missed case before it becomes a runtime bug.',
+        validation:
+          'Before adding the case: `tsc --noEmit` reports a type error at the `never` assignment naming `"cancelled"`. After adding the case: zero errors.',
+      },
+      {
+        id: 5,
+        title: 'Prove impossible states are actually unrepresentable',
+        description:
+          'Try to construct an object literal `{ status: "loading", data: 5, error: "x" }` and confirm TypeScript rejects it as not assignable to `RequestState<number>`. Write a one-paragraph explanation (as a code comment) of why the old `{ isLoading, data, error }` boolean-flags design could not have caught this, but the discriminated union can.',
+        hint: 'The old design has three independent fields with no relationship enforced between them — nothing stops `isLoading: true` and `error: "x"` from both being set simultaneously, because they are not variants of one type, just three separate optional-ish fields.',
+        validation:
+          'The object literal with mismatched fields fails to compile with an excess-property or type-mismatch error. The comment correctly identifies that a discriminated union\'s variants are mutually exclusive by construction, while independent flags are not.',
+      },
+    ],
+    completionCriteria:
+      'RequestState<T> is a 5-variant (after task 4) discriminated union with no way to construct a state with fields from the wrong variant. transition() only allows legal state changes. render() is provably exhaustive via a never-typed default branch, verified by the intentional-break-then-fix exercise in task 4.',
+    solutionNotes:
+      'Discriminated unions plus exhaustiveness checking is the single highest-leverage TypeScript pattern for UI state: it converts "did we forget to handle a case" from a runtime bug discovered in production into a compile-time error caught before the code ships.',
   },
 ];

@@ -19,7 +19,10 @@ export default defineConfig({
           if (id.includes('/src/data/playwrightQuestions.ts')) {
             return 'questions-playwright';
           }
-          if (id.includes('/src/data/concepts.ts') || id.includes('/src/data/playwrightConcepts.ts')) {
+          if (id.includes('/src/data/typescriptQuestions.ts')) {
+            return 'questions-typescript';
+          }
+          if (id.includes('/src/data/concepts.ts') || id.includes('/src/data/playwrightConcepts.ts') || id.includes('/src/data/typescriptConcepts.ts')) {
             return 'concept-data';
           }
           if (id.includes('/src/components/')) {

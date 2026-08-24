@@ -10,13 +10,13 @@ interface Props {
 }
 
 type SkillStatus = 'not-started' | 'in-progress' | 'practicing' | 'mastered';
-type FilterPath = 'all' | 'javascript' | 'playwright' | 'tosca';
+type FilterPath = 'all' | 'javascript' | 'playwright' | 'tosca' | 'typescript';
 
-const PATH_LABELS: Record<string, string> = { javascript: 'JavaScript', playwright: 'Playwright', tosca: 'Tosca' };
+const PATH_LABELS: Record<string, string> = { javascript: 'JavaScript', playwright: 'Playwright', tosca: 'Tosca', typescript: 'TypeScript' };
 const STATUS_LABELS: Record<SkillStatus, string> = { 'not-started': 'Not Started', 'in-progress': 'In Progress', practicing: 'Practicing', mastered: 'Mastered' };
 const STATUS_COLORS: Record<SkillStatus, string> = { 'not-started': 'var(--dm)', 'in-progress': 'var(--yw)', practicing: 'var(--bl)', mastered: 'var(--gn)' };
-const FILTERS: FilterPath[] = ['all', 'javascript', 'playwright', 'tosca'];
-const PATHS = ['javascript', 'playwright', 'tosca'] as const;
+const FILTERS: FilterPath[] = ['all', 'javascript', 'playwright', 'tosca', 'typescript'];
+const PATHS = ['javascript', 'playwright', 'tosca', 'typescript'] as const;
 
 const RECOMMENDED: Record<SkillStatus, string> = {
   'not-started': 'Begin by studying the related concepts in the Learn section.',

@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TypeScript Classes & Access Modifiers: Complete Guide</title>
+    <link rel="stylesheet" href="/guides/guide-base.css">
+</head>
+<body>
+    <div class="container">
+        <h1>🏛️ TypeScript Classes & Access Modifiers: Complete Guide</h1>
+        <p style="font-size: 1.1em; color: #7f8c8d; margin-bottom: 20px;">
+            A comprehensive journey from fundamental concepts to advanced techniques
+        </p>
+
+        <div class="toc">
+            <h3>📚 Table of Contents</h3>
+            <ul>
+                <li><a href="#section1">1. Classes in TypeScript</a></li>
+                <li><a href="#section2">2. Typed Fields and Constructors</a></li>
+                <li><a href="#section3">3. public, private, and protected</a></li>
+                <li><a href="#section4">4. Parameter Properties (Constructor Shorthand)</a></li>
+                <li><a href="#section5">5. readonly Class Members</a></li>
+                <li><a href="#section6">6. Inheritance with extends</a></li>
+                <li><a href="#section7">7. Abstract Classes</a></li>
+                <li><a href="#section8">8. Interfaces with implements</a></li>
+                <li><a href="#section9">9. Static Members and #private Fields</a></li>
+                <li><a href="#section10">10. Best Practices</a></li>
+            </ul>
+        </div>
+
+        <!-- SECTION 1 -->
+        <h2 id="section1"><span class="level beginner">BEGINNER</span>1. Classes in TypeScript</h2>
+
+        <h3>Definition</h3>
+        <p>TypeScript classes build on JavaScript's <code>class</code> syntax by adding type annotations for fields, constructor parameters, and methods, plus access modifiers that JavaScript lacks natively.</p>
+
+        <pre>class Person {
+    name: string;
+    age: number;
+
+    constructor(name: string, age: number) {
+        this.name = name;
+        this.age = age;
+    }
+
+    greet(): string {
+        return `Hi, I'm ${this.name} and I'm ${this.age}.`;
+    }
+}
+
+const p = new Person("Ivy", 28);
+console.log(p.greet());   // Hi, I'm Ivy and I'm 28.</pre>
+
+        <div class="note">
+            <strong>💡 Tip:</strong> Every field used in the constructor must be declared with a type at the class level first — TypeScript won't infer fields purely from assignments inside methods.
+        </div>
+
+        <!-- SECTION 2 -->
+        <h2 id="section2"><span class="level beginner">BEGINNER</span>2. Typed Fields and Constructors</h2>
+
+        <h3>Fields with Default Values</h3>
+        <pre>class Counter {
+    count: number = 0;         // default value, type inferred as number
+
+    increment(): void {
+        this.count++;
+    }
+}
+
+const c = new Counter();
+c.increment();
+console.log(c.count);   // 1</pre>
+
+        <h3>Optional Fields</h3>
+        <pre>class Profile {
+    username: string;
+    bio?: string;   // may be undefined
+
+    constructor(username: string) {
+        this.username = username;
+    }
+}
+
+const profile = new Profile("nova");
+console.log(profile.bio);   // undefined</pre>
+
+        <h3>Definite Assignment Assertion (!)</h3>
+        <pre>class Service {
+    // Assigned in an init() method, not the constructor
+    apiClient!: ApiClient;
+
+    init() {
+        this.apiClient = new ApiClient();
+    }
+}
+
+class ApiClient {}</pre>
+
+        <div class="warning">
+            <strong>⚠️ Common Pitfall:</strong> The <code>!</code> definite assignment assertion silences the compiler but doesn't guarantee the field is actually set before use. Use it sparingly and only when you're certain of the initialization order.
+        </div>
+
+        <!-- SECTION 3 -->
+        <h2 id="section3"><span class="level intermediate">INTERMEDIATE</span>3. public, private, and protected</h2>
+
+        <p>Access modifiers control which code can read or write a class member. This is a compile-time-only feature — the emitted JavaScript has no true enforcement (unless you use <code>#private</code> fields, covered in section 9).</p>
+
+        <div class="table-wrap">
+        <table class="table-compact">
+            <tr>
+                <th>Modifier</th>
+                <th>Accessible From</th>
+                <th>Default?</th>
+            </tr>
+            <tr>
+                <td><code>public</code></td>
+                <td>Anywhere</td>
+                <td>✅ Yes - implicit if omitted</td>
+            </tr>
+            <tr>
+                <td><code>private</code></td>
+                <td>Only within the declaring class</td>
+                <td>❌ No</td>
+            </tr>
+            <tr>
+                <td><code>protected</code></td>
+                <td>The declaring class and its subclasses</td>
+                <td>❌ No</td>
+            </tr>
+        </table>
+        </div>
+
+        <pre>class BankAccount {
+    public accountHolder: string;
+    private balance: number;
+    protected accountNumber: string;
+
+    constructor(holder: string, initial: number, accountNumber: string) {
+        this.accountHolder = holder;
+        this.balance = initial;
+        this.accountNumber = accountNumber;
+    }
+
+    deposit(amount: number): void {
+        this.balance += amount;   // ✅ OK - private accessible inside the class
+    }
+
+    getBalance(): number {
+        return this.balance;
+    }
+}
+
+const account = new BankAccount("Sam", 1000, "ACC-001");
+// account.balance;      // ❌ Error: 'balance' is private
+account.deposit(500);
+console.log(account.getBalance());   // 1500</pre>
+
+        <h3>protected in Subclasses</h3>
+        <pre>class SavingsAccount extends BankAccount {
+    showAccountNumber(): string {
+        return this.accountNumber;   // ✅ OK - protected accessible in subclass
+    }
+}
+
+// const sa = new SavingsAccount("Sam", 1000, "ACC-001");
+// sa.accountNumber;   // ❌ Error: 'accountNumber' is protected</pre>
+
+        <!-- SECTION 4 -->
+        <h2 id="section4"><span class="level intermediate">INTERMEDIATE</span>4. Parameter Properties (Constructor Shorthand)</h2>
+
+        <p>TypeScript lets you declare and initialize a field in one step by adding an access modifier directly to a constructor parameter.</p>
+
+        <pre>// Without parameter properties (verbose)
+class UserVerbose {
+    public id: number;
+    private name: string;
+
+    constructor(id: number, name: string) {
+        this.id = id;
+        this.name = name;
+    }
+}
+
+// With parameter properties (concise, same result)
+class User {
+    constructor(
+        public id: number,
+        private name: string,
+        protected role: string = "member"
+    ) {}
+
+    getName(): string {
+        return this.name;
+    }
+}
+
+const user = new User(1, "Robin");
+console.log(user.id);          // ✅ OK - public
+console.log(user.getName());   // Robin</pre>
+
+        <div class="example">
+            <strong>When to use it:</strong> Parameter properties are extremely common in real-world TypeScript for dependency injection style constructors, e.g. <code>constructor(private http: HttpClient, private logger: Logger) {}</code>.
+        </div>
+
+        <!-- SECTION 5 -->
+        <h2 id="section5"><span class="level intermediate">INTERMEDIATE</span>5. readonly Class Members</h2>
+
+        <pre>class Point {
+    readonly x: number;
+    readonly y: number;
+
+    constructor(x: number, y: number) {
+        this.x = x;
+        this.y = y;
+    }
+}
+
+const origin = new Point(0, 0);
+// origin.x = 10;   // ❌ Error: Cannot assign to 'x' because it is read-only</pre>
+
+        <h3>Combining readonly with Parameter Properties</h3>
+        <pre>class Config {
+    constructor(
+        public readonly apiUrl: string,
+        public readonly timeoutMs: number = 5000
+    ) {}
+}
+
+const config = new Config("https://api.example.com");
+// config.apiUrl = "https://other.com";   // ❌ Error</pre>
+
+        <!-- SECTION 6 -->
+        <h2 id="section6"><span class="level intermediate">INTERMEDIATE</span>6. Inheritance with extends</h2>
+
+        <pre>class Animal {
+    constructor(protected name: string) {}
+
+    move(distance: number = 0): void {
+        console.log(`${this.name} moved ${distance}m.`);
+    }
+}
+
+class Dog extends Animal {
+    bark(): void {
+        console.log(`${this.name} says Woof!`);
+    }
+
+    // Overriding a method - must remain compatible with the base signature
+    move(distance: number = 5): void {
+        console.log("Running...");
+        super.move(distance);   // call the base class implementation
+    }
+}
+
+const rex = new Dog("Rex");
+rex.bark();     // Rex says Woof!
+rex.move();     // Running... / Rex moved 5m.</pre>
+
+        <div class="warning">
+            <strong>⚠️ Common Pitfall:</strong> If a subclass constructor is defined, it must call <code>super(...)</code> before accessing <code>this</code>, or TypeScript raises a compile error.
+        </div>
+
+        <!-- SECTION 7 -->
+        <h2 id="section7"><span class="level advanced">ADVANCED</span>7. Abstract Classes</h2>
+
+        <p>An abstract class cannot be instantiated directly — it exists to be extended, and can declare methods that subclasses <strong>must</strong> implement.</p>
+
+        <pre>abstract class Shape {
+    abstract area(): number;         // no body - must be implemented by subclasses
+
+    describe(): string {              // regular method - inherited as-is
+        return `This shape has an area of ${this.area()}`;
+    }
+}
+
+class Circle extends Shape {
+    constructor(private radius: number) {
+        super();
+    }
+
+    area(): number {
+        return Math.PI * this.radius ** 2;
+    }
+}
+
+// const shape = new Shape();   // ❌ Error: Cannot create an instance of an abstract class
+const circle = new Circle(3);
+console.log(circle.describe());   // This shape has an area of 28.27...</pre>
+
+        <div class="example">
+            <strong>Real-world use case:</strong> Abstract classes are ideal for defining a shared template (e.g. a <code>Repository</code> base class with a common <code>save()</code> flow) while forcing each subclass to supply the specifics (e.g. <code>validate()</code>).
+        </div>
+
+        <!-- SECTION 8 -->
+        <h2 id="section8"><span class="level advanced">ADVANCED</span>8. Interfaces with implements</h2>
+
+        <pre>interface Flyable {
+    altitude: number;
+    fly(): void;
+}
+
+interface Swimmable {
+    depth: number;
+    swim(): void;
+}
+
+// A class can implement multiple interfaces at once
+class Duck implements Flyable, Swimmable {
+    altitude = 0;
+    depth = 0;
+
+    fly(): void {
+        this.altitude = 10;
+        console.log("Duck is flying at", this.altitude);
+    }
+
+    swim(): void {
+        this.depth = 2;
+        console.log("Duck is swimming at depth", this.depth);
+    }
+}</pre>
+
+        <div class="note">
+            <strong>💡 Tip:</strong> <code>implements</code> only checks the class's public shape against the interface at compile time — it copies no behavior. Compare this with <code>extends</code>, which shares actual implementation from a base class.
+        </div>
+
+        <!-- SECTION 9 -->
+        <h2 id="section9"><span class="level advanced">ADVANCED</span>9. Static Members and True Private (#) Fields</h2>
+
+        <h3>Static Members</h3>
+        <pre>class IdGenerator {
+    private static counter = 0;
+
+    static next(): number {
+        IdGenerator.counter += 1;
+        return IdGenerator.counter;
+    }
+}
+
+console.log(IdGenerator.next());   // 1
+console.log(IdGenerator.next());   // 2</pre>
+
+        <h3>ECMAScript #private Fields</h3>
+        <p>TypeScript's <code>private</code> keyword is compile-time only — it's erased in the compiled JavaScript, so the field is still technically accessible at runtime. Native <code>#</code> fields are enforced by the JavaScript engine itself, even after compilation.</p>
+
+        <pre>class SecureVault {
+    #secret: string;
+
+    constructor(secret: string) {
+        this.#secret = secret;
+    }
+
+    reveal(): string {
+        return this.#secret;
+    }
+}
+
+const vault = new SecureVault("classified");
+console.log(vault.reveal());   // classified
+// console.log(vault.#secret); // ❌ SyntaxError at compile time AND blocked at runtime
+// console.log((vault as any).secret);  // undefined - can't reach it via any either</pre>
+
+        <div class="table-wrap">
+        <table class="table-compact">
+            <tr>
+                <th>Feature</th>
+                <th>private keyword</th>
+                <th>#field</th>
+            </tr>
+            <tr>
+                <td>Enforced at compile time</td>
+                <td>✅ Yes</td>
+                <td>✅ Yes</td>
+            </tr>
+            <tr>
+                <td>Enforced at runtime</td>
+                <td>❌ No - erased to a normal property</td>
+                <td>✅ Yes - true JS-level privacy</td>
+            </tr>
+            <tr>
+                <td>Bypassable via <code>as any</code></td>
+                <td>✅ Yes</td>
+                <td>❌ No</td>
+            </tr>
+        </table>
+        </div>
+
+        <!-- SECTION 10 -->
+        <h2 id="section10"><span class="level advanced">ADVANCED</span>10. Best Practices</h2>
+
+        <h3>1. Prefer Parameter Properties for Simple Constructors</h3>
+        <pre>// ✅ Good
+class OrderService {
+    constructor(private repository: OrderRepository) {}
+}
+class OrderRepository {}</pre>
+
+        <h3>2. Default to private, Widen Only When Necessary</h3>
+        <pre>// ✅ Good - start restrictive, loosen deliberately
+class Cache {
+    private store = new Map<string, unknown>();
+}</pre>
+
+        <h3>3. Use Abstract Classes for Shared Templates</h3>
+        <pre>// ✅ Good
+abstract class Validator<T> {
+    abstract isValid(value: T): boolean;
+    assert(value: T): void {
+        if (!this.isValid(value)) throw new Error("Invalid value");
+    }
+}</pre>
+
+        <h3>4. Reach for # Fields When True Runtime Privacy Matters</h3>
+        <pre>// ✅ Good for security-sensitive internal state
+class TokenStore {
+    #token: string = "";
+}</pre>
+
+        <h3>5. Keep Inheritance Hierarchies Shallow</h3>
+        <p>Prefer composition (accepting collaborators via constructor) over deep inheritance chains, which become hard to reason about and refactor.</p>
+
+        <!-- SUMMARY -->
+        <h2 style="margin-top: 40px;">📋 Quick Reference Summary</h2>
+
+        <div class="table-wrap">
+        <table>
+            <tr>
+                <th>Concept</th>
+                <th>Key Points</th>
+            </tr>
+            <tr>
+                <td><strong>public / private / protected</strong></td>
+                <td>Compile-time access control; public is the implicit default</td>
+            </tr>
+            <tr>
+                <td><strong>Parameter properties</strong></td>
+                <td>Declare + assign a field directly in the constructor signature</td>
+            </tr>
+            <tr>
+                <td><strong>readonly</strong></td>
+                <td>Field can be set once (declaration or constructor), never reassigned after</td>
+            </tr>
+            <tr>
+                <td><strong>extends</strong></td>
+                <td>Inherit implementation from a base class; use super() to reach it</td>
+            </tr>
+            <tr>
+                <td><strong>abstract class</strong></td>
+                <td>Cannot be instantiated; may declare methods subclasses must implement</td>
+            </tr>
+            <tr>
+                <td><strong>implements</strong></td>
+                <td>Class promises to satisfy an interface's shape; no behavior sharing</td>
+            </tr>
+            <tr>
+                <td><strong>#field</strong></td>
+                <td>True runtime-private field enforced by the JS engine itself</td>
+            </tr>
+        </table>
+        </div>
+
+        <div style="margin-top: 40px; padding: 20px; background: #ecf0f1; border-radius: 5px;">
+            <h3>🎓 Learning Path</h3>
+            <p><strong>Beginner:</strong> Master sections 1, 2</p>
+            <p><strong>Intermediate:</strong> Understand sections 3, 4, 5, 6</p>
+            <p><strong>Advanced:</strong> Deep dive into sections 7, 8, 9, 10</p>
+        </div>
+
+    </div>
+</body>
+</html>

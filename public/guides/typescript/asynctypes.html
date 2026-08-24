@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TypeScript Async/Await with Types: Complete Guide</title>
+    <link rel="stylesheet" href="/guides/guide-base.css">
+</head>
+<body>
+    <div class="container">
+        <h1>⏳ TypeScript Async/Await with Types: Complete Guide</h1>
+        <p style="font-size: 1.1em; color: #7f8c8d; margin-bottom: 20px;">
+            A comprehensive journey from fundamental concepts to advanced techniques
+        </p>
+
+        <div class="toc">
+            <h3>📚 Table of Contents</h3>
+            <ul>
+                <li><a href="#section1">1. Typing Promises</a></li>
+                <li><a href="#section2">2. async Functions and Their Return Types</a></li>
+                <li><a href="#section3">3. await and Type Narrowing</a></li>
+                <li><a href="#section4">4. Typing fetch and JSON Responses</a></li>
+                <li><a href="#section5">5. Error Handling in Async Code</a></li>
+                <li><a href="#section6">6. Promise.all, allSettled, and race with Types</a></li>
+                <li><a href="#section7">7. The Awaited&lt;T&gt; Utility Type</a></li>
+                <li><a href="#section8">8. Async Generators and for await...of</a></li>
+                <li><a href="#section9">9. Typing Callback-to-Promise Conversions</a></li>
+                <li><a href="#section10">10. Best Practices</a></li>
+            </ul>
+        </div>
+
+        <!-- SECTION 1 -->
+        <h2 id="section1"><span class="level beginner">BEGINNER</span>1. Typing Promises</h2>
+
+        <h3>Definition</h3>
+        <p>A <code>Promise&lt;T&gt;</code> represents a value of type <code>T</code> that will be available in the future, once the asynchronous operation completes.</p>
+
+        <pre>const numberPromise: Promise<number> = new Promise((resolve) => {
+    setTimeout(() => resolve(42), 1000);
+});
+
+numberPromise.then((value) => {
+    console.log(value.toFixed(2));   // ✅ 'value' is typed as number
+});</pre>
+
+        <h3>Promise&lt;void&gt; for Side-Effect-Only Operations</h3>
+        <pre>function delay(ms: number): Promise<void> {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+delay(500).then(() => console.log("500ms passed"));</pre>
+
+        <!-- SECTION 2 -->
+        <h2 id="section2"><span class="level beginner">BEGINNER</span>2. async Functions and Their Return Types</h2>
+
+        <p>An <code>async</code> function always returns a <code>Promise</code>, even if you write a plain <code>return</code> statement inside it — TypeScript wraps the declared return type in <code>Promise&lt;...&gt;</code> automatically.</p>
+
+        <pre>async function getUser(id: number): Promise<{ id: number; name: string }> {
+    // pretend this is a network call
+    return { id, name: "Amir" };
+}
+
+// You call it and 'await' the resolved value
+async function main() {
+    const user = await getUser(1);
+    console.log(user.name);   // "Amir" - typed as string
+}</pre>
+
+        <h3>Inferred Async Return Types</h3>
+        <pre>// TypeScript infers Promise<string> without an explicit annotation
+async function greet(name: string) {
+    return `Hello, ${name}`;
+}</pre>
+
+        <!-- SECTION 3 -->
+        <h2 id="section3"><span class="level beginner">BEGINNER</span>3. await and Type Narrowing</h2>
+
+        <pre>async function fetchScore(): Promise<number | null> {
+    // simulate a lookup that might fail
+    return Math.random() > 0.5 ? 95 : null;
+}
+
+async function displayScore() {
+    const score = await fetchScore();
+    if (score !== null) {
+        console.log(score.toFixed(1));   // ✅ narrowed to number
+    } else {
+        console.log("No score available");
+    }
+}</pre>
+
+        <div class="note">
+            <strong>💡 Tip:</strong> <code>await</code> "unwraps" a <code>Promise&lt;T&gt;</code> down to <code>T</code>. All the narrowing techniques from the Type Narrowing guide apply normally to the awaited value.
+        </div>
+
+        <!-- SECTION 4 -->
+        <h2 id="section4"><span class="level intermediate">INTERMEDIATE</span>4. Typing fetch and JSON Responses</h2>
+
+        <p>The built-in <code>fetch</code> function returns <code>Promise&lt;Response&gt;</code>, and <code>response.json()</code> returns <code>Promise&lt;any&gt;</code> — so you should assert or validate the shape you expect.</p>
+
+        <pre>interface Post {
+    id: number;
+    title: string;
+    body: string;
+}
+
+async function getPost(id: number): Promise<Post> {
+    const response = await fetch(`/api/posts/${id}`);
+    if (!response.ok) {
+        throw new Error(`Request failed: ${response.status}`);
+    }
+    const data = await response.json() as Post;   // assertion - json() is 'any'
+    return data;
+}</pre>
+
+        <h3>A Generic fetchJson Helper</h3>
+        <pre>async function fetchJson<T>(url: string): Promise<T> {
+    const response = await fetch(url);
+    if (!response.ok) {
+        throw new Error(`Request failed: ${response.status}`);
+    }
+    return response.json() as Promise<T>;
+}
+
+const post = await fetchJson<Post>("/api/posts/1");
+console.log(post.title);   // ✅ typed as string</pre>
+
+        <div class="warning">
+            <strong>⚠️ Common Pitfall:</strong> Casting the result of <code>response.json()</code> is a compile-time-only promise — it doesn't validate the actual payload. For untrusted APIs, pair this with a runtime validation library (like Zod) to catch shape mismatches.
+        </div>
+
+        <!-- SECTION 5 -->
+        <h2 id="section5"><span class="level intermediate">INTERMEDIATE</span>5. Error Handling in Async Code</h2>
+
+        <pre>async function loadConfig(): Promise<{ apiUrl: string }> {
+    try {
+        const response = await fetch("/config.json");
+        return await response.json();
+    } catch (error) {
+        // 'error' is typed as 'unknown' under strict settings - narrow it
+        if (error instanceof Error) {
+            console.error("Failed to load config:", error.message);
+        }
+        throw error;
+    }
+}</pre>
+
+        <h3>Rejected Promises and unknown</h3>
+        <pre>Promise.reject(new Error("Something broke")).catch((error: unknown) => {
+    if (error instanceof Error) {
+        console.log(error.message);
+    }
+});</pre>
+
+        <div class="note">
+            <strong>💡 Tip:</strong> Under <code>strict</code> mode (specifically <code>useUnknownInCatchVariables</code>, on by default since TS 4.4), <code>catch</code> clause variables are typed as <code>unknown</code> rather than <code>any</code>, forcing you to narrow before accessing properties — see the Error Handling guide for the full pattern.
+        </div>
+
+        <!-- SECTION 6 -->
+        <h2 id="section6"><span class="level intermediate">INTERMEDIATE</span>6. Promise.all, allSettled, and race with Types</h2>
+
+        <h3>Promise.all — Tuple-Preserving</h3>
+        <pre>async function loadDashboard() {
+    const [user, posts, notifications] = await Promise.all([
+        fetchJson<{ id: number; name: string }>("/api/user"),
+        fetchJson<{ id: number; title: string }[]>("/api/posts"),
+        fetchJson<number>("/api/notifications/count")
+    ]);
+    // user, posts, notifications each keep their own distinct type
+    console.log(user.name, posts.length, notifications);
+}
+
+async function fetchJson<T>(url: string): Promise<T> {
+    return fetch(url).then((r) => r.json());
+}</pre>
+
+        <h3>Promise.allSettled — Per-Item Status</h3>
+        <pre>const results = await Promise.allSettled([
+    fetchJson<number>("/api/a"),
+    fetchJson<number>("/api/b")
+]);
+
+for (const result of results) {
+    if (result.status === "fulfilled") {
+        console.log(result.value);   // ✅ narrowed - value exists
+    } else {
+        console.log(result.reason);  // ✅ narrowed - reason exists
+    }
+}</pre>
+
+        <!-- SECTION 7 -->
+        <h2 id="section7"><span class="level advanced">ADVANCED</span>7. The Awaited&lt;T&gt; Utility Type</h2>
+
+        <p><code>Awaited&lt;T&gt;</code> recursively unwraps nested Promises, mirroring what <code>await</code> does at runtime — including promises that resolve to other promises.</p>
+
+        <pre>type A = Awaited<Promise<string>>;                 // string
+type B = Awaited<Promise<Promise<number>>>;         // number (unwraps recursively)
+type C = Awaited<string>;                            // string (non-promise passthrough)
+
+async function getData(): Promise<Promise<{ id: number }>> {
+    return Promise.resolve({ id: 1 });
+}
+
+type DataType = Awaited<ReturnType<typeof getData>>;
+// { id: number }</pre>
+
+        <div class="example">
+            <strong>Real-world use case:</strong> <code>Awaited&lt;ReturnType&lt;typeof someAsyncFn&gt;&gt;</code> is a very common pattern for deriving the resolved data type of an async function you don't own, without duplicating an interface by hand.
+        </div>
+
+        <!-- SECTION 8 -->
+        <h2 id="section8"><span class="level advanced">ADVANCED</span>8. Async Generators and for await...of</h2>
+
+        <pre>async function* fetchPages(baseUrl: string): AsyncGenerator<string[]> {
+    let page = 1;
+    while (page <= 3) {
+        const response = await fetch(`${baseUrl}?page=${page}`);
+        const items: string[] = await response.json();
+        yield items;
+        page++;
+    }
+}
+
+async function processAllPages() {
+    for await (const page of fetchPages("/api/items")) {
+        console.log("Got page with", page.length, "items");
+    }
+}</pre>
+
+        <div class="note">
+            <strong>💡 Tip:</strong> <code>AsyncGenerator&lt;T, TReturn, TNext&gt;</code> mirrors the regular <code>Generator&lt;T, TReturn, TNext&gt;</code> type, but every value produced by <code>yield</code> is wrapped as if it went through a Promise.
+        </div>
+
+        <!-- SECTION 9 -->
+        <h2 id="section9"><span class="level advanced">ADVANCED</span>9. Typing Callback-to-Promise Conversions</h2>
+
+        <p>Older Node.js-style APIs use error-first callbacks rather than Promises. Wrapping them requires carefully typing both the success and error paths.</p>
+
+        <pre>import { readFile } from "fs";
+
+function readFileAsync(path: string): Promise<string> {
+    return new Promise((resolve, reject) => {
+        readFile(path, "utf-8", (error, data) => {
+            if (error) {
+                reject(error);
+            } else {
+                resolve(data);
+            }
+        });
+    });
+}
+
+async function main() {
+    const content = await readFileAsync("./data.txt");
+    console.log(content.length);   // ✅ typed as string
+}</pre>
+
+        <div class="note">
+            <strong>💡 Tip:</strong> Node's built-in <code>util.promisify</code> does this conversion automatically and infers types correctly for most standard callback-style functions, so prefer it over hand-rolled wrappers when available.
+        </div>
+
+        <!-- SECTION 10 -->
+        <h2 id="section10"><span class="level advanced">ADVANCED</span>10. Best Practices</h2>
+
+        <h3>1. Always Annotate the Resolved Type of Public Async Functions</h3>
+        <pre>// ✅ Good - clear contract for callers
+export async function getUser(id: number): Promise<User> { /* ... */ }
+interface User { id: number; }</pre>
+
+        <h3>2. Validate External Data Instead of Blindly Asserting</h3>
+        <pre>// ✅ Better - runtime + compile-time safety together
+import { z } from "zod";
+const UserSchema = z.object({ id: z.number(), name: z.string() });
+async function getUser(id: number) {
+    const data = await fetch(`/api/users/${id}`).then((r) => r.json());
+    return UserSchema.parse(data);   // throws if shape doesn't match
+}</pre>
+
+        <h3>3. Narrow catch Variables Before Using Them</h3>
+        <pre>// ✅ Good
+catch (error) {
+    if (error instanceof Error) { console.error(error.message); }
+}</pre>
+
+        <h3>4. Prefer Promise.all for Independent Concurrent Work</h3>
+        <pre>// ✅ Good - runs concurrently, preserves each result's type
+const [a, b] = await Promise.all([taskA(), taskB()]);
+declare function taskA(): Promise<number>;
+declare function taskB(): Promise<string>;</pre>
+
+        <h3>5. Use Awaited&lt;T&gt; Instead of Manually Unwrapping Promise Types</h3>
+        <pre>// ✅ Good
+type UserResult = Awaited<ReturnType<typeof getUser>>;
+declare function getUser(): Promise<{ id: number }>;</pre>
+
+        <!-- SUMMARY -->
+        <h2 style="margin-top: 40px;">📋 Quick Reference Summary</h2>
+
+        <div class="table-wrap">
+        <table>
+            <tr>
+                <th>Concept</th>
+                <th>Key Points</th>
+            </tr>
+            <tr>
+                <td><strong>Promise&lt;T&gt;</strong></td>
+                <td>A future value of type T; async functions return this automatically</td>
+            </tr>
+            <tr>
+                <td><strong>await</strong></td>
+                <td>Unwraps a Promise&lt;T&gt; to T; supports full narrowing afterward</td>
+            </tr>
+            <tr>
+                <td><strong>fetch + json()</strong></td>
+                <td>Returns 'any' by default - assert or validate the expected shape</td>
+            </tr>
+            <tr>
+                <td><strong>catch variable</strong></td>
+                <td>Typed as 'unknown' under strict mode; narrow with instanceof Error</td>
+            </tr>
+            <tr>
+                <td><strong>Promise.all / allSettled</strong></td>
+                <td>Preserve distinct per-item types; allSettled adds status narrowing</td>
+            </tr>
+            <tr>
+                <td><strong>Awaited&lt;T&gt;</strong></td>
+                <td>Recursively unwraps nested Promise types, mirrors real await behavior</td>
+            </tr>
+            <tr>
+                <td><strong>AsyncGenerator&lt;T&gt;</strong></td>
+                <td>Typed async iteration via for await...of</td>
+            </tr>
+        </table>
+        </div>
+
+        <div style="margin-top: 40px; padding: 20px; background: #ecf0f1; border-radius: 5px;">
+            <h3>🎓 Learning Path</h3>
+            <p><strong>Beginner:</strong> Master sections 1, 2, 3</p>
+            <p><strong>Intermediate:</strong> Understand sections 4, 5, 6</p>
+            <p><strong>Advanced:</strong> Deep dive into sections 7, 8, 9, 10</p>
+        </div>
+
+    </div>
+</body>
+</html>

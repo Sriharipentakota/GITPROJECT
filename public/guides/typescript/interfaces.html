@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TypeScript Interfaces & Type Aliases: Complete Guide</title>
+    <link rel="stylesheet" href="/guides/guide-base.css">
+</head>
+<body>
+    <div class="container">
+        <h1>📐 TypeScript Interfaces & Type Aliases: Complete Guide</h1>
+        <p style="font-size: 1.1em; color: #7f8c8d; margin-bottom: 20px;">
+            A comprehensive journey from fundamental concepts to advanced techniques
+        </p>
+
+        <div class="toc">
+            <h3>📚 Table of Contents</h3>
+            <ul>
+                <li><a href="#section1">1. Why Name a Shape?</a></li>
+                <li><a href="#section2">2. Defining Interfaces</a></li>
+                <li><a href="#section3">3. Type Aliases</a></li>
+                <li><a href="#section4">4. Interface vs Type Alias</a></li>
+                <li><a href="#section5">5. Optional and Readonly Members</a></li>
+                <li><a href="#section6">6. Extending Interfaces</a></li>
+                <li><a href="#section7">7. Interfaces for Functions and Indexable Types</a></li>
+                <li><a href="#section8">8. Declaration Merging</a></li>
+                <li><a href="#section9">9. Implementing Interfaces with Classes</a></li>
+                <li><a href="#section10">10. Best Practices</a></li>
+            </ul>
+        </div>
+
+        <!-- SECTION 1 -->
+        <h2 id="section1"><span class="level beginner">BEGINNER</span>1. Why Name a Shape?</h2>
+
+        <h3>Definition</h3>
+        <p>An <strong>interface</strong> gives a name to a specific object shape so you can reuse it across your codebase instead of repeating an inline type every time.</p>
+
+        <div class="example">
+            <strong>Real-world analogy:</strong> An interface is like a blueprint for a form. Instead of describing "a box for name, a box for age, a box for email" every single time, you hand people the blueprint and say "fill this out."
+        </div>
+
+        <h3>The Problem Without Named Types</h3>
+        <pre>// Repeating the same shape everywhere is error-prone
+function printUser(user: { id: number; name: string; email: string }) { /* ... */ }
+function saveUser(user: { id: number; name: string; email: string }) { /* ... */ }
+function updateUser(user: { id: number; name: string; email: string }) { /* ... */ }</pre>
+
+        <h3>The Fix: Name It Once</h3>
+        <pre>interface User {
+    id: number;
+    name: string;
+    email: string;
+}
+
+function printUser(user: User) { /* ... */ }
+function saveUser(user: User) { /* ... */ }
+function updateUser(user: User) { /* ... */ }</pre>
+
+        <div class="note">
+            <strong>💡 Tip:</strong> By convention, interface names use PascalCase and are usually nouns describing the entity they model: <code>User</code>, <code>Product</code>, <code>ApiResponse</code>.
+        </div>
+
+        <!-- SECTION 2 -->
+        <h2 id="section2"><span class="level beginner">BEGINNER</span>2. Defining Interfaces</h2>
+
+        <h3>Basic Syntax</h3>
+        <pre>interface Point {
+    x: number;
+    y: number;
+}
+
+const origin: Point = { x: 0, y: 0 };
+const shifted: Point = { x: 10, y: 5 };
+
+// const invalid: Point = { x: 0 };   // ❌ Error: Property 'y' is missing</pre>
+
+        <h3>Nested Object Shapes</h3>
+        <pre>interface Address {
+    street: string;
+    city: string;
+    zip: string;
+}
+
+interface Customer {
+    name: string;
+    address: Address;
+}
+
+const customer: Customer = {
+    name: "Jordan",
+    address: { street: "1 Main St", city: "Springfield", zip: "00000" }
+};</pre>
+
+        <h3>Array and Method Members</h3>
+        <pre>interface Cart {
+    items: string[];
+    total: number;
+    checkout(): void;
+}
+
+const cart: Cart = {
+    items: ["book", "pen"],
+    total: 24.5,
+    checkout() {
+        console.log("Checking out...");
+    }
+};</pre>
+
+        <!-- SECTION 3 -->
+        <h2 id="section3"><span class="level beginner">BEGINNER</span>3. Type Aliases</h2>
+
+        <p>A <strong>type alias</strong> (created with the <code>type</code> keyword) gives a name to <em>any</em> type — not just object shapes.</p>
+
+        <pre>type ID = string | number;
+type Point = { x: number; y: number };
+type Direction = "up" | "down" | "left" | "right";
+type Callback = (error: Error | null, data?: string) => void;
+
+let userId: ID = 42;
+userId = "abc-123";   // ✅ also valid, ID is a union</pre>
+
+        <h3>Aliasing Primitives and Unions</h3>
+        <pre>type Age = number;
+type Username = string;
+type Result<T> = { success: true; value: T } | { success: false; error: string };
+
+const outcome: Result<number> = { success: true, value: 100 };</pre>
+
+        <div class="note">
+            <strong>💡 Tip:</strong> Unlike interfaces, type aliases can represent unions, tuples, primitives, and mapped types — not just object shapes. This makes them more flexible in some scenarios.
+        </div>
+
+        <!-- SECTION 4 -->
+        <h2 id="section4"><span class="level intermediate">INTERMEDIATE</span>4. Interface vs Type Alias</h2>
+
+        <p>Both can describe an object shape, and in most everyday cases they're interchangeable. But there are real differences worth knowing.</p>
+
+        <div class="table-wrap">
+        <table class="table-compact">
+            <tr>
+                <th>Feature</th>
+                <th>interface</th>
+                <th>type</th>
+            </tr>
+            <tr>
+                <td>Object shapes</td>
+                <td>✅ Yes</td>
+                <td>✅ Yes</td>
+            </tr>
+            <tr>
+                <td>Unions / Intersections</td>
+                <td>❌ No (unions specifically)</td>
+                <td>✅ Yes</td>
+            </tr>
+            <tr>
+                <td>Can be extended (<code>extends</code>)</td>
+                <td>✅ Yes</td>
+                <td>✅ Yes (via <code>&amp;</code>)</td>
+            </tr>
+            <tr>
+                <td>Declaration merging</td>
+                <td>✅ Yes (same name adds members)</td>
+                <td>❌ No (duplicate name errors)</td>
+            </tr>
+            <tr>
+                <td>Primitives, tuples, functions</td>
+                <td>❌ No (functions only via call signature)</td>
+                <td>✅ Yes</td>
+            </tr>
+        </table>
+        </div>
+
+        <h3>Side-by-Side Example</h3>
+        <div class="comparison">
+            <div>
+                <strong>interface:</strong>
+                <pre>interface Animal {
+    name: string;
+}
+
+interface Dog extends Animal {
+    breed: string;
+}</pre>
+            </div>
+            <div>
+                <strong>type:</strong>
+                <pre>type Animal = {
+    name: string;
+};
+
+type Dog = Animal & {
+    breed: string;
+};</pre>
+            </div>
+        </div>
+
+        <div class="example">
+            <strong>Rule of thumb:</strong> Use <code>interface</code> for public object/class shapes that might be extended later. Use <code>type</code> for unions, tuples, function types, and anything that isn't a plain object shape.
+        </div>
+
+        <!-- SECTION 5 -->
+        <h2 id="section5"><span class="level intermediate">INTERMEDIATE</span>5. Optional and Readonly Members</h2>
+
+        <h3>Optional Properties (?)</h3>
+        <pre>interface Product {
+    id: number;
+    name: string;
+    discount?: number;   // may or may not be present
+}
+
+const item1: Product = { id: 1, name: "Mouse" };
+const item2: Product = { id: 2, name: "Keyboard", discount: 0.1 };</pre>
+
+        <h3>Readonly Properties</h3>
+        <pre>interface Config {
+    readonly apiKey: string;
+    readonly createdAt: Date;
+}
+
+const config: Config = { apiKey: "abc123", createdAt: new Date() };
+// config.apiKey = "xyz789";   // ❌ Error: Cannot assign to 'apiKey' because it is read-only</pre>
+
+        <h3>Readonly Arrays</h3>
+        <pre>interface Snapshot {
+    readonly tags: readonly string[];
+}
+
+const snap: Snapshot = { tags: ["a", "b"] };
+// snap.tags.push("c");   // ❌ Error: Property 'push' does not exist on
+//                           type 'readonly string[]'</pre>
+
+        <div class="warning">
+            <strong>⚠️ Common Pitfall:</strong> <code>readonly</code> is shallow. A readonly property holding an object still allows mutating that object's own properties unless it too is marked readonly.
+        </div>
+
+        <!-- SECTION 6 -->
+        <h2 id="section6"><span class="level intermediate">INTERMEDIATE</span>6. Extending Interfaces</h2>
+
+        <h3>Single Extension</h3>
+        <pre>interface Animal {
+    name: string;
+    age: number;
+}
+
+interface Dog extends Animal {
+    breed: string;
+    bark(): void;
+}
+
+const rex: Dog = {
+    name: "Rex",
+    age: 3,
+    breed: "Labrador",
+    bark() { console.log("Woof!"); }
+};</pre>
+
+        <h3>Extending Multiple Interfaces</h3>
+        <pre>interface Timestamped {
+    createdAt: Date;
+}
+
+interface Identifiable {
+    id: number;
+}
+
+interface Post extends Timestamped, Identifiable {
+    title: string;
+    body: string;
+}
+
+const post: Post = {
+    id: 1,
+    title: "Hello World",
+    body: "My first post",
+    createdAt: new Date()
+};</pre>
+
+        <h3>Overriding Members When Extending</h3>
+        <pre>interface Shape {
+    color: string;
+}
+
+interface Circle extends Shape {
+    // must remain compatible with the base type
+    color: "red" | "blue";
+    radius: number;
+}</pre>
+
+        <!-- SECTION 7 -->
+        <h2 id="section7"><span class="level intermediate">INTERMEDIATE</span>7. Interfaces for Functions and Indexable Types</h2>
+
+        <h3>Function Type Interfaces</h3>
+        <pre>interface Comparator {
+    (a: number, b: number): number;
+}
+
+const ascending: Comparator = (a, b) => a - b;
+const descending: Comparator = (a, b) => b - a;
+
+[3, 1, 2].sort(ascending);   // [1, 2, 3]</pre>
+
+        <h3>Index Signatures</h3>
+        <p>Index signatures describe objects used like dictionaries, where property names aren't known ahead of time.</p>
+
+        <pre>interface StringDictionary {
+    [key: string]: string;
+}
+
+const translations: StringDictionary = {
+    hello: "hola",
+    goodbye: "adios"
+};
+
+translations.thanks = "gracias";   // ✅ OK
+// translations.count = 5;         // ❌ Error: number not assignable to string</pre>
+
+        <h3>Combining Known Keys with an Index Signature</h3>
+        <pre>interface Scores {
+    average: number;
+    [studentName: string]: number;
+}
+
+const scores: Scores = { average: 88, alice: 92, bob: 84 };</pre>
+
+        <!-- SECTION 8 -->
+        <h2 id="section8"><span class="level advanced">ADVANCED</span>8. Declaration Merging</h2>
+
+        <p>Unlike type aliases, declaring an interface with the same name twice in the same scope <strong>merges</strong> the members into one interface rather than causing an error.</p>
+
+        <pre>interface Window {
+    title: string;
+}
+
+interface Window {
+    ts: TypeScript;
+}
+
+// The effective interface is now:
+// interface Window {
+//     title: string;
+//     ts: TypeScript;
+// }
+
+interface TypeScript { version: string; }</pre>
+
+        <div class="example">
+            <strong>Real-world use case:</strong> Library authors use declaration merging to let consumers extend built-in types, such as adding custom properties to the global <code>Window</code> or augmenting an Express <code>Request</code> object with a <code>user</code> field.
+        </div>
+
+        <pre>// Augmenting Express's Request type in your own project
+declare namespace Express {
+    interface Request {
+        user?: { id: number; role: string };
+    }
+}</pre>
+
+        <div class="warning">
+            <strong>⚠️ Common Pitfall:</strong> Because <code>type</code> aliases cannot merge, declaring <code>type Window = {...}</code> twice is a hard compile error. Only interfaces support this behavior.
+        </div>
+
+        <!-- SECTION 9 -->
+        <h2 id="section9"><span class="level advanced">ADVANCED</span>9. Implementing Interfaces with Classes</h2>
+
+        <pre>interface Serializable {
+    serialize(): string;
+}
+
+interface Identifiable {
+    id: number;
+}
+
+class User implements Serializable, Identifiable {
+    constructor(public id: number, private name: string) {}
+
+    serialize(): string {
+        return JSON.stringify({ id: this.id, name: this.name });
+    }
+}
+
+const u = new User(1, "Kai");
+console.log(u.serialize());   // {"id":1,"name":"Kai"}</pre>
+
+        <div class="note">
+            <strong>💡 Tip:</strong> <code>implements</code> only checks the public shape of the class against the interface — it does not copy any behavior. You still have to write every method yourself. This is different from <code>extends</code>, which inherits implementation.
+        </div>
+
+        <!-- SECTION 10 -->
+        <h2 id="section10"><span class="level advanced">ADVANCED</span>10. Best Practices</h2>
+
+        <h3>1. Prefer interface for Object Shapes, type for Everything Else</h3>
+        <pre>// ✅ Good
+interface User { id: number; name: string; }
+type Status = "active" | "inactive";</pre>
+
+        <h3>2. Keep Interfaces Small and Composable</h3>
+        <pre>// ✅ Good - compose small pieces
+interface Identifiable { id: number; }
+interface Timestamped { createdAt: Date; }
+interface Post extends Identifiable, Timestamped { title: string; }</pre>
+
+        <h3>3. Mark Immutable Data as readonly</h3>
+        <pre>interface Config {
+    readonly apiUrl: string;
+}</pre>
+
+        <h3>4. Avoid Excessive Optional Properties</h3>
+        <pre>// ❌ Too permissive - hard to know what's actually required
+interface Order { id?: number; total?: number; items?: string[]; }
+
+// ✅ Better - be explicit about what's required
+interface Order { id: number; total: number; items: string[]; }</pre>
+
+        <h3>5. Use Declaration Merging Sparingly</h3>
+        <p>Reach for it only when augmenting third-party or global types — not as a general design pattern in your own code.</p>
+
+        <!-- SUMMARY -->
+        <h2 style="margin-top: 40px;">📋 Quick Reference Summary</h2>
+
+        <div class="table-wrap">
+        <table>
+            <tr>
+                <th>Concept</th>
+                <th>Key Points</th>
+            </tr>
+            <tr>
+                <td><strong>interface</strong></td>
+                <td>Named object shape; supports <code>extends</code> and declaration merging</td>
+            </tr>
+            <tr>
+                <td><strong>type</strong></td>
+                <td>Names any type: unions, tuples, functions, primitives, object shapes</td>
+            </tr>
+            <tr>
+                <td><strong>Optional (?)</strong></td>
+                <td>Property may be omitted</td>
+            </tr>
+            <tr>
+                <td><strong>readonly</strong></td>
+                <td>Prevents reassignment after initial creation (shallow)</td>
+            </tr>
+            <tr>
+                <td><strong>extends</strong></td>
+                <td>Combine multiple interfaces into one richer shape</td>
+            </tr>
+            <tr>
+                <td><strong>Index signatures</strong></td>
+                <td>Model dictionary-like objects with dynamic keys</td>
+            </tr>
+            <tr>
+                <td><strong>implements</strong></td>
+                <td>Class promises to satisfy an interface's public shape</td>
+            </tr>
+        </table>
+        </div>
+
+        <div style="margin-top: 40px; padding: 20px; background: #ecf0f1; border-radius: 5px;">
+            <h3>🎓 Learning Path</h3>
+            <p><strong>Beginner:</strong> Master sections 1, 2, 3</p>
+            <p><strong>Intermediate:</strong> Understand sections 4, 5, 6, 7</p>
+            <p><strong>Advanced:</strong> Deep dive into sections 8, 9, 10</p>
+        </div>
+
+    </div>
+</body>
+</html>

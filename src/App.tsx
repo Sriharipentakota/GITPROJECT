@@ -2,10 +2,12 @@ import { useState, useMemo, useCallback, useRef, useEffect, Suspense, lazy } fro
 import { CONCEPTS } from './data/concepts';
 import { PLAYWRIGHT_CONCEPTS } from './data/playwrightConcepts';
 import { TOSCA_CONCEPTS } from './data/toscaConcepts';
+import { TYPESCRIPT_CONCEPTS } from './data/typescriptConcepts';
 import { JS_TASKS } from './data/jsTasks';
 import { PW_TASKS } from './data/playwrightTasks';
+import { TS_TASKS } from './data/typescriptTasks';
 import { MISSIONS } from './data/missions';
-import type { Question, Task, SaveStatus, InProgressState, Progress, AppView } from './types';
+import type { Concept, Question, Task, SaveStatus, InProgressState, Progress, AppView } from './types';
 import { useProgress } from './hooks/useProgress';
 import { useSession } from './hooks/useSession';
 import useMissions from './hooks/useMissions';
@@ -28,9 +30,17 @@ const Dashboard     = lazy(() => import('./components/Dashboard'));
 const SkillMap      = lazy(() => import('./components/SkillMap'));
 const MissionList   = lazy(() => import('./components/MissionList'));
 const MissionDetail = lazy(() => import('./components/MissionDetail'));
-const Analytics     = lazy(() => import('./components/Analytics'));
-const Achievements  = lazy(() => import('./components/Achievements'));
 const SearchPalette = lazy(() => import('./components/SearchPalette'));
+
+// Single source of truth for "which concept list belongs to this path" — every
+// other per-path branch below (tasks, question loader, progress key) mirrors
+// this same set of ids, so adding a path only ever means adding one entry here.
+const PATH_CONCEPTS: Record<string, Concept[]> = {
+  javascript: CONCEPTS,
+  playwright: PLAYWRIGHT_CONCEPTS,
+  tosca: TOSCA_CONCEPTS,
+  typescript: TYPESCRIPT_CONCEPTS,
+};
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function rawToQuestion(r: any[]): Question {
@@ -40,6 +50,7 @@ function rawToQuestion(r: any[]): Question {
 function getTasksForPath(pathId: string, conceptId: string): Task[] {
   if (pathId === 'javascript') return JS_TASKS[conceptId] ?? [];
   if (pathId === 'playwright') return PW_TASKS[conceptId] ?? [];
+  if (pathId === 'typescript') return TS_TASKS[conceptId] ?? [];
   return [];
 }
 
@@ -60,7 +71,7 @@ export default function App() {
     () => localStorage.getItem('jml_path') || 'javascript'
   );
 
-  const concepts = pathId === 'playwright' ? PLAYWRIGHT_CONCEPTS : pathId === 'tosca' ? TOSCA_CONCEPTS : CONCEPTS;
+  const concepts = PATH_CONCEPTS[pathId] ?? CONCEPTS;
   const [questionsRaw, setQuestionsRaw] = useState<Record<string, unknown[][]>>({});
   const [isQuestionsLoaded, setIsQuestionsLoaded] = useState(false);
 
@@ -99,6 +110,8 @@ export default function App() {
         ? await import('./data/playwrightQuestions')
         : pathId === 'tosca'
         ? await import('./data/toscaQuestions')
+        : pathId === 'typescript'
+        ? await import('./data/typescriptQuestions')
         : await import('./data/questions');
 
       if (!active) return;
@@ -107,6 +120,8 @@ export default function App() {
         ? (module as typeof import('./data/playwrightQuestions')).PLAYWRIGHT_QUESTIONS_RAW
         : pathId === 'tosca'
         ? (module as typeof import('./data/toscaQuestions')).TOSCA_QUESTIONS_RAW
+        : pathId === 'typescript'
+        ? (module as typeof import('./data/typescriptQuestions')).TYPESCRIPT_QUESTIONS_RAW
         : (module as typeof import('./data/questions')).QUESTIONS_RAW;
 
       setQuestionsRaw(data as Record<string, unknown[][]>);
@@ -132,11 +147,12 @@ export default function App() {
     return () => window.removeEventListener('keydown', handler);
   }, []);
 
-  // Aggregate progress across all paths for dashboard/analytics/achievements
+  // Aggregate progress across all paths for the dashboard and skill map
   const allProgress = useMemo<Record<string, Progress>>(() => ({
     javascript: pathId === 'javascript' ? progress : loadProgressForPath('javascript'),
     playwright: pathId === 'playwright' ? progress : loadProgressForPath('playwright'),
     tosca:      pathId === 'tosca'      ? progress : loadProgressForPath('tosca'),
+    typescript: pathId === 'typescript' ? progress : loadProgressForPath('typescript'),
   }), [pathId, progress]);
 
   const missionCompletedCount = useMemo(
@@ -158,7 +174,7 @@ export default function App() {
       setQuestionsRaw({});
       setIsQuestionsLoaded(false);
       setPathId(newPathId);
-      const newConcepts = newPathId === 'playwright' ? PLAYWRIGHT_CONCEPTS : newPathId === 'tosca' ? TOSCA_CONCEPTS : CONCEPTS;
+      const newConcepts = PATH_CONCEPTS[newPathId] ?? CONCEPTS;
       setConceptId(newConcepts[0].id);
       setMode('learn');
       setAppView('learn');
@@ -336,18 +352,6 @@ export default function App() {
                 onCompleteMission={handleCompleteMission}
               />
             )}
-            {appView === 'analytics' && (
-              <Analytics
-                allProgress={allProgress}
-                missionProgress={missionProgress}
-              />
-            )}
-            {appView === 'achievements' && (
-              <Achievements
-                allProgress={allProgress}
-                missionProgress={missionProgress}
-              />
-            )}
             {appView === 'learn' && showContent && (
               mode === 'learn' ? (
                 <ConceptView
@@ -397,7 +401,6 @@ export default function App() {
           { id: 'learn',        icon: '📚', label: 'Learn'    },
           { id: 'skillmap',     icon: '🗺️', label: 'Skills'   },
           { id: 'missions',     icon: '🎯', label: 'Missions' },
-          { id: 'achievements', icon: '🏆', label: 'Badges'   },
         ] as { id: AppView; icon: string; label: string }[]).map(item => (
           <button
             key={item.id}

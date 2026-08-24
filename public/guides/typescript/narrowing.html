@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TypeScript Type Narrowing & Guards: Complete Guide</title>
+    <link rel="stylesheet" href="/guides/guide-base.css">
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 TypeScript Type Narrowing & Guards: Complete Guide</h1>
+        <p style="font-size: 1.1em; color: #7f8c8d; margin-bottom: 20px;">
+            A comprehensive journey from fundamental concepts to advanced techniques
+        </p>
+
+        <div class="toc">
+            <h3>📚 Table of Contents</h3>
+            <ul>
+                <li><a href="#section1">1. What is Type Narrowing?</a></li>
+                <li><a href="#section2">2. Narrowing with typeof</a></li>
+                <li><a href="#section3">3. Truthiness and Equality Narrowing</a></li>
+                <li><a href="#section4">4. Narrowing with instanceof</a></li>
+                <li><a href="#section5">5. Narrowing with in</a></li>
+                <li><a href="#section6">6. Discriminated Union Narrowing</a></li>
+                <li><a href="#section7">7. Custom Type Guards (is)</a></li>
+                <li><a href="#section8">8. Assertion Functions</a></li>
+                <li><a href="#section9">9. Control Flow Analysis Nuances</a></li>
+                <li><a href="#section10">10. Best Practices</a></li>
+            </ul>
+        </div>
+
+        <!-- SECTION 1 -->
+        <h2 id="section1"><span class="level beginner">BEGINNER</span>1. What is Type Narrowing?</h2>
+
+        <h3>Definition</h3>
+        <p>Narrowing is TypeScript's process of refining a broad type (like a union) into a more specific one based on runtime checks in your code, such as <code>if</code> statements or <code>typeof</code> checks.</p>
+
+        <div class="example">
+            <strong>Real-world analogy:</strong> Narrowing is like a border checkpoint that first checks "is this a passport or a driver's license?" — once it knows which one, it can safely check fields specific to that document type.
+        </div>
+
+        <pre>function printLength(value: string | string[]) {
+    if (typeof value === "string") {
+        console.log(value.length);   // ✅ narrowed to string
+    } else {
+        console.log(value.length);   // ✅ narrowed to string[]
+    }
+}</pre>
+
+        <div class="note">
+            <strong>💡 Tip:</strong> Narrowing only happens within the block where the check is true. Once you leave that block, TypeScript reverts to the wider type.
+        </div>
+
+        <!-- SECTION 2 -->
+        <h2 id="section2"><span class="level beginner">BEGINNER</span>2. Narrowing with typeof</h2>
+
+        <pre>function formatValue(value: string | number | boolean): string {
+    if (typeof value === "string") {
+        return value.trim();
+    } else if (typeof value === "number") {
+        return value.toFixed(2);
+    } else {
+        return value ? "yes" : "no";
+    }
+}
+
+formatValue("  hi  ");   // "hi"
+formatValue(3.14159);    // "3.14"
+formatValue(true);       // "yes"</pre>
+
+        <h3>typeof Works with switch Too</h3>
+        <pre>function describe(value: string | number | undefined): string {
+    switch (typeof value) {
+        case "string":
+            return `String: ${value}`;
+        case "number":
+            return `Number: ${value}`;
+        default:
+            return "Nothing provided";
+    }
+}</pre>
+
+        <div class="warning">
+            <strong>⚠️ Common Pitfall:</strong> <code>typeof null</code> returns <code>"object"</code> in JavaScript, a historical quirk. Use an explicit <code>value === null</code> check to separate <code>null</code> from real objects.
+        </div>
+
+        <!-- SECTION 3 -->
+        <h2 id="section3"><span class="level beginner">BEGINNER</span>3. Truthiness and Equality Narrowing</h2>
+
+        <h3>Truthiness Narrowing</h3>
+        <pre>function printName(name: string | null | undefined) {
+    if (name) {
+        console.log(name.toUpperCase());   // ✅ narrowed - name is string here
+    } else {
+        console.log("No name provided");
+    }
+}</pre>
+
+        <h3>Equality Narrowing</h3>
+        <pre>function compare(a: string | number, b: string | boolean) {
+    if (a === b) {
+        // Only 'string' is common to both unions, so both narrow to string
+        console.log(a.toUpperCase(), b.toUpperCase());
+    }
+}</pre>
+
+        <h3>Narrowing null and undefined with != null</h3>
+        <pre>function greet(name: string | null | undefined) {
+    if (name != null) {   // catches both null AND undefined
+        console.log(`Hello, ${name}`);   // ✅ narrowed to string
+    }
+}</pre>
+
+        <div class="warning">
+            <strong>⚠️ Common Pitfall:</strong> Truthiness narrowing on strings/numbers also excludes valid values like <code>""</code> or <code>0</code>. Prefer explicit <code>!= null</code> checks when you specifically want to exclude only <code>null</code>/<code>undefined</code>.
+        </div>
+
+        <!-- SECTION 4 -->
+        <h2 id="section4"><span class="level intermediate">INTERMEDIATE</span>4. Narrowing with instanceof</h2>
+
+        <pre>class ValidationError extends Error {
+    field: string;
+    constructor(field: string, message: string) {
+        super(message);
+        this.field = field;
+    }
+}
+
+function handleError(error: Error) {
+    if (error instanceof ValidationError) {
+        console.log(`Invalid field: ${error.field}`);   // ✅ narrowed
+    } else {
+        console.log(`Generic error: ${error.message}`);
+    }
+}</pre>
+
+        <h3>instanceof with Built-in Types</h3>
+        <pre>function formatDate(value: Date | string): string {
+    if (value instanceof Date) {
+        return value.toISOString();
+    }
+    return new Date(value).toISOString();
+}</pre>
+
+        <!-- SECTION 5 -->
+        <h2 id="section5"><span class="level intermediate">INTERMEDIATE</span>5. Narrowing with in</h2>
+
+        <p>The <code>in</code> operator checks whether a property exists on an object, which TypeScript can use to distinguish between object shapes that don't share a discriminant tag.</p>
+
+        <pre>interface Car {
+    drive(): void;
+}
+
+interface Boat {
+    sail(): void;
+}
+
+function operate(vehicle: Car | Boat) {
+    if ("drive" in vehicle) {
+        vehicle.drive();   // ✅ narrowed to Car
+    } else {
+        vehicle.sail();    // ✅ narrowed to Boat
+    }
+}</pre>
+
+        <h3>in with Optional Properties</h3>
+        <pre>interface Admin {
+    role: "admin";
+    permissions: string[];
+}
+
+interface Guest {
+    role: "guest";
+}
+
+function describe(user: Admin | Guest) {
+    if ("permissions" in user) {
+        console.log(user.permissions.join(", "));   // ✅ narrowed to Admin
+    } else {
+        console.log("Guest user");
+    }
+}</pre>
+
+        <!-- SECTION 6 -->
+        <h2 id="section6"><span class="level intermediate">INTERMEDIATE</span>6. Discriminated Union Narrowing</h2>
+
+        <p>When every member of a union shares a common literal property, checking that single property narrows the entire object at once — the most reliable and readable narrowing pattern.</p>
+
+        <pre>type Shape =
+    | { kind: "circle"; radius: number }
+    | { kind: "rectangle"; width: number; height: number }
+    | { kind: "triangle"; base: number; height: number };
+
+function area(shape: Shape): number {
+    switch (shape.kind) {
+        case "circle":
+            return Math.PI * shape.radius ** 2;
+        case "rectangle":
+            return shape.width * shape.height;
+        case "triangle":
+            return (shape.base * shape.height) / 2;
+    }
+}</pre>
+
+        <div class="note">
+            <strong>💡 Tip:</strong> This pattern (also called a "tagged union") is the backbone of most robust TypeScript state-machine and API-response modeling — see the Union & Intersection Types guide for more depth.
+        </div>
+
+        <!-- SECTION 7 -->
+        <h2 id="section7"><span class="level advanced">ADVANCED</span>7. Custom Type Guards (is)</h2>
+
+        <p>When built-in narrowing techniques aren't enough, you can write your own type predicate function using the <code>value is Type</code> return annotation.</p>
+
+        <pre>interface Fish {
+    swim(): void;
+}
+
+interface Bird {
+    fly(): void;
+}
+
+function isFish(pet: Fish | Bird): pet is Fish {
+    return (pet as Fish).swim !== undefined;
+}
+
+function move(pet: Fish | Bird) {
+    if (isFish(pet)) {
+        pet.swim();   // ✅ narrowed to Fish
+    } else {
+        pet.fly();    // ✅ narrowed to Bird
+    }
+}</pre>
+
+        <h3>Type Guards for Arrays with .filter()</h3>
+        <pre>const values: (string | null)[] = ["a", null, "b", null, "c"];
+
+function isString(value: string | null): value is string {
+    return value !== null;
+}
+
+const strings: string[] = values.filter(isString);
+// Without the type guard, .filter would return (string | null)[]</pre>
+
+        <!-- SECTION 8 -->
+        <h2 id="section8"><span class="level advanced">ADVANCED</span>8. Assertion Functions</h2>
+
+        <p>Assertion functions don't return a boolean — instead they <strong>throw</strong> if a condition fails, and TypeScript narrows the type for all code that runs after the call.</p>
+
+        <pre>function assertIsString(value: unknown): asserts value is string {
+    if (typeof value !== "string") {
+        throw new Error("Expected a string");
+    }
+}
+
+function process(input: unknown) {
+    assertIsString(input);
+    console.log(input.toUpperCase());   // ✅ narrowed to string after the assertion
+}</pre>
+
+        <h3>Generic assert() Helper</h3>
+        <pre>function assert(condition: unknown, message: string): asserts condition {
+    if (!condition) {
+        throw new Error(message);
+    }
+}
+
+function divide(a: number, b: number): number {
+    assert(b !== 0, "Division by zero");
+    return a / b;   // TypeScript trusts b is non-zero going forward
+}</pre>
+
+        <div class="warning">
+            <strong>⚠️ Common Pitfall:</strong> Assertion functions are a compile-time promise, not a runtime guarantee beyond what you actually check. A poorly written assertion (e.g. always returning without checking) creates false type safety.
+        </div>
+
+        <!-- SECTION 9 -->
+        <h2 id="section9"><span class="level advanced">ADVANCED</span>9. Control Flow Analysis Nuances</h2>
+
+        <h3>Narrowing Is Lost Across Function Boundaries</h3>
+        <pre>function isValid(value: unknown): boolean {
+    return typeof value === "string";
+}
+
+function process(value: unknown) {
+    if (isValid(value)) {
+        // value.toUpperCase();   // ❌ Error - TypeScript doesn't know
+        //                           isValid() narrows to string; it only
+        //                           returns 'boolean', not a type predicate
+    }
+}
+
+// Fix: use a real type predicate instead
+function isString2(value: unknown): value is string {
+    return typeof value === "string";
+}</pre>
+
+        <h3>Narrowing and Closures</h3>
+        <pre>function example(value: string | undefined) {
+    if (value) {
+        setTimeout(() => {
+            // console.log(value.toUpperCase());   // ❌ Error in some cases -
+            //   TypeScript can't guarantee 'value' hasn't changed by the
+            //   time this closure runs (relevant with 'let' captured variables)
+        }, 100);
+    }
+}</pre>
+
+        <div class="note">
+            <strong>💡 Tip:</strong> When narrowing needs to survive into a callback, copy the narrowed value into a new <code>const</code> first: <code>const safeValue = value;</code> then reference <code>safeValue</code> inside the closure.
+        </div>
+
+        <!-- SECTION 10 -->
+        <h2 id="section10"><span class="level advanced">ADVANCED</span>10. Best Practices</h2>
+
+        <h3>1. Prefer Discriminated Unions Over in/instanceof Chains</h3>
+        <pre>// ✅ Good - one property, clean switch
+type Action = { type: "add"; value: number } | { type: "reset" };</pre>
+
+        <h3>2. Write Type Predicates for Reusable Checks</h3>
+        <pre>// ✅ Good
+function isNonNull<T>(value: T | null | undefined): value is T {
+    return value !== null && value !== undefined;
+}
+
+const clean = [1, null, 2, undefined, 3].filter(isNonNull);   // number[]</pre>
+
+        <h3>3. Use Assertion Functions for Preconditions</h3>
+        <pre>// ✅ Good - fails fast with a clear type guarantee afterward
+assert(user !== null, "User must be loaded before this point");</pre>
+
+        <h3>4. Capture Narrowed Values Before Using Them in Callbacks</h3>
+        <pre>// ✅ Good
+if (value) {
+    const safeValue = value;
+    setTimeout(() => console.log(safeValue.toUpperCase()), 100);
+}</pre>
+
+        <h3>5. Always Add an Exhaustiveness Check to Narrowing switch Statements</h3>
+        <pre>// ✅ Good
+default: {
+    const _exhaustive: never = shape;
+    throw new Error(`Unhandled shape: ${JSON.stringify(_exhaustive)}`);
+}</pre>
+
+        <!-- SUMMARY -->
+        <h2 style="margin-top: 40px;">📋 Quick Reference Summary</h2>
+
+        <div class="table-wrap">
+        <table>
+            <tr>
+                <th>Technique</th>
+                <th>Key Points</th>
+            </tr>
+            <tr>
+                <td><strong>typeof</strong></td>
+                <td>Narrows primitives: string, number, boolean, bigint, symbol, undefined, function</td>
+            </tr>
+            <tr>
+                <td><strong>Truthiness / != null</strong></td>
+                <td>Filters out null/undefined/falsy values before use</td>
+            </tr>
+            <tr>
+                <td><strong>instanceof</strong></td>
+                <td>Narrows class instances, including custom Error subclasses</td>
+            </tr>
+            <tr>
+                <td><strong>in</strong></td>
+                <td>Narrows based on property presence across differently-shaped objects</td>
+            </tr>
+            <tr>
+                <td><strong>Discriminated unions</strong></td>
+                <td>Narrows via a shared literal tag property; most robust pattern</td>
+            </tr>
+            <tr>
+                <td><strong>value is Type</strong></td>
+                <td>Custom, reusable type guard function returning a boolean</td>
+            </tr>
+            <tr>
+                <td><strong>asserts value is Type</strong></td>
+                <td>Throws on failure; narrows all subsequent code in scope</td>
+            </tr>
+        </table>
+        </div>
+
+        <div style="margin-top: 40px; padding: 20px; background: #ecf0f1; border-radius: 5px;">
+            <h3>🎓 Learning Path</h3>
+            <p><strong>Beginner:</strong> Master sections 1, 2, 3</p>
+            <p><strong>Intermediate:</strong> Understand sections 4, 5, 6</p>
+            <p><strong>Advanced:</strong> Deep dive into sections 7, 8, 9, 10</p>
+        </div>
+
+    </div>
+</body>
+</html>

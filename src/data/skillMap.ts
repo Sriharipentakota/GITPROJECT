@@ -1,7 +1,7 @@
 export interface Skill {
   id: string;
   label: string;
-  path: 'javascript' | 'playwright' | 'tosca';
+  path: 'javascript' | 'playwright' | 'tosca' | 'typescript';
   category: string;
   description: string;
   relatedConceptIds: string[];
@@ -223,5 +223,77 @@ export const SKILLS: Skill[] = [
       'Design and execute API test cases in Tosca using the API Testing module to validate REST and SOAP service contracts. Combine API and UI test steps within the same test case to support end-to-end integration scenarios.',
     relatedConceptIds: ['api'],
     prerequisites: ['tc-testcases'],
+  },
+
+  // TypeScript Skills
+  {
+    id: 'ts-basics',
+    label: 'Type Fundamentals',
+    path: 'typescript',
+    category: 'Fundamentals',
+    description:
+      'Annotate variables, parameters, and return values with TypeScript\'s basic types, and understand how the compiler uses them to catch mistakes before code ever runs.',
+    relatedConceptIds: ['typebasics'],
+    prerequisites: [],
+  },
+  {
+    id: 'ts-interfaces',
+    label: 'Interfaces & Aliases',
+    path: 'typescript',
+    category: 'Fundamentals',
+    description:
+      'Shape object structures with interfaces and type aliases, extend and compose them, and choose the right tool for describing the shape of your data.',
+    relatedConceptIds: ['interfaces'],
+    prerequisites: ['ts-basics'],
+  },
+  {
+    id: 'ts-functions',
+    label: 'Function & Collection Types',
+    path: 'typescript',
+    category: 'Fundamentals',
+    description:
+      'Type function parameters, return values, and overloads, and model ordered collections precisely with arrays, tuples, and enums.',
+    relatedConceptIds: ['functiontypes', 'arraystuples'],
+    prerequisites: ['ts-basics'],
+  },
+  {
+    id: 'ts-narrowing',
+    label: 'Union Types & Narrowing',
+    path: 'typescript',
+    category: 'Type System',
+    description:
+      'Combine types with unions and intersections, then safely narrow them down using type guards, discriminated unions, and control-flow analysis.',
+    relatedConceptIds: ['uniontypes', 'narrowing'],
+    prerequisites: ['ts-interfaces'],
+  },
+  {
+    id: 'ts-oop',
+    label: 'Classes & Generics',
+    path: 'typescript',
+    category: 'Type System',
+    description:
+      'Build typed object-oriented code with classes and access modifiers, and write reusable, type-safe functions and structures using generics.',
+    relatedConceptIds: ['classes', 'generics'],
+    prerequisites: ['ts-functions'],
+  },
+  {
+    id: 'ts-advanced',
+    label: 'Advanced Type Techniques',
+    path: 'typescript',
+    category: 'Advanced',
+    description:
+      'Transform and derive types with mapped, conditional, and utility types, and understand exactly how and when TypeScript infers a type versus requiring an assertion.',
+    relatedConceptIds: ['advancedtypes', 'inference'],
+    prerequisites: ['ts-narrowing', 'ts-oop'],
+  },
+  {
+    id: 'ts-tooling',
+    label: 'Modules, Decorators & Tooling',
+    path: 'typescript',
+    category: 'Tooling',
+    description:
+      'Organize a codebase into modules, use decorators to add cross-cutting behavior, write type-safe async and error-handling code, and configure the compiler itself via tsconfig.json.',
+    relatedConceptIds: ['modules', 'decorators', 'asynctypes', 'errorhandling', 'tsconfig'],
+    prerequisites: ['ts-advanced'],
   },
 ];
