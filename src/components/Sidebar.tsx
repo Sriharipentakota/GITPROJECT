@@ -2,10 +2,10 @@ import { PATHS } from '../data/paths';
 import type { Concept, Progress, InProgressState, AppView } from '../types';
 
 const NAV_ITEMS: { id: AppView; icon: string; label: string }[] = [
-  { id: 'dashboard',    icon: '📊', label: 'Dashboard'   },
+  // { id: 'dashboard',    icon: '📊', label: 'Dashboard'   },
   { id: 'learn',        icon: '📚', label: 'Learn'       },
-  { id: 'skillmap',     icon: '🗺️', label: 'Skill Map'   },
-  { id: 'missions',     icon: '🎯', label: 'Missions'    },
+  // { id: 'skillmap',     icon: '🗺️', label: 'Skill Map'   },
+  // { id: 'missions',     icon: '🎯', label: 'Missions'    },
 ];
 
 interface Props {
