@@ -81,7 +81,7 @@ export default function App() {
   const feedback = useImmersiveFeedback();
   const confetti = useConfetti();
 
-  const [appView, setAppView] = useState<AppView>('dashboard');
+  const [appView, setAppView] = useState<AppView>('learn');
   const [selectedMissionId, setSelectedMissionId] = useState<string | null>(null);
   const [searchOpen, setSearchOpen] = useState(false);
 
