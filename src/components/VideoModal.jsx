@@ -1,5 +1,25 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { phaseThemes } from '../data/roadmap'
+
+const VIDEO_RATIO = 16 / 9
+const DRAG_EXPAND_THRESHOLD = 50 // px of upward drag before it snaps to expanded
+const DRAG_COLLAPSE_THRESHOLD = 50 // px of downward drag before it snaps back
+
+// "Cover" sizing for the iframe — like CSS object-fit: cover, computed by
+// hand because iframe doesn't reliably support object-fit across browsers.
+// Scales the (fixed 16:9) video so BOTH dimensions meet or exceed the
+// container, then the overflowing dimension is cropped by centering it —
+// this is what eliminates the gap, trading a sliver of picture at the edges
+// for zero visible bars, same tradeoff any "no letterbox" video UI makes.
+function computeCoverSize(containerW, containerH) {
+  const containerRatio = containerW / containerH
+  if (containerRatio > VIDEO_RATIO) {
+    const width = containerW
+    return { width, height: width / VIDEO_RATIO }
+  }
+  const height = containerH
+  return { width: height * VIDEO_RATIO, height }
+}
 
 // Extracts the bare video ID from any YouTube URL format, or returns the input as-is if it's already an ID.
 // Handles: youtu.be/ID, youtube.com/watch?v=ID, youtube.com/embed/ID, youtube.com/shorts/ID, plain IDs
@@ -31,9 +51,94 @@ function extractVideoId(input) {
 export default function VideoModal({ topic, phaseId, onClose }) {
   const overlayRef = useRef(null)
   const iframeRef = useRef(null)
+  const handleRef = useRef(null)
+  const dragRef = useRef(null) // { startY, pointerId } while a drag is in progress
+  const [isExpanded, setIsExpanded] = useState(false)
+  const [dragOffset, setDragOffset] = useState(0) // live finger-follow offset while dragging
   const videoId = extractVideoId(topic.videoId)
   const hasVideo = videoId !== ''
   const theme = phaseThemes[phaseId]
+
+  // Custom drag-to-expand, independent of YouTube's own fullscreen button.
+  // The drag has to start on our own `handleRef` element (never on the
+  // iframe itself) because pointer events landing directly on a cross-origin
+  // iframe are handed off to that iframe's own document and never reach our
+  // listeners. Once the drag starts, `setPointerCapture` keeps every
+  // subsequent move/up event routed to the handle regardless of where the
+  // finger physically travels — including on top of the iframe — which is
+  // what makes dragging over the video area work at all.
+  useEffect(() => {
+    const handle = handleRef.current
+    if (!handle) return
+
+    const onPointerDown = (e) => {
+      dragRef.current = { startY: e.clientY, pointerId: e.pointerId }
+      try { handle.setPointerCapture(e.pointerId) } catch { /* no active pointer to capture — rare, non-fatal */ }
+    }
+    const onPointerMove = (e) => {
+      const drag = dragRef.current
+      if (!drag || drag.pointerId !== e.pointerId) return
+      const delta = e.clientY - drag.startY
+      // Dragging up (negative delta) only matters while collapsed; dragging
+      // down (positive delta) only matters while expanded — clamp so the
+      // handle doesn't visually run away past what a drag can actually do.
+      setDragOffset(isExpanded ? Math.max(0, delta) : Math.min(0, delta))
+    }
+    const endDrag = (e) => {
+      const drag = dragRef.current
+      if (!drag || drag.pointerId !== e.pointerId) return
+      const delta = e.clientY - drag.startY
+      const TAP_THRESHOLD = 8
+      if (Math.abs(delta) < TAP_THRESHOLD) {
+        setIsExpanded((prev) => !prev) // a plain tap on the handle also toggles
+      } else if (!isExpanded && delta <= -DRAG_EXPAND_THRESHOLD) {
+        setIsExpanded(true)
+      } else if (isExpanded && delta >= DRAG_COLLAPSE_THRESHOLD) {
+        setIsExpanded(false)
+      }
+      dragRef.current = null
+      setDragOffset(0)
+      try { handle.releasePointerCapture(e.pointerId) } catch { /* already released */ }
+    }
+
+    handle.addEventListener('pointerdown', onPointerDown)
+    handle.addEventListener('pointermove', onPointerMove)
+    handle.addEventListener('pointerup', endDrag)
+    handle.addEventListener('pointercancel', endDrag)
+    return () => {
+      handle.removeEventListener('pointerdown', onPointerDown)
+      handle.removeEventListener('pointermove', onPointerMove)
+      handle.removeEventListener('pointerup', endDrag)
+      handle.removeEventListener('pointercancel', endDrag)
+    }
+  }, [isExpanded])
+
+  // While expanded, size the IFRAME (not its clipping container, which must
+  // stay exactly viewport-sized) to "cover" the real viewport — overflowing
+  // on one axis, centered by the container's flex+overflow-hidden, which is
+  // what crops it instead of letterboxing. Kept correct through rotation.
+  useEffect(() => {
+    const iframe = iframeRef.current
+    if (!isExpanded || !iframe) return
+
+    const applyCoverSize = () => {
+      const { width, height } = computeCoverSize(window.innerWidth, window.innerHeight)
+      iframe.style.width = `${width}px`
+      iframe.style.height = `${height}px`
+      iframe.style.flexShrink = '0'
+    }
+    applyCoverSize()
+    window.addEventListener('resize', applyCoverSize)
+    window.addEventListener('orientationchange', applyCoverSize)
+    return () => {
+      window.removeEventListener('resize', applyCoverSize)
+      window.removeEventListener('orientationchange', applyCoverSize)
+      // Clear back to the normal (non-expanded) sizing rules.
+      iframe.style.width = ''
+      iframe.style.height = ''
+      iframe.style.flexShrink = ''
+    }
+  }, [isExpanded])
 
   // Mobile browsers (mainly iOS Safari) can leave the fullscreened video
   // undersized — with visible gaps — after a landscape rotation, because the
@@ -76,12 +181,17 @@ export default function VideoModal({ topic, phaseId, onClose }) {
     }
   }, [])
 
-  // Close on Escape key
+  // Escape collapses the custom expanded view first, then closes the modal
+  // on a second press — mirrors how Escape exits native fullscreen first.
   useEffect(() => {
-    const handleKey = (e) => { if (e.key === 'Escape') onClose() }
+    const handleKey = (e) => {
+      if (e.key !== 'Escape') return
+      if (isExpanded) setIsExpanded(false)
+      else onClose()
+    }
     window.addEventListener('keydown', handleKey)
     return () => window.removeEventListener('keydown', handleKey)
-  }, [onClose])
+  }, [onClose, isExpanded])
 
   // Prevent body scroll while modal open
   useEffect(() => {
@@ -131,17 +241,54 @@ export default function VideoModal({ topic, phaseId, onClose }) {
             (correct in both portrait and landscape phone orientations); on a
             genuinely large viewport (see .video-modal-video-area's media
             query) it becomes a fixed 16:9 box instead, matching the original
-            desktop card look. */}
-        <div className="video-modal-video-area relative w-full bg-black">
+            desktop card look. Dragging the handle below expands it to a
+            custom, cropped-to-fill fullscreen view we control ourselves
+            (see the isExpanded effects above) — independent of, and in
+            addition to, YouTube's own native fullscreen button. */}
+        <div
+          className={isExpanded
+            ? 'fixed inset-0 z-[70] bg-black flex items-center justify-center overflow-hidden'
+            : 'video-modal-video-area relative w-full bg-black'}
+        >
           {hasVideo ? (
             <iframe
               ref={iframeRef}
-              className="absolute inset-0 w-full h-full"
+              className={isExpanded ? '' : 'absolute inset-0 w-full h-full'}
               src={`https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1`}
               title={topic.name}
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
             />
-          ) : (
+          ) : null}
+
+          {hasVideo && (
+            <div
+              ref={handleRef}
+              className="absolute z-10 cursor-grab touch-none select-none active:cursor-grabbing"
+              style={{
+                top: isExpanded ? '10px' : '6px',
+                left: '50%',
+                transform: `translate(-50%, ${dragOffset}px)`,
+              }}
+              role="button"
+              tabIndex={0}
+              aria-label={isExpanded ? 'Drag down or tap to exit full screen' : 'Drag up or tap for full screen'}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') setIsExpanded((prev) => !prev)
+              }}
+            >
+              <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-black/60 backdrop-blur-sm">
+                <span className="w-8 h-1 rounded-full bg-white/70" />
+                <svg
+                  className={`w-3.5 h-3.5 text-white/80 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+                  fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 15.75l7.5-7.5 7.5 7.5" />
+                </svg>
+              </div>
+            </div>
+          )}
+
+          {!hasVideo && (
             <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 text-center px-6">
               <div className={`w-16 h-16 rounded-full flex items-center justify-center ${theme.badge}`}>
                 <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
