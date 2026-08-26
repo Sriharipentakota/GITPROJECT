@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TypeScript Functions & Function Types: Complete Guide</title>
+    <link rel="stylesheet" href="/guides/guide-base.css">
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 TypeScript Functions & Function Types: Complete Guide</h1>
+        <p style="font-size: 1.1em; color: #7f8c8d; margin-bottom: 20px;">
+            A comprehensive journey from fundamental concepts to advanced techniques
+        </p>
+
+        <div class="toc">
+            <h3>📚 Table of Contents</h3>
+            <ul>
+                <li><a href="#section1">1. Typing Function Parameters and Returns</a></li>
+                <li><a href="#section2">2. Optional, Default, and Rest Parameters</a></li>
+                <li><a href="#section3">3. Function Type Expressions</a></li>
+                <li><a href="#section4">4. Arrow Functions vs Function Declarations</a></li>
+                <li><a href="#section5">5. Function Overloads</a></li>
+                <li><a href="#section6">6. this Parameters</a></li>
+                <li><a href="#section7">7. Callback Parameter Typing</a></li>
+                <li><a href="#section8">8. Void Return vs Contextual Typing</a></li>
+                <li><a href="#section9">9. Higher-Order Functions with Generics</a></li>
+                <li><a href="#section10">10. Best Practices</a></li>
+            </ul>
+        </div>
+
+        <!-- SECTION 1 -->
+        <h2 id="section1"><span class="level beginner">BEGINNER</span>1. Typing Function Parameters and Returns</h2>
+
+        <h3>Definition</h3>
+        <p>Every function parameter should have an explicit type, since TypeScript cannot infer it purely from how the function is defined. Return types are usually inferred, but can be annotated too.</p>
+
+        <pre>function add(a: number, b: number): number {
+    return a + b;
+}
+
+function greet(name: string): string {
+    return `Hello, ${name}!`;
+}
+
+add(2, 3);        // 5
+// add("2", 3);   // ❌ Error: Argument of type 'string' is not
+//                   assignable to parameter of type 'number'</pre>
+
+        <div class="example">
+            <strong>Why annotate parameters:</strong> Without annotations, parameters implicitly become <code>any</code> (or cause an error under <code>noImplicitAny</code>), silently disabling type checking for that function.
+        </div>
+
+        <h3>Inferred vs Explicit Return Types</h3>
+        <pre>// Inferred - TypeScript figures out the return is number
+function square(n: number) {
+    return n * n;
+}
+
+// Explicit - documents intent, catches accidental mismatches
+function cube(n: number): number {
+    return n * n * n;
+}</pre>
+
+        <!-- SECTION 2 -->
+        <h2 id="section2"><span class="level beginner">BEGINNER</span>2. Optional, Default, and Rest Parameters</h2>
+
+        <h3>Optional Parameters</h3>
+        <pre>function buildName(first: string, last?: string): string {
+    return last ? `${first} ${last}` : first;
+}
+
+buildName("Madonna");          // "Madonna"
+buildName("John", "Smith");    // "John Smith"</pre>
+
+        <h3>Default Parameters</h3>
+        <pre>function createUser(name: string, role: string = "member"): string {
+    return `${name} (${role})`;
+}
+
+createUser("Ana");             // "Ana (member)"
+createUser("Ana", "admin");    // "Ana (admin)"</pre>
+
+        <h3>Rest Parameters</h3>
+        <pre>function sum(...numbers: number[]): number {
+    return numbers.reduce((total, n) => total + n, 0);
+}
+
+sum(1, 2, 3);        // 6
+sum(1, 2, 3, 4, 5);  // 15</pre>
+
+        <div class="warning">
+            <strong>⚠️ Common Pitfall:</strong> Optional and default parameters must be declared after all required parameters. Rest parameters must always come last.
+        </div>
+
+        <!-- SECTION 3 -->
+        <h2 id="section3"><span class="level beginner">BEGINNER</span>3. Function Type Expressions</h2>
+
+        <p>You can describe the "shape" of a function — its parameters and return type — as its own type, useful for callbacks and variables that hold functions.</p>
+
+        <pre>type MathOperation = (a: number, b: number) => number;
+
+const multiply: MathOperation = (a, b) => a * b;
+const divide: MathOperation = (a, b) => a / b;
+
+function calculate(a: number, b: number, operation: MathOperation): number {
+    return operation(a, b);
+}
+
+calculate(10, 5, multiply);   // 50
+calculate(10, 5, divide);     // 2</pre>
+
+        <h3>Naming Parameters in Function Types</h3>
+        <p>Parameter names in a function type are just documentation — only the position and type matter for compatibility.</p>
+
+        <pre>type Logger = (message: string, level: "info" | "error") => void;
+
+const consoleLogger: Logger = (msg, lvl) => {
+    console.log(`[${lvl.toUpperCase()}] ${msg}`);
+};</pre>
+
+        <!-- SECTION 4 -->
+        <h2 id="section4"><span class="level intermediate">INTERMEDIATE</span>4. Arrow Functions vs Function Declarations</h2>
+
+        <div class="comparison">
+            <div>
+                <strong>Function Declaration:</strong>
+                <pre>function add(a: number, b: number): number {
+    return a + b;
+}
+// Hoisted - can be called before defined
+// Has its own 'this' binding</pre>
+            </div>
+            <div>
+                <strong>Arrow Function:</strong>
+                <pre>const add = (a: number, b: number): number => {
+    return a + b;
+};
+// Not hoisted
+// Inherits 'this' from enclosing scope</pre>
+            </div>
+        </div>
+
+        <h3>Typing Arrow Functions Assigned to a Variable</h3>
+        <pre>const isEven: (n: number) => boolean = (n) => n % 2 === 0;
+
+// More commonly, let the function type alias do the work:
+type Predicate = (n: number) => boolean;
+const isOdd: Predicate = (n) => n % 2 !== 0;</pre>
+
+        <h3>Function Expressions</h3>
+        <pre>const subtract = function (a: number, b: number): number {
+    return a - b;
+};</pre>
+
+        <!-- SECTION 5 -->
+        <h2 id="section5"><span class="level intermediate">INTERMEDIATE</span>5. Function Overloads</h2>
+
+        <p>Overloads let a single function name accept different combinations of parameter types and return correspondingly different types, more precisely than a union type alone would allow.</p>
+
+        <pre>// Overload signatures
+function makeDate(timestamp: number): Date;
+function makeDate(month: number, day: number, year: number): Date;
+// Implementation signature (not directly callable from outside)
+function makeDate(monthOrTimestamp: number, day?: number, year?: number): Date {
+    if (day !== undefined && year !== undefined) {
+        return new Date(year, monthOrTimestamp - 1, day);
+    }
+    return new Date(monthOrTimestamp);
+}
+
+makeDate(1_700_000_000_000);   // ✅ OK - matches first overload
+makeDate(8, 15, 2024);         // ✅ OK - matches second overload
+// makeDate(8, 15);            // ❌ Error: No overload expects 2 arguments</pre>
+
+        <div class="note">
+            <strong>💡 Tip:</strong> The implementation signature is never visible to callers — only the overload signatures are. It must be general enough to handle every overload's parameter combination.
+        </div>
+
+        <div class="warning">
+            <strong>⚠️ Common Pitfall:</strong> If a union type parameter would express the same intent, prefer it over overloads — overloads add complexity and should be reserved for cases where the return type genuinely depends on which combination of arguments was passed.
+        </div>
+
+        <!-- SECTION 6 -->
+        <h2 id="section6"><span class="level intermediate">INTERMEDIATE</span>6. this Parameters</h2>
+
+        <p>TypeScript lets you declare the expected type of <code>this</code> as a fake first parameter, purely for type-checking — it's erased at compile time and never appears in the compiled JavaScript.</p>
+
+        <pre>interface Button {
+    label: string;
+    onClick(this: Button, event: string): void;
+}
+
+const button: Button = {
+    label: "Submit",
+    onClick(this: Button, event: string) {
+        console.log(`${this.label} clicked: ${event}`);
+    }
+};
+
+button.onClick("click");   // OK - called with correct 'this'
+
+// const detached = button.onClick;
+// detached("click");      // ❌ Error if strict this-checking flags this misuse</pre>
+
+        <div class="example">
+            <strong>Real-world use case:</strong> DOM event handlers and jQuery-style APIs where <code>this</code> refers to the element that triggered the event benefit from explicit <code>this</code> typing to prevent accidental detachment bugs.
+        </div>
+
+        <!-- SECTION 7 -->
+        <h2 id="section7"><span class="level intermediate">INTERMEDIATE</span>7. Callback Parameter Typing</h2>
+
+        <pre>function fetchData(
+    url: string,
+    onSuccess: (data: string) => void,
+    onError: (error: Error) => void
+): void {
+    // simulate an async call
+    const success = true;
+    if (success) {
+        onSuccess("response data");
+    } else {
+        onError(new Error("Request failed"));
+    }
+}
+
+fetchData(
+    "/api/data",
+    (data) => console.log("Got:", data),
+    (err) => console.error("Failed:", err.message)
+);</pre>
+
+        <h3>Array Method Callbacks</h3>
+        <pre>const numbers: number[] = [1, 2, 3, 4, 5];
+
+// TypeScript infers 'n' as number from the array's element type
+const doubled = numbers.map((n) => n * 2);
+const evens = numbers.filter((n) => n % 2 === 0);
+const total = numbers.reduce((sum, n) => sum + n, 0);</pre>
+
+        <!-- SECTION 8 -->
+        <h2 id="section8"><span class="level advanced">ADVANCED</span>8. Void Return vs Contextual Typing Quirks</h2>
+
+        <p>A function typed to return <code>void</code> can still be assigned an implementation that returns something else — as long as that return value is ignored.</p>
+
+        <pre>type VoidCallback = () => void;
+
+// This is allowed even though the arrow function returns a boolean;
+// TypeScript trusts you to discard the value.
+const onClick: VoidCallback = () => {
+    return true;   // ✅ allowed, but the 'true' is discarded by contract
+};
+
+const items: number[] = [];
+// Array.prototype.push returns a number, but forEach expects void callbacks
+[1, 2, 3].forEach((n) => items.push(n));   // ✅ OK, push's number return is ignored</pre>
+
+        <div class="warning">
+            <strong>⚠️ Common Pitfall:</strong> This "void-returning function accepts non-void implementations" rule exists so common patterns like <code>arr.forEach(x => arr2.push(x))</code> compile — but it means <code>void</code> is not as strict a guarantee as it might first appear.
+        </div>
+
+        <!-- SECTION 9 -->
+        <h2 id="section9"><span class="level advanced">ADVANCED</span>9. Higher-Order Functions with Generics</h2>
+
+        <p>Functions that accept or return other functions often need generics to preserve type information across the boundary (full generics coverage is in its own guide).</p>
+
+        <pre>function once<T extends (...args: any[]) => any>(fn: T): T {
+    let called = false;
+    let result: ReturnType<T>;
+
+    return ((...args: Parameters<T>) => {
+        if (!called) {
+            result = fn(...args);
+            called = true;
+        }
+        return result;
+    }) as T;
+}
+
+const initialize = once((config: string) => {
+    console.log("Initializing with", config);
+    return true;
+});
+
+initialize("prod");   // runs
+initialize("dev");    // no-op, returns cached result</pre>
+
+        <div class="note">
+            <strong>💡 Tip:</strong> <code>Parameters&lt;T&gt;</code> and <code>ReturnType&lt;T&gt;</code> are built-in utility types that extract a function's parameter tuple and return type respectively — invaluable when wrapping arbitrary functions generically.
+        </div>
+
+        <!-- SECTION 10 -->
+        <h2 id="section10"><span class="level advanced">ADVANCED</span>10. Best Practices</h2>
+
+        <h3>1. Always Annotate Parameters</h3>
+        <pre>// ✅ Good
+function process(value: string): void { /* ... */ }</pre>
+
+        <h3>2. Let Return Types Be Inferred for Simple Functions</h3>
+        <pre>// ✅ Fine to omit — obviously a number
+function double(n: number) {
+    return n * 2;
+}</pre>
+
+        <h3>3. Prefer Union Parameters Over Overloads When Possible</h3>
+        <pre>// ✅ Simpler than overloads when return type doesn't change
+function format(value: string | number): string {
+    return String(value);
+}</pre>
+
+        <h3>4. Name Function Types for Reuse</h3>
+        <pre>// ✅ Good
+type Validator<T> = (value: T) => boolean;
+const isPositive: Validator<number> = (n) => n > 0;</pre>
+
+        <h3>5. Avoid Overly Generic any Callbacks</h3>
+        <pre>// ❌ Avoid
+function on(event: string, handler: (...args: any[]) => any) {}
+
+// ✅ Better - specific to the event's real payload
+function onUserCreated(handler: (user: { id: number; name: string }) => void) {}</pre>
+
+        <!-- SUMMARY -->
+        <h2 style="margin-top: 40px;">📋 Quick Reference Summary</h2>
+
+        <div class="table-wrap">
+        <table>
+            <tr>
+                <th>Concept</th>
+                <th>Key Points</th>
+            </tr>
+            <tr>
+                <td><strong>Parameter types</strong></td>
+                <td>Always required explicitly; never inferred from context alone</td>
+            </tr>
+            <tr>
+                <td><strong>Optional / Default</strong></td>
+                <td><code>param?: T</code> or <code>param: T = value</code>, must follow required params</td>
+            </tr>
+            <tr>
+                <td><strong>Rest parameters</strong></td>
+                <td><code>...args: T[]</code>, must be last</td>
+            </tr>
+            <tr>
+                <td><strong>Function type expressions</strong></td>
+                <td><code>(a: T, b: U) =&gt; R</code> — describes callable shapes</td>
+            </tr>
+            <tr>
+                <td><strong>Overloads</strong></td>
+                <td>Multiple signatures for one function name, one implementation</td>
+            </tr>
+            <tr>
+                <td><strong>this parameter</strong></td>
+                <td>Fake first parameter, erased at compile time, types <code>this</code></td>
+            </tr>
+            <tr>
+                <td><strong>Parameters&lt;T&gt; / ReturnType&lt;T&gt;</strong></td>
+                <td>Utility types for extracting a function's signature pieces</td>
+            </tr>
+        </table>
+        </div>
+
+        <div style="margin-top: 40px; padding: 20px; background: #ecf0f1; border-radius: 5px;">
+            <h3>🎓 Learning Path</h3>
+            <p><strong>Beginner:</strong> Master sections 1, 2, 3</p>
+            <p><strong>Intermediate:</strong> Understand sections 4, 5, 6, 7</p>
+            <p><strong>Advanced:</strong> Deep dive into sections 8, 9, 10</p>
+        </div>
+
+    </div>
+</body>
+</html>

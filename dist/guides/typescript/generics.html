@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TypeScript Generics: Complete Guide</title>
+    <link rel="stylesheet" href="/guides/guide-base.css">
+</head>
+<body>
+    <div class="container">
+        <h1>🧩 TypeScript Generics: Complete Guide</h1>
+        <p style="font-size: 1.1em; color: #7f8c8d; margin-bottom: 20px;">
+            A comprehensive journey from fundamental concepts to advanced techniques
+        </p>
+
+        <div class="toc">
+            <h3>📚 Table of Contents</h3>
+            <ul>
+                <li><a href="#section1">1. Why Generics Exist</a></li>
+                <li><a href="#section2">2. Generic Functions</a></li>
+                <li><a href="#section3">3. Generic Interfaces and Type Aliases</a></li>
+                <li><a href="#section4">4. Generic Classes</a></li>
+                <li><a href="#section5">5. Constraints with extends</a></li>
+                <li><a href="#section6">6. Default Type Parameters</a></li>
+                <li><a href="#section7">7. Multiple Type Parameters</a></li>
+                <li><a href="#section8">8. keyof and Generic Property Access</a></li>
+                <li><a href="#section9">9. Generic Utility Type Patterns</a></li>
+                <li><a href="#section10">10. Best Practices</a></li>
+            </ul>
+        </div>
+
+        <!-- SECTION 1 -->
+        <h2 id="section1"><span class="level beginner">BEGINNER</span>1. Why Generics Exist</h2>
+
+        <h3>Definition</h3>
+        <p>Generics let you write functions, interfaces, and classes that work with <strong>any type</strong> while still preserving type information, instead of falling back to <code>any</code> and losing type safety.</p>
+
+        <div class="example">
+            <strong>Real-world analogy:</strong> A generic function is like a shipping container — it doesn't care what's inside, but it guarantees whatever comes out is exactly what went in, whether that's books, furniture, or electronics.
+        </div>
+
+        <h3>The Problem Without Generics</h3>
+        <pre>// Using 'any' loses all type information
+function firstElementAny(arr: any[]): any {
+    return arr[0];
+}
+
+const num = firstElementAny([1, 2, 3]);
+num.toUpperCase();   // ❌ Compiles fine, but crashes at runtime! No safety.</pre>
+
+        <h3>The Fix: A Generic Function</h3>
+        <pre>function firstElement<T>(arr: T[]): T {
+    return arr[0];
+}
+
+const num = firstElement([1, 2, 3]);        // T inferred as number
+const str = firstElement(["a", "b", "c"]);  // T inferred as string
+
+// num.toUpperCase();   // ❌ Error: Property 'toUpperCase' does not exist
+//                          on type 'number' - caught at compile time!</pre>
+
+        <!-- SECTION 2 -->
+        <h2 id="section2"><span class="level beginner">BEGINNER</span>2. Generic Functions</h2>
+
+        <pre>function identity<T>(value: T): T {
+    return value;
+}
+
+identity<string>("hello");   // explicit type argument
+identity(42);                 // inferred as number - most common usage</pre>
+
+        <h3>Generic Functions Over Arrays</h3>
+        <pre>function last<T>(arr: T[]): T | undefined {
+    return arr[arr.length - 1];
+}
+
+last([1, 2, 3]);            // 3 (number | undefined)
+last(["x", "y", "z"]);      // "z" (string | undefined)
+last([]);                    // undefined</pre>
+
+        <h3>Generic Arrow Functions</h3>
+        <pre>const wrapInArray = <T,>(value: T): T[] => [value];
+// Note: the trailing comma in <T,> avoids ambiguity with JSX in .tsx files
+
+wrapInArray(5);        // number[]
+wrapInArray("hi");     // string[]</pre>
+
+        <!-- SECTION 3 -->
+        <h2 id="section3"><span class="level intermediate">INTERMEDIATE</span>3. Generic Interfaces and Type Aliases</h2>
+
+        <pre>interface Box<T> {
+    value: T;
+}
+
+const numberBox: Box<number> = { value: 42 };
+const stringBox: Box<string> = { value: "hello" };
+
+interface ApiResponse<T> {
+    data: T;
+    status: number;
+    error?: string;
+}
+
+const response: ApiResponse<{ id: number; name: string }> = {
+    data: { id: 1, name: "Widget" },
+    status: 200
+};</pre>
+
+        <h3>Generic Type Aliases</h3>
+        <pre>type Pair<A, B> = { first: A; second: B };
+
+const coordinate: Pair<number, number> = { first: 10, second: 20 };
+const entry: Pair<string, number> = { first: "age", second: 30 };
+
+type Nullable<T> = T | null;
+
+let maybeName: Nullable<string> = null;
+maybeName = "Reese";</pre>
+
+        <!-- SECTION 4 -->
+        <h2 id="section4"><span class="level intermediate">INTERMEDIATE</span>4. Generic Classes</h2>
+
+        <pre>class Stack<T> {
+    private items: T[] = [];
+
+    push(item: T): void {
+        this.items.push(item);
+    }
+
+    pop(): T | undefined {
+        return this.items.pop();
+    }
+
+    peek(): T | undefined {
+        return this.items[this.items.length - 1];
+    }
+
+    get size(): number {
+        return this.items.length;
+    }
+}
+
+const numberStack = new Stack<number>();
+numberStack.push(1);
+numberStack.push(2);
+console.log(numberStack.pop());   // 2
+
+const stringStack = new Stack<string>();
+stringStack.push("a");
+stringStack.push("b");</pre>
+
+        <h3>Generic Class with a Constrained Method</h3>
+        <pre>class Repository<T extends { id: number }> {
+    private items: T[] = [];
+
+    add(item: T): void {
+        this.items.push(item);
+    }
+
+    findById(id: number): T | undefined {
+        return this.items.find((item) => item.id === id);
+    }
+}
+
+interface Product { id: number; name: string; }
+const products = new Repository<Product>();
+products.add({ id: 1, name: "Widget" });</pre>
+
+        <!-- SECTION 5 -->
+        <h2 id="section5"><span class="level intermediate">INTERMEDIATE</span>5. Constraints with extends</h2>
+
+        <p>A generic constraint restricts <code>T</code> to types that have certain members, so you can safely use those members inside the function body.</p>
+
+        <pre>interface HasLength {
+    length: number;
+}
+
+function logLength<T extends HasLength>(value: T): T {
+    console.log(value.length);   // ✅ OK - guaranteed by the constraint
+    return value;
+}
+
+logLength("hello");        // 5 - strings have .length
+logLength([1, 2, 3]);      // 3 - arrays have .length
+// logLength(42);           // ❌ Error: number doesn't have .length</pre>
+
+        <h3>Constraining to Keys of Another Type</h3>
+        <pre>function pluck<T, K extends keyof T>(obj: T, key: K): T[K] {
+    return obj[key];
+}
+
+const user = { id: 1, name: "Wren", active: true };
+
+pluck(user, "name");     // "Wren" (string)
+pluck(user, "active");   // true (boolean)
+// pluck(user, "email");  // ❌ Error: 'email' is not a key of 'user'</pre>
+
+        <!-- SECTION 6 -->
+        <h2 id="section6"><span class="level intermediate">INTERMEDIATE</span>6. Default Type Parameters</h2>
+
+        <pre>interface ApiResult<T = unknown> {
+    data: T;
+    success: boolean;
+}
+
+// Uses the default 'unknown' when no type argument is given
+const genericResult: ApiResult = { data: "anything", success: true };
+
+// Explicit type argument overrides the default
+const typedResult: ApiResult<number[]> = { data: [1, 2, 3], success: true };</pre>
+
+        <h3>Defaults Referencing Other Parameters</h3>
+        <pre>interface Cache<K = string, V = K> {
+    get(key: K): V | undefined;
+    set(key: K, value: V): void;
+}
+
+// Cache<string> === Cache<string, string> since V defaults to K</pre>
+
+        <!-- SECTION 7 -->
+        <h2 id="section7"><span class="level advanced">ADVANCED</span>7. Multiple Type Parameters</h2>
+
+        <pre>function merge<T extends object, U extends object>(a: T, b: U): T & U {
+    return { ...a, ...b };
+}
+
+const merged = merge({ name: "Ash" }, { age: 25 });
+// merged: { name: string } & { age: number }
+console.log(merged.name, merged.age);   // Ash 25</pre>
+
+        <h3>Mapping Between Two Related Generic Parameters</h3>
+        <pre>function zip<T, U>(first: T[], second: U[]): [T, U][] {
+    const length = Math.min(first.length, second.length);
+    const result: [T, U][] = [];
+    for (let i = 0; i < length; i++) {
+        result.push([first[i], second[i]]);
+    }
+    return result;
+}
+
+zip([1, 2, 3], ["a", "b", "c"]);
+// [[1, "a"], [2, "b"], [3, "c"]]</pre>
+
+        <!-- SECTION 8 -->
+        <h2 id="section8"><span class="level advanced">ADVANCED</span>8. keyof and Generic Property Access</h2>
+
+        <p><code>keyof</code> produces a union of a type's property names as string literal types, commonly paired with generics for type-safe property access.</p>
+
+        <pre>interface Settings {
+    theme: string;
+    fontSize: number;
+    notifications: boolean;
+}
+
+type SettingsKey = keyof Settings;   // "theme" | "fontSize" | "notifications"
+
+function updateSetting<K extends keyof Settings>(
+    settings: Settings,
+    key: K,
+    value: Settings[K]
+): Settings {
+    return { ...settings, [key]: value };
+}
+
+const settings: Settings = { theme: "dark", fontSize: 14, notifications: true };
+updateSetting(settings, "fontSize", 16);      // ✅ OK - number matches
+// updateSetting(settings, "fontSize", "16"); // ❌ Error: string not assignable to number</pre>
+
+        <div class="note">
+            <strong>💡 Tip:</strong> <code>Settings[K]</code> is an "indexed access type" — it looks up the exact type of the property named by <code>K</code>, keeping the value parameter's type locked to whichever key was passed.
+        </div>
+
+        <!-- SECTION 9 -->
+        <h2 id="section9"><span class="level advanced">ADVANCED</span>9. Generic Utility Type Patterns</h2>
+
+        <p>Many of TypeScript's built-in utility types (fully explored in the Advanced & Utility Types guide) are themselves generics you can learn from and mimic.</p>
+
+        <pre>// A simplified reimplementation of Partial<T>
+type MyPartial<T> = {
+    [K in keyof T]?: T[K];
+};
+
+interface Task { id: number; title: string; done: boolean; }
+
+type PartialTask = MyPartial<Task>;
+// { id?: number; title?: string; done?: boolean; }
+
+function updateTask(task: Task, changes: MyPartial<Task>): Task {
+    return { ...task, ...changes };
+}</pre>
+
+        <h3>A Generic Result Wrapper</h3>
+        <pre>type Result<T, E = Error> =
+    | { ok: true; value: T }
+    | { ok: false; error: E };
+
+function tryParseJson<T>(json: string): Result<T> {
+    try {
+        return { ok: true, value: JSON.parse(json) as T };
+    } catch (e) {
+        return { ok: false, error: e as Error };
+    }
+}
+
+const result = tryParseJson<{ id: number }>('{"id": 1}');
+if (result.ok) {
+    console.log(result.value.id);   // ✅ narrowed - value exists
+}</pre>
+
+        <!-- SECTION 10 -->
+        <h2 id="section10"><span class="level advanced">ADVANCED</span>10. Best Practices</h2>
+
+        <h3>1. Only Add a Type Parameter When It's Actually Used Twice</h3>
+        <pre>// ❌ Unnecessary - T only appears once, 'unknown' would do
+function log<T>(value: T): void {
+    console.log(value);
+}
+
+// ✅ Good - T links input and output, must be generic
+function identity<T>(value: T): T {
+    return value;
+}</pre>
+
+        <h3>2. Constrain Generics to the Minimum Shape You Need</h3>
+        <pre>// ✅ Good - only requires 'length', works with strings, arrays, etc.
+function isEmpty<T extends { length: number }>(value: T): boolean {
+    return value.length === 0;
+}</pre>
+
+        <h3>3. Use Descriptive Names for Complex Generics</h3>
+        <pre>// ✅ Good for multi-parameter generics
+interface Cache<TKey, TValue> { /* ... */ }
+
+// T, U, K, V are fine for simple, obvious cases</pre>
+
+        <h3>4. Provide Sensible Defaults</h3>
+        <pre>// ✅ Good - most callers won't need to specify T
+interface AsyncState<T = unknown> {
+    loading: boolean;
+    data?: T;
+}</pre>
+
+        <h3>5. Avoid Generic Overkill</h3>
+        <p>If a function only ever operates on <code>string</code>, don't make it generic "just in case." Generics add cognitive overhead — reserve them for genuine type-relationship needs.</p>
+
+        <!-- SUMMARY -->
+        <h2 style="margin-top: 40px;">📋 Quick Reference Summary</h2>
+
+        <div class="table-wrap">
+        <table>
+            <tr>
+                <th>Concept</th>
+                <th>Key Points</th>
+            </tr>
+            <tr>
+                <td><strong>&lt;T&gt;</strong></td>
+                <td>Type parameter placeholder, filled in at call/instantiation time</td>
+            </tr>
+            <tr>
+                <td><strong>Generic interfaces/types</strong></td>
+                <td>Reusable shapes parameterized over the data they hold</td>
+            </tr>
+            <tr>
+                <td><strong>Generic classes</strong></td>
+                <td>Data structures (Stack, Repository) that work with any element type</td>
+            </tr>
+            <tr>
+                <td><strong>extends constraint</strong></td>
+                <td>Restricts T to types with specific members</td>
+            </tr>
+            <tr>
+                <td><strong>Default type parameters</strong></td>
+                <td><code>&lt;T = DefaultType&gt;</code> reduces boilerplate at call sites</td>
+            </tr>
+            <tr>
+                <td><strong>keyof + T[K]</strong></td>
+                <td>Type-safe dynamic property access tied to a specific key</td>
+            </tr>
+        </table>
+        </div>
+
+        <div style="margin-top: 40px; padding: 20px; background: #ecf0f1; border-radius: 5px;">
+            <h3>🎓 Learning Path</h3>
+            <p><strong>Beginner:</strong> Master sections 1, 2</p>
+            <p><strong>Intermediate:</strong> Understand sections 3, 4, 5, 6</p>
+            <p><strong>Advanced:</strong> Deep dive into sections 7, 8, 9, 10</p>
+        </div>
+
+    </div>
+</body>
+</html>

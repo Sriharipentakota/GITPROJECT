@@ -8,6 +8,75 @@
   }
 }
 
+/*
+ * Video fullscreen fix (mobile landscape gap bug)
+ * ------------------------------------------------
+ * Without this, tapping YouTube's own fullscreen button inside the embedded
+ * iframe can leave letterbox-like gaps on mobile, especially after rotating
+ * to landscape. Two causes, both addressed here:
+ *  1. The fullscreened element is promoted to the browser's "top layer" and
+ *     should already ignore ancestor padding/rounded-corners/flex-centering
+ *     per spec, but some mobile browsers still leak stale sizing from the
+ *     iframe's normal (16:9-boxed) layout into the fullscreen render.
+ *  2. Without `viewport-fit=cover` (set in index.html) the page reserves
+ *     blank space for the safe area (notch / home-indicator) even while
+ *     fullscreen, which reads as an unwanted gap along one edge.
+ * These rules force the fullscreened iframe itself to the full, real
+ * viewport box on every engine's fullscreen pseudo-class, overriding any
+ * inherited sizing.
+ */
+iframe:fullscreen,
+iframe:-webkit-full-screen,
+iframe:-moz-full-screen {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  max-width: none !important;
+  max-height: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+}
+
+/*
+ * Video modal sizing — deliberately NOT a Tailwind `sm:` width breakpoint.
+ * A phone in landscape is routinely wider than 640px (e.g. 844px), so a
+ * width-only breakpoint misidentifies it as "desktop" and switches to a
+ * fixed-height centered card — which then overflows a short landscape
+ * viewport instead of filling it. Gating on height too (via this compound
+ * media query) is what actually distinguishes "desktop-sized window" from
+ * "phone lying on its side."
+ */
+.video-modal-overlay {
+  padding: 0;
+}
+.video-modal-card {
+  width: 100%;
+  height: 100%;
+  border-radius: 0;
+  border-width: 0;
+}
+.video-modal-video-area {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+@media (min-width: 640px) and (min-height: 500px) {
+  .video-modal-overlay {
+    padding: 1rem;
+  }
+  .video-modal-card {
+    height: auto;
+    max-width: 48rem;
+    border-radius: 1rem;
+    border-width: 1px;
+  }
+  .video-modal-video-area {
+    flex: none;
+    aspect-ratio: 16 / 9;
+  }
+}
+
 @layer utilities {
   .scrollbar-thin {
     scrollbar-width: thin;

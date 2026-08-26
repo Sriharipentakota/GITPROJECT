@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TypeScript Decorators: Complete Guide</title>
+    <link rel="stylesheet" href="/guides/guide-base.css">
+</head>
+<body>
+    <div class="container">
+        <h1>🎀 TypeScript Decorators: Complete Guide</h1>
+        <p style="font-size: 1.1em; color: #7f8c8d; margin-bottom: 20px;">
+            A comprehensive journey from fundamental concepts to advanced techniques
+        </p>
+
+        <div class="toc">
+            <h3>📚 Table of Contents</h3>
+            <ul>
+                <li><a href="#section1">1. What are Decorators?</a></li>
+                <li><a href="#section2">2. Enabling Decorators</a></li>
+                <li><a href="#section3">3. Class Decorators</a></li>
+                <li><a href="#section4">4. Method Decorators</a></li>
+                <li><a href="#section5">5. Accessor and Property Decorators</a></li>
+                <li><a href="#section6">6. Parameter Decorators</a></li>
+                <li><a href="#section7">7. Decorator Factories</a></li>
+                <li><a href="#section8">8. Composing Multiple Decorators</a></li>
+                <li><a href="#section9">9. Legacy vs Stage 3 (ECMAScript) Decorators</a></li>
+                <li><a href="#section10">10. Best Practices</a></li>
+            </ul>
+        </div>
+
+        <!-- SECTION 1 -->
+        <h2 id="section1"><span class="level intermediate">INTERMEDIATE</span>1. What are Decorators?</h2>
+
+        <h3>Definition</h3>
+        <p>A decorator is a special kind of declaration attached to a class, method, accessor, property, or parameter using the <code>@expression</code> syntax, letting you observe, modify, or replace that declaration's behavior.</p>
+
+        <div class="example">
+            <strong>Real-world analogy:</strong> A decorator is like a gift wrapper — it takes the original item (a class or method), wraps additional behavior around it (logging, validation, timing), and hands back something that still works like the original but does more.
+        </div>
+
+        <pre>function Logged(target: any, propertyKey: string, descriptor: PropertyDescriptor) {
+    const original = descriptor.value;
+    descriptor.value = function (...args: any[]) {
+        console.log(`Calling ${propertyKey} with`, args);
+        return original.apply(this, args);
+    };
+}
+
+class Calculator {
+    @Logged
+    add(a: number, b: number): number {
+        return a + b;
+    }
+}
+
+new Calculator().add(2, 3);
+// Logs: Calling add with [2, 3]
+// Returns: 5</pre>
+
+        <div class="note">
+            <strong>💡 Tip:</strong> Decorators are heavily used by frameworks like Angular (<code>@Component</code>, <code>@Injectable</code>) and by libraries like TypeORM and NestJS to reduce boilerplate for common patterns.
+        </div>
+
+        <!-- SECTION 2 -->
+        <h2 id="section2"><span class="level intermediate">INTERMEDIATE</span>2. Enabling Decorators</h2>
+
+        <p>The classic ("legacy") decorator implementation requires an explicit compiler flag; TypeScript 5.0+ also supports the newer Stage 3 ECMAScript decorators without any flag.</p>
+
+        <pre>// tsconfig.json - required for the legacy/experimental decorator implementation
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true
+  }
+}</pre>
+
+        <div class="warning">
+            <strong>⚠️ Common Pitfall:</strong> Without <code>experimentalDecorators: true</code> (for the legacy style), using <code>@Decorator</code> syntax either fails to compile or is interpreted using the newer Stage 3 semantics, which have different decorator signatures. Know which mode your project targets — see section 9.
+        </div>
+
+        <!-- SECTION 3 -->
+        <h2 id="section3"><span class="level intermediate">INTERMEDIATE</span>3. Class Decorators</h2>
+
+        <p>A class decorator receives the class's constructor and can observe, modify, or replace it entirely.</p>
+
+        <pre>function Sealed(constructor: Function) {
+    Object.seal(constructor);
+    Object.seal(constructor.prototype);
+}
+
+@Sealed
+class Greeter {
+    greeting: string;
+    constructor(message: string) {
+        this.greeting = message;
+    }
+}
+
+// After @Sealed, no new properties can be added to Greeter or its prototype</pre>
+
+        <h3>Replacing the Constructor</h3>
+        <pre>function WithTimestamp<T extends { new (...args: any[]): {} }>(Base: T) {
+    return class extends Base {
+        createdAt = new Date();
+    };
+}
+
+@WithTimestamp
+class Order {
+    constructor(public id: number) {}
+}
+
+const order = new Order(1) as Order & { createdAt: Date };
+console.log(order.createdAt);   // a Date instance</pre>
+
+        <!-- SECTION 4 -->
+        <h2 id="section4"><span class="level intermediate">INTERMEDIATE</span>4. Method Decorators</h2>
+
+        <p>A method decorator receives the target's prototype, the method name, and its property descriptor — the same shape used by <code>Object.defineProperty</code>.</p>
+
+        <pre>function Measure(target: any, propertyKey: string, descriptor: PropertyDescriptor) {
+    const original = descriptor.value;
+    descriptor.value = function (...args: any[]) {
+        const start = performance.now();
+        const result = original.apply(this, args);
+        console.log(`${propertyKey} took ${(performance.now() - start).toFixed(2)}ms`);
+        return result;
+    };
+    return descriptor;
+}
+
+class ReportService {
+    @Measure
+    generateReport(rows: number): string {
+        // simulate work
+        return `Report with ${rows} rows`;
+    }
+}
+
+new ReportService().generateReport(1000);</pre>
+
+        <!-- SECTION 5 -->
+        <h2 id="section5"><span class="level advanced">ADVANCED</span>5. Accessor and Property Decorators</h2>
+
+        <h3>Accessor Decorator</h3>
+        <pre>function Configurable(value: boolean) {
+    return function (target: any, propertyKey: string, descriptor: PropertyDescriptor) {
+        descriptor.configurable = value;
+    };
+}
+
+class Point {
+    private _x = 0;
+
+    @Configurable(false)
+    get x(): number {
+        return this._x;
+    }
+}</pre>
+
+        <h3>Property Decorator</h3>
+        <pre>function Required(target: any, propertyKey: string) {
+    let value: any;
+    Object.defineProperty(target, propertyKey, {
+        get() { return value; },
+        set(newValue) {
+            if (newValue === undefined || newValue === null) {
+                throw new Error(`${propertyKey} is required`);
+            }
+            value = newValue;
+        }
+    });
+}
+
+class User {
+    @Required
+    name!: string;
+}
+
+const user = new User();
+// user.name = null;   // throws: "name is required"
+user.name = "Devi";     // ✅ OK</pre>
+
+        <!-- SECTION 6 -->
+        <h2 id="section6"><span class="level advanced">ADVANCED</span>6. Parameter Decorators</h2>
+
+        <p>Parameter decorators observe a specific parameter's position within a method — they cannot modify the parameter itself, but are commonly used to record metadata for dependency injection frameworks.</p>
+
+        <pre>function LogParam(target: any, methodName: string, parameterIndex: number) {
+    console.log(`Parameter ${parameterIndex} of ${methodName} is decorated`);
+}
+
+class NotificationService {
+    send(@LogParam recipient: string, message: string): void {
+        console.log(`Sending "${message}" to ${recipient}`);
+    }
+}
+
+// Logs at class-definition time: "Parameter 0 of send is decorated"</pre>
+
+        <div class="example">
+            <strong>Real-world use case:</strong> NestJS uses parameter decorators like <code>@Body()</code> and <code>@Param()</code> to record which constructor/method parameter should receive which piece of an incoming HTTP request.
+        </div>
+
+        <!-- SECTION 7 -->
+        <h2 id="section7"><span class="level advanced">ADVANCED</span>7. Decorator Factories</h2>
+
+        <p>A decorator factory is a function that returns a decorator, letting you customize its behavior with arguments at the point of use.</p>
+
+        <pre>function MinLength(length: number) {
+    return function (target: any, propertyKey: string) {
+        let value: string;
+        Object.defineProperty(target, propertyKey, {
+            get() { return value; },
+            set(newValue: string) {
+                if (newValue.length < length) {
+                    throw new Error(`${propertyKey} must be at least ${length} characters`);
+                }
+                value = newValue;
+            }
+        });
+    };
+}
+
+class Account {
+    @MinLength(8)
+    password!: string;
+}
+
+const account = new Account();
+// account.password = "short";       // throws
+account.password = "supersecure";    // ✅ OK</pre>
+
+        <!-- SECTION 8 -->
+        <h2 id="section8"><span class="level advanced">ADVANCED</span>8. Composing Multiple Decorators</h2>
+
+        <p>Multiple decorators applied to the same declaration run in a well-defined order: evaluated top-to-bottom, but <strong>applied</strong> bottom-to-top (closest to the declaration first).</p>
+
+        <pre>function First() {
+    console.log("First: factory evaluated");
+    return function (target: any, key: string, descriptor: PropertyDescriptor) {
+        console.log("First: applied");
+    };
+}
+
+function Second() {
+    console.log("Second: factory evaluated");
+    return function (target: any, key: string, descriptor: PropertyDescriptor) {
+        console.log("Second: applied");
+    };
+}
+
+class Example {
+    @First()
+    @Second()
+    method() {}
+}
+
+// Output order:
+// First: factory evaluated
+// Second: factory evaluated
+// Second: applied
+// First: applied</pre>
+
+        <div class="note">
+            <strong>💡 Tip:</strong> This "evaluate top-down, apply bottom-up" order matters when decorators wrap each other's behavior (e.g. logging + caching) — the innermost decorator (closest to the method) runs its wrapping logic first.
+        </div>
+
+        <!-- SECTION 9 -->
+        <h2 id="section9"><span class="level advanced">ADVANCED</span>9. Legacy vs Stage 3 (ECMAScript) Decorators</h2>
+
+        <p>TypeScript originally shipped an experimental decorator implementation years before decorators were standardized. TypeScript 5.0 added support for the finalized Stage 3 ECMAScript proposal, which has a different (simpler, more restricted) signature.</p>
+
+        <div class="table-wrap">
+        <table class="table-compact">
+            <tr>
+                <th>Aspect</th>
+                <th>Legacy (experimentalDecorators)</th>
+                <th>Stage 3 (standard, TS 5.0+)</th>
+            </tr>
+            <tr>
+                <td>Compiler flag needed</td>
+                <td>✅ Yes - <code>experimentalDecorators: true</code></td>
+                <td>❌ No - works by default</td>
+            </tr>
+            <tr>
+                <td>Parameter decorators</td>
+                <td>✅ Supported</td>
+                <td>❌ Not part of the standard</td>
+            </tr>
+            <tr>
+                <td>Property descriptor access</td>
+                <td>✅ Full access</td>
+                <td>Limited - uses a context object instead</td>
+            </tr>
+            <tr>
+                <td>Standardized in JavaScript</td>
+                <td>❌ No - TypeScript/Babel-specific</td>
+                <td>✅ Yes - real ECMAScript feature</td>
+            </tr>
+        </table>
+        </div>
+
+        <pre>// Stage 3 style method decorator - receives a ClassMethodDecoratorContext
+function LogCall(originalMethod: any, context: ClassMethodDecoratorContext) {
+    const methodName = String(context.name);
+    function replacement(this: any, ...args: any[]) {
+        console.log(`Calling ${methodName}`);
+        return originalMethod.call(this, ...args);
+    }
+    return replacement;
+}
+
+class Service {
+    @LogCall
+    run() {
+        console.log("Running...");
+    }
+}</pre>
+
+        <div class="warning">
+            <strong>⚠️ Common Pitfall:</strong> Many popular libraries (older Angular, TypeORM, NestJS) still target the legacy decorator model. Check a library's documentation before assuming Stage 3 semantics apply — mixing the two mental models causes confusing bugs.
+        </div>
+
+        <!-- SECTION 10 -->
+        <h2 id="section10"><span class="level advanced">ADVANCED</span>10. Best Practices</h2>
+
+        <h3>1. Know Which Decorator Model Your Project Uses</h3>
+        <pre>// ✅ Check tsconfig.json for experimentalDecorators before writing new decorators</pre>
+
+        <h3>2. Prefer Decorator Factories Over Bare Decorators for Configurability</h3>
+        <pre>// ✅ Good - accepts configuration
+function Retry(times: number) { return function (/* ... */) {}; }
+
+// ❌ Less flexible - hardcoded behavior
+function RetryThreeTimes(/* ... */) {}</pre>
+
+        <h3>3. Keep Decorator Logic Focused and Side-Effect-Aware</h3>
+        <p>A decorator should do one clear thing (logging, validation, timing) rather than several unrelated things bundled together.</p>
+
+        <h3>4. Document the Order-Dependence of Composed Decorators</h3>
+        <pre>// ✅ Add a comment when order matters
+class Handler {
+    @Authorize()   // must run before @Log() wraps the result
+    @Log()
+    handle() {}
+}</pre>
+
+        <h3>5. Avoid Decorators for Simple One-Off Logic</h3>
+        <p>If a plain function wrapper or higher-order function achieves the same result without decorator syntax, prefer that for simpler debugging and broader compiler compatibility.</p>
+
+        <!-- SUMMARY -->
+        <h2 style="margin-top: 40px;">📋 Quick Reference Summary</h2>
+
+        <div class="table-wrap">
+        <table>
+            <tr>
+                <th>Decorator Type</th>
+                <th>Key Points</th>
+            </tr>
+            <tr>
+                <td><strong>Class decorator</strong></td>
+                <td>Receives the constructor; can observe, modify, or replace it</td>
+            </tr>
+            <tr>
+                <td><strong>Method decorator</strong></td>
+                <td>Receives target, key, and PropertyDescriptor; can wrap behavior</td>
+            </tr>
+            <tr>
+                <td><strong>Accessor/Property decorator</strong></td>
+                <td>Customizes getters/setters or intercepts field assignment</td>
+            </tr>
+            <tr>
+                <td><strong>Parameter decorator</strong></td>
+                <td>Records metadata about a specific parameter's position (legacy only)</td>
+            </tr>
+            <tr>
+                <td><strong>Decorator factory</strong></td>
+                <td>Function returning a decorator, enabling configuration arguments</td>
+            </tr>
+            <tr>
+                <td><strong>Composition order</strong></td>
+                <td>Factories evaluate top-down; decorators apply bottom-up</td>
+            </tr>
+            <tr>
+                <td><strong>Legacy vs Stage 3</strong></td>
+                <td>experimentalDecorators flag vs standardized ECMAScript decorators (TS 5.0+)</td>
+            </tr>
+        </table>
+        </div>
+
+        <div style="margin-top: 40px; padding: 20px; background: #ecf0f1; border-radius: 5px;">
+            <h3>🎓 Learning Path</h3>
+            <p><strong>Beginner:</strong> Not applicable - this is an advanced-tier guide</p>
+            <p><strong>Intermediate:</strong> Master sections 1, 2, 3, 4</p>
+            <p><strong>Advanced:</strong> Deep dive into sections 5, 6, 7, 8, 9, 10</p>
+        </div>
+
+    </div>
+</body>
+</html>

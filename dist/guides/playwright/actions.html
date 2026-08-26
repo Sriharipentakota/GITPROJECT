@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Playwright Interactions & Actions: Complete Guide</title>
+    <link rel="stylesheet" href="/guides/guide-base.css">
+</head>
+<body>
+    <div class="container">
+        <h1>🖱️ Playwright Interactions & Actions: Complete Guide</h1>
+        <p style="font-size: 1.1em; color: #7f8c8d; margin-bottom: 20px;">
+            Actionability checks, text input, form controls, mouse actions, and file uploads
+        </p>
+
+        <div class="toc">
+            <h3>📚 Table of Contents</h3>
+            <ul>
+                <li><a href="#section1">1. Actionability Checks</a></li>
+                <li><a href="#section2">2. Clicking</a></li>
+                <li><a href="#section3">3. Text Input: fill() vs pressSequentially()</a></li>
+                <li><a href="#section4">4. Keyboard Actions</a></li>
+                <li><a href="#section5">5. Form Controls: Checkboxes and Selects</a></li>
+                <li><a href="#section6">6. Mouse Actions: Hover, Drag, Scroll</a></li>
+                <li><a href="#section7">7. File Uploads</a></li>
+                <li><a href="#section8">8. Overriding Auto-Waiting</a></li>
+                <li><a href="#section9">9. Common Pitfalls</a></li>
+            </ul>
+        </div>
+
+        <!-- SECTION 1 -->
+        <h2 id="section1"><span class="level beginner">BEGINNER</span>1. Actionability Checks</h2>
+
+        <p>Before performing virtually any action, Playwright automatically verifies the target element is:</p>
+
+        <ul style="margin: 15px 0; margin-left: 20px;">
+            <li><strong>Attached</strong> — present in the DOM</li>
+            <li><strong>Visible</strong> — has non-zero size and no <code>display: none</code>/<code>visibility: hidden</code></li>
+            <li><strong>Stable</strong> — not mid-animation, same position across two consecutive frames</li>
+            <li><strong>Enabled</strong> — not disabled</li>
+            <li><strong>Receiving events</strong> — not obscured by another element on top of it</li>
+        </ul>
+
+        <p>These checks run silently and repeatedly (with short retries) before every <code>click()</code>, <code>fill()</code>, <code>check()</code>, and similar methods — this is what eliminates most race-condition flakiness without you writing manual waits.</p>
+
+        <div class="example">
+            <strong>What this replaces:</strong> in older tools you'd write <code>waitForElementVisible()</code>, then <code>waitForElementEnabled()</code>, then finally click. Playwright folds all of that into the action call itself.
+        </div>
+
+        <!-- SECTION 2 -->
+        <h2 id="section2"><span class="level beginner">BEGINNER</span>2. Clicking</h2>
+
+        <pre>await locator.click();
+await locator.dblclick();
+await locator.click({ button: 'right' });           // context menu
+await locator.click({ modifiers: ['Control'] });   // Ctrl+Click
+await locator.click({ modifiers: ['Shift'] });     // Shift+Click
+await locator.click({ position: { x: 50, y: 30 } }); // click a specific pixel offset
+await locator.click({ timeout: 10_000 });          // per-action timeout</pre>
+
+        <h3>Right-Click Context Menu Example</h3>
+        <pre>await page.getByTestId('file-item').click({ button: 'right' });
+await page.getByRole('menuitem', { name: 'Rename' }).click();</pre>
+
+        <!-- SECTION 3 -->
+        <h2 id="section3"><span class="level beginner">BEGINNER</span>3. Text Input: fill() vs pressSequentially()</h2>
+
+        <div class="table-wrap">
+        <table class="table-compact">
+            <tr>
+                <th>Method</th>
+                <th>How it works</th>
+                <th>When to use</th>
+            </tr>
+            <tr>
+                <td><code>fill(text)</code></td>
+                <td>Clears the field and sets the value atomically (like a paste)</td>
+                <td>The default choice — fast and reliable for nearly all forms</td>
+            </tr>
+            <tr>
+                <td><code>pressSequentially(text, opts)</code></td>
+                <td>Simulates real key-down/key-up events for each character</td>
+                <td>Autocomplete widgets or custom key-event listeners that <code>fill()</code> bypasses</td>
+            </tr>
+        </table>
+        </div>
+
+        <pre>await locator.fill('user@example.com');    // instant, atomic
+await locator.clear();                     // clear only, no new value
+
+await locator.pressSequentially('playwright', { delay: 50 }); // key-by-key, 50ms apart</pre>
+
+        <div class="warning">
+            <strong>⚠️ Common Pitfall:</strong> Reaching for <code>pressSequentially()</code> everywhere "to be safe" makes the suite noticeably slower for no benefit on ordinary inputs. Use it only when a test specifically needs to trigger per-keystroke behavior like a live search dropdown.
+        </div>
+
+        <!-- SECTION 4 -->
+        <h2 id="section4"><span class="level intermediate">INTERMEDIATE</span>4. Keyboard Actions</h2>
+
+        <pre>await locator.press('Enter');
+await locator.press('Control+A');
+await locator.press('Tab');
+await locator.press('ArrowDown');
+
+// Global keyboard (not tied to a specific locator)
+await page.keyboard.press('Control+A');
+await page.keyboard.type('Playwright');</pre>
+
+        <h3>Autocomplete Selection Example</h3>
+        <pre>test('keyboard-driven search selection', async ({ page }) => {
+  await page.goto('/search');
+
+  await page.getByPlaceholder('Search').pressSequentially('play', { delay: 80 });
+  await page.getByPlaceholder('Search').press('ArrowDown');
+  await page.getByPlaceholder('Search').press('Enter');
+
+  await expect(page.getByTestId('result-count')).not.toBeEmpty();
+});</pre>
+
+        <!-- SECTION 5 -->
+        <h2 id="section5"><span class="level intermediate">INTERMEDIATE</span>5. Form Controls: Checkboxes and Selects</h2>
+
+        <pre>await page.getByLabel('Terms').check();
+await page.getByLabel('Newsletter').uncheck();
+
+await page.getByLabel('Country').selectOption('US');                     // by value
+await page.getByLabel('Country').selectOption({ label: 'United States' }); // by visible label
+await page.getByLabel('Country').selectOption({ index: 0 });             // by position
+await page.getByLabel('Skills').selectOption(['js', 'ts']);              // multi-select</pre>
+
+        <h3>Full Registration Form</h3>
+        <pre>test('register a new account', async ({ page }) => {
+  await page.goto('/register');
+
+  await page.getByLabel('Full name').fill('Alice Smith');
+  await page.getByLabel('Email').fill('alice@example.com');
+  await page.getByLabel('Password').fill('Secure#1234');
+
+  await page.getByLabel('I agree to the Terms of Service').check();
+  await page.getByLabel('Country').selectOption({ label: 'United States' });
+
+  await page.getByRole('button', { name: 'Create account' }).click();
+  await expect(page).toHaveURL('/welcome');
+});</pre>
+
+        <div class="note">
+            <strong>💡 Tip:</strong> <code>check()</code> is idempotent — calling it on an already-checked checkbox is a no-op rather than toggling it off. This is safer than <code>click()</code> for checkboxes because you never accidentally flip the state in the wrong direction.
+        </div>
+
+        <!-- SECTION 6 -->
+        <h2 id="section6"><span class="level intermediate">INTERMEDIATE</span>6. Mouse Actions: Hover, Drag, Scroll</h2>
+
+        <pre>await locator.hover();                                          // reveal tooltips/menus
+await page.locator('#src').dragTo(page.locator('#dst'));       // drag and drop
+await page.mouse.wheel(0, 300);                                 // scroll down 300px</pre>
+
+        <h3>Hover to Reveal a Tooltip</h3>
+        <pre>await page.getByRole('button', { name: 'Info' }).hover();
+await expect(page.getByRole('tooltip')).toBeVisible();</pre>
+
+        <!-- SECTION 7 -->
+        <h2 id="section7"><span class="level advanced">ADVANCED</span>7. File Uploads</h2>
+
+        <pre>await page.getByLabel('Upload').setInputFiles('report.pdf');
+await page.getByLabel('Upload').setInputFiles(['a.pdf', 'b.pdf']); // multiple files
+await page.getByLabel('Upload').setInputFiles([]);                 // clear selection</pre>
+
+        <pre>test('upload a file', async ({ page }) => {
+  await page.goto('/files');
+  await page.getByLabel('Choose file').setInputFiles('report.pdf');
+  await expect(page.getByText('report.pdf')).toBeVisible();
+});</pre>
+
+        <div class="example">
+            <strong>No native file dialog needed:</strong> <code>setInputFiles()</code> sets the file directly on the <code>&lt;input type="file"&gt;</code> element programmatically, bypassing the OS-native file picker dialog that Playwright cannot otherwise interact with.
+        </div>
+
+        <!-- SECTION 8 -->
+        <h2 id="section8"><span class="level advanced">ADVANCED</span>8. Overriding Auto-Waiting</h2>
+
+        <pre>await locator.click({ force: true });   // skip actionability checks
+await locator.click({ trial: true });   // dry-run: check readiness, don't actually click</pre>
+
+        <div class="warning">
+            <strong>⚠️ Common Pitfall:</strong> <code>{ force: true }</code> should be a deliberate, rare exception — for example, clicking an element deliberately covered by a custom overlay you know is safe to ignore. Reaching for it as a default fix for "element not clickable" errors usually just masks a real timing bug or a genuinely broken UI state that real users would also struggle with.
+        </div>
+
+        <!-- SECTION 9 -->
+        <h2 id="section9"><span class="level advanced">ADVANCED</span>9. Common Pitfalls</h2>
+
+        <div class="warning">
+            <strong>⚠️ Pitfall 1 — Clicking a label instead of its input:</strong> Sometimes it's more robust to interact with the labelled control via <code>getByLabel()</code> directly rather than clicking visible text near it, especially on custom-styled checkboxes/radios where the visual element and the real <code>&lt;input&gt;</code> are not the same node.
+        </div>
+
+        <div class="warning">
+            <strong>⚠️ Pitfall 2 — Not waiting for the result of an action:</strong> An action completing doesn't guarantee the UI has finished reacting to it. Always follow a click that triggers async work with an <code>expect()</code> assertion on the expected outcome, rather than assuming the next line is safe to run immediately.
+        </div>
+
+        <!-- SUMMARY -->
+        <h2 style="margin-top: 40px;">📋 Quick Reference Summary</h2>
+
+        <div class="table-wrap">
+        <table>
+            <tr>
+                <th>Concept</th>
+                <th>Key Points</th>
+            </tr>
+            <tr>
+                <td><strong>Actionability</strong></td>
+                <td>Attached, visible, stable, enabled, receiving events — checked automatically before every action.</td>
+            </tr>
+            <tr>
+                <td><strong>fill() vs pressSequentially()</strong></td>
+                <td>fill() = atomic set (default); pressSequentially() = real per-key events (autocomplete).</td>
+            </tr>
+            <tr>
+                <td><strong>press()</strong></td>
+                <td>Single key or shortcut, e.g. 'Enter', 'Control+A', 'ArrowDown'.</td>
+            </tr>
+            <tr>
+                <td><strong>check()/uncheck()</strong></td>
+                <td>Idempotent checkbox control; selectOption() for dropdowns.</td>
+            </tr>
+            <tr>
+                <td><strong>Mouse</strong></td>
+                <td>hover(), dragTo(), page.mouse.wheel() for scrolling.</td>
+            </tr>
+            <tr>
+                <td><strong>File upload</strong></td>
+                <td>setInputFiles(path) sets files directly — no OS dialog interaction needed.</td>
+            </tr>
+            <tr>
+                <td><strong>{ force: true }</strong></td>
+                <td>Skips actionability checks — use sparingly and deliberately.</td>
+            </tr>
+        </table>
+        </div>
+
+        <div style="margin-top: 40px; padding: 20px; background: #ecf0f1; border-radius: 5px;">
+            <h3>🎓 Learning Path</h3>
+            <p><strong>Beginner:</strong> Master sections 1, 2, 3</p>
+            <p><strong>Intermediate:</strong> Understand sections 4, 5, 6</p>
+            <p><strong>Advanced:</strong> Deep dive into sections 7, 8, 9</p>
+        </div>
+
+    </div>
+</body>
+</html>

@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Playwright Browsers & Contexts: Complete Guide</title>
+    <link rel="stylesheet" href="/guides/guide-base.css">
+</head>
+<body>
+    <div class="container">
+        <h1>🌐 Playwright Browsers & Contexts: Complete Guide</h1>
+        <p style="font-size: 1.1em; color: #7f8c8d; margin-bottom: 20px;">
+            The Browser → BrowserContext → Page hierarchy and multi-user isolation
+        </p>
+
+        <div class="toc">
+            <h3>📚 Table of Contents</h3>
+            <ul>
+                <li><a href="#section1">1. The Three-Level Object Model</a></li>
+                <li><a href="#section2">2. The Default page Fixture</a></li>
+                <li><a href="#section3">3. Creating a Custom Context</a></li>
+                <li><a href="#section4">4. Context Isolation for Multi-User Tests</a></li>
+                <li><a href="#section5">5. Saving and Reusing Auth via storageState</a></li>
+                <li><a href="#section6">6. Multiple Pages and Popups in One Context</a></li>
+                <li><a href="#section7">7. Cleanup and Resource Management</a></li>
+                <li><a href="#section8">8. Common Pitfalls</a></li>
+            </ul>
+        </div>
+
+        <!-- SECTION 1 -->
+        <h2 id="section1"><span class="level beginner">BEGINNER</span>1. The Three-Level Object Model</h2>
+
+        <p>Playwright organizes browser automation into three nested levels:</p>
+
+        <ul style="margin: 15px 0; margin-left: 20px;">
+            <li><strong>Browser</strong> — the actual running browser process (Chromium, Firefox, or WebKit)</li>
+            <li><strong>BrowserContext</strong> — an isolated session inside that browser, like a private/incognito window, with its own cookies, localStorage, cache, and permissions</li>
+            <li><strong>Page</strong> — a single tab living inside a context</li>
+        </ul>
+
+        <div class="example">
+            <strong>Why this matters:</strong> a single Browser process can host many completely isolated Contexts simultaneously. This is dramatically cheaper than launching a whole new browser process per test, which is why Playwright reuses one Browser across many tests but gives each test a fresh Context.
+        </div>
+
+        <!-- SECTION 2 -->
+        <h2 id="section2"><span class="level beginner">BEGINNER</span>2. The Default page Fixture</h2>
+
+        <p>In ordinary tests you never manually create a Browser, Context, or Page — the <code>page</code> fixture already gives you one, built using your project's <code>use</code> settings from <code>playwright.config.ts</code>.</p>
+
+        <pre>test('uses the default page', async ({ page }) => {
+  await page.goto('/');
+  // Playwright already created a Browser, a Context, and this Page for you
+});</pre>
+
+        <p>You only need to reach for <code>browser.newContext()</code> explicitly when a test needs configuration that differs from the project defaults — a different viewport, locale, or set of granted permissions, for example.</p>
+
+        <!-- SECTION 3 -->
+        <h2 id="section3"><span class="level intermediate">INTERMEDIATE</span>3. Creating a Custom Context</h2>
+
+        <pre>const context = await browser.newContext({
+  viewport:         { width: 1280, height: 720 },
+  locale:           'en-US',
+  timezoneId:       'America/New_York',
+  geolocation:      { latitude: 40.71, longitude: -74.01 },
+  permissions:      ['geolocation', 'notifications'],
+  storageState:     'auth.json',
+  userAgent:        'Custom/1.0',
+  ignoreHTTPSErrors: true,
+  colorScheme:      'dark',
+  recordVideo:      { dir: 'videos/' },
+  extraHTTPHeaders: { 'X-Api-Key': 'secret' },
+});
+
+const page = await context.newPage();
+await page.goto('https://example.com');</pre>
+
+        <h3>Locale-Specific Test Example</h3>
+        <pre>test('French locale date format', async ({ browser }) => {
+  const context = await browser.newContext({
+    locale: 'fr-FR',
+    timezoneId: 'Europe/Paris',
+    viewport: { width: 1440, height: 900 },
+  });
+  const page = await context.newPage();
+
+  await page.goto('/dashboard');
+  await expect(page.getByTestId('date-display')).toHaveText(/juillet/);
+
+  await context.close();
+});</pre>
+
+        <div class="table-wrap">
+        <table class="table-compact">
+            <tr>
+                <th>Option</th>
+                <th>Purpose</th>
+                <th>Example</th>
+            </tr>
+            <tr>
+                <td><code>viewport</code></td>
+                <td>Test responsive breakpoints</td>
+                <td><code>{ width: 375, height: 812 }</code></td>
+            </tr>
+            <tr>
+                <td><code>geolocation</code> + <code>permissions</code></td>
+                <td>Simulate location-aware features</td>
+                <td>Must grant <code>'geolocation'</code> or the API is denied</td>
+            </tr>
+            <tr>
+                <td><code>storageState</code></td>
+                <td>Pre-load a logged-in session</td>
+                <td><code>'auth.json'</code></td>
+            </tr>
+            <tr>
+                <td><code>colorScheme</code></td>
+                <td>Test dark mode UI</td>
+                <td><code>'dark'</code> or <code>'light'</code></td>
+            </tr>
+            <tr>
+                <td><code>recordVideo</code></td>
+                <td>Capture the session as WebM</td>
+                <td><code>{ dir: 'videos/' }</code></td>
+            </tr>
+        </table>
+        </div>
+
+        <!-- SECTION 4 -->
+        <h2 id="section4"><span class="level intermediate">INTERMEDIATE</span>4. Context Isolation for Multi-User Tests</h2>
+
+        <p>Because each context has its own cookie jar and storage, you can simulate two completely different users interacting with the same application in the <em>same test</em>, with zero risk of one user's session leaking into the other's.</p>
+
+        <pre>test('admin can see message sent by guest', async ({ browser }) => {
+  const adminCtx = await browser.newContext({ storageState: 'admin.json' });
+  const guestCtx = await browser.newContext({ storageState: 'guest.json' });
+
+  const adminPage = await adminCtx.newPage();
+  const guestPage = await guestCtx.newPage();
+
+  await guestPage.goto('/chat');
+  await guestPage.getByLabel('Message').fill('Hello admin!');
+  await guestPage.getByRole('button', { name: 'Send' }).click();
+
+  await adminPage.goto('/chat');
+  await expect(adminPage.getByText('Hello admin!')).toBeVisible();
+
+  await adminCtx.close();
+  await guestCtx.close();
+});</pre>
+
+        <div class="example">
+            <strong>Real-world use cases:</strong> testing real-time chat, collaborative document editing, multiplayer features, or any workflow where one user's action (e.g. an admin approving a request) must be reflected for another user.
+        </div>
+
+        <!-- SECTION 5 -->
+        <h2 id="section5"><span class="level intermediate">INTERMEDIATE</span>5. Saving and Reusing Auth via storageState</h2>
+
+        <pre>// Save current session (cookies + localStorage) to a file
+await context.storageState({ path: 'auth.json' });
+
+// Later — or in a different test — reload it instantly
+const context2 = await browser.newContext({ storageState: 'auth.json' });</pre>
+
+        <p>This pattern (covered in depth in the Authentication & State guide) turns a 2-second login into a near-instant file read, which adds up dramatically across a large suite.</p>
+
+        <!-- SECTION 6 -->
+        <h2 id="section6"><span class="level advanced">ADVANCED</span>6. Multiple Pages and Popups in One Context</h2>
+
+        <p>A single context can hold several pages — useful for testing features that open a new tab, such as "Open in new tab" links or OAuth popups.</p>
+
+        <pre>test('handle a popup window', async ({ context, page }) => {
+  await page.goto('/docs');
+
+  // Wait for the popup while triggering the action that opens it
+  const [popup] = await Promise.all([
+    context.waitForEvent('page'),
+    page.getByRole('link', { name: 'Open in new tab' }).click(),
+  ]);
+
+  await popup.waitForLoadState();
+  await expect(popup).toHaveURL(/\/docs\/full/);
+});</pre>
+
+        <div class="note">
+            <strong>💡 Tip:</strong> Always pair the triggering action with <code>context.waitForEvent('page')</code> inside <code>Promise.all()</code> — if you click first and then wait, there's a race condition where the popup could open before your listener is attached.
+        </div>
+
+        <!-- SECTION 7 -->
+        <h2 id="section7"><span class="level advanced">ADVANCED</span>7. Cleanup and Resource Management</h2>
+
+        <pre>await context.close();   // closes every page within it automatically</pre>
+
+        <p>When you create contexts explicitly (rather than relying on the built-in <code>page</code> fixture), you're responsible for closing them. Closing a context releases its cookies, cache, and any recorded video/trace resources, and closes all pages inside it — you don't need to close pages individually first.</p>
+
+        <div class="warning">
+            <strong>⚠️ Common Pitfall:</strong> Forgetting to close manually-created contexts leaks memory across a long test run and can slow down or crash workers in large suites. If you use <code>browser.newContext()</code> directly (outside the built-in <code>page</code>/<code>context</code> fixtures), always wrap it so <code>close()</code> runs even if the test fails — a custom fixture with <code>await use(context)</code> handles this automatically via its teardown phase.
+        </div>
+
+        <!-- SECTION 8 -->
+        <h2 id="section8"><span class="level advanced">ADVANCED</span>8. Common Pitfalls</h2>
+
+        <div class="warning">
+            <strong>⚠️ Pitfall 1 — Assuming contexts share state:</strong> Developers coming from single-session tools sometimes expect a second <code>newContext()</code> to inherit cookies set in the first. It never does — that's the entire point of isolation.
+        </div>
+
+        <div class="warning">
+            <strong>⚠️ Pitfall 2 — Granting permissions after navigation:</strong> Permissions like <code>geolocation</code> must be included in <code>browser.newContext({ permissions: [...] })</code> <em>before</em> the page that requests them loads; granting them mid-test via <code>context.grantPermissions()</code> works too, but forgetting either step results in the browser silently denying the API.
+        </div>
+
+        <div class="note">
+            <strong>💡 Tip:</strong> Use <code>context.grantPermissions(['camera'], { origin: 'https://example.com' })</code> to scope a permission grant to a specific origin instead of the whole context.
+        </div>
+
+        <!-- SUMMARY -->
+        <h2 style="margin-top: 40px;">📋 Quick Reference Summary</h2>
+
+        <div class="table-wrap">
+        <table>
+            <tr>
+                <th>Concept</th>
+                <th>Key Points</th>
+            </tr>
+            <tr>
+                <td><strong>Browser</strong></td>
+                <td>The running browser process; Playwright reuses one across many tests.</td>
+            </tr>
+            <tr>
+                <td><strong>BrowserContext</strong></td>
+                <td>Isolated session — own cookies, storage, permissions. Like incognito windows.</td>
+            </tr>
+            <tr>
+                <td><strong>Page</strong></td>
+                <td>A tab inside a context; a context can hold multiple pages.</td>
+            </tr>
+            <tr>
+                <td><strong>Default fixture</strong></td>
+                <td><code>page</code> is auto-created from project <code>use</code> settings — no manual setup needed normally.</td>
+            </tr>
+            <tr>
+                <td><strong>Custom context</strong></td>
+                <td>Use <code>browser.newContext(options)</code> for viewport, locale, geolocation, storageState, etc.</td>
+            </tr>
+            <tr>
+                <td><strong>Multi-user</strong></td>
+                <td>Create separate contexts per user — complete isolation, no state bleed.</td>
+            </tr>
+            <tr>
+                <td><strong>Cleanup</strong></td>
+                <td><code>context.close()</code> closes all pages inside it; always close manually-created contexts.</td>
+            </tr>
+        </table>
+        </div>
+
+        <div style="margin-top: 40px; padding: 20px; background: #ecf0f1; border-radius: 5px;">
+            <h3>🎓 Learning Path</h3>
+            <p><strong>Beginner:</strong> Master sections 1, 2</p>
+            <p><strong>Intermediate:</strong> Understand sections 3, 4, 5</p>
+            <p><strong>Advanced:</strong> Deep dive into sections 6, 7, 8</p>
+        </div>
+
+    </div>
+</body>
+</html>

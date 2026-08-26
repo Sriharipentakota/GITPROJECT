@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Playwright Page Object Model: Complete Guide</title>
+    <link rel="stylesheet" href="/guides/guide-base.css">
+</head>
+<body>
+    <div class="container">
+        <h1>🏗️ Playwright Page Object Model: Complete Guide</h1>
+        <p style="font-size: 1.1em; color: #7f8c8d; margin-bottom: 20px;">
+            Encapsulating locators and actions into reusable, maintainable classes
+        </p>
+
+        <div class="toc">
+            <h3>📚 Table of Contents</h3>
+            <ul>
+                <li><a href="#section1">1. Why Page Objects Exist</a></li>
+                <li><a href="#section2">2. Anatomy of a Page Object Class</a></li>
+                <li><a href="#section3">3. The Golden Rule: Actions in PO, Assertions in Test</a></li>
+                <li><a href="#section4">4. Integrating Page Objects with Fixtures</a></li>
+                <li><a href="#section5">5. Component Objects for Shared UI</a></li>
+                <li><a href="#section6">6. Composing Multiple Page Objects</a></li>
+                <li><a href="#section7">7. Page Objects vs Raw Locators — When to Bother</a></li>
+                <li><a href="#section8">8. Common Pitfalls</a></li>
+            </ul>
+        </div>
+
+        <!-- SECTION 1 -->
+        <h2 id="section1"><span class="level beginner">BEGINNER</span>1. Why Page Objects Exist</h2>
+
+        <p>Without a page object, every test that interacts with the login form repeats the same locators and steps:</p>
+
+        <pre>// Repeated in test after test after test...
+await page.getByLabel('Email').fill(email);
+await page.getByLabel('Password').fill(password);
+await page.getByRole('button', { name: 'Sign in' }).click();</pre>
+
+        <p>The moment the button label changes from "Sign in" to "Log in," every one of those tests breaks — and you have to fix the same line in dozens of places. The <strong>Page Object Model (POM)</strong> solves this by encapsulating a page's locators and interactions into one reusable class.</p>
+
+        <div class="example">
+            <strong>The payoff:</strong> when the UI changes, you fix <em>one class</em>, and every test using it is automatically correct again. Tests become short and readable — they describe <em>what</em> the user does, not <em>how</em> the DOM is structured.
+        </div>
+
+        <!-- SECTION 2 -->
+        <h2 id="section2"><span class="level beginner">BEGINNER</span>2. Anatomy of a Page Object Class</h2>
+
+        <p>A page object has three parts:</p>
+
+        <ul style="margin: 15px 0; margin-left: 20px;">
+            <li>A <strong>constructor</strong> that receives <code>page</code> (and optionally <code>context</code> or <code>request</code>)</li>
+            <li><strong>Locator properties</strong>, declared <code>readonly</code>, using <code>page.getByRole(…)</code> etc. — lazy, so they always reflect the current DOM</li>
+            <li><strong>Action methods</strong> that group related interactions into meaningful steps</li>
+        </ul>
+
+        <pre>// pages/LoginPage.ts
+import { type Page } from '@playwright/test';
+
+export class LoginPage {
+  constructor(private readonly page: Page) {}
+
+  readonly emailInput    = this.page.getByLabel('Email');
+  readonly passwordInput = this.page.getByLabel('Password');
+  readonly submitButton  = this.page.getByRole('button', { name: 'Sign in' });
+  readonly errorMessage  = this.page.getByRole('alert');
+
+  async goto() {
+    await this.page.goto('/login');
+  }
+
+  async signIn(email: string, password: string) {
+    await this.emailInput.fill(email);
+    await this.passwordInput.fill(password);
+    await this.submitButton.click();
+  }
+}</pre>
+
+        <div class="note">
+            <strong>💡 Tip:</strong> Locator properties are re-evaluated every time they're accessed — declaring them once in the constructor's field initializers is safe even before <code>page.goto()</code> has run, because nothing actually queries the DOM until an action or assertion uses the locator.
+        </div>
+
+        <!-- SECTION 3 -->
+        <h2 id="section3"><span class="level beginner">BEGINNER</span>3. The Golden Rule: Actions in PO, Assertions in Test</h2>
+
+        <p>Page objects are <strong>action libraries</strong>, not validators. Keep <code>expect()</code> calls in the test file, not inside the page object class.</p>
+
+        <div class="comparison">
+            <div>
+                <strong>❌ Assertion inside the page object:</strong>
+                <pre>async signIn(email, password) {
+  await this.emailInput.fill(email);
+  await this.submitButton.click();
+  // Don't do this here:
+  await expect(this.page).toHaveURL('/dashboard');
+}</pre>
+            </div>
+            <div>
+                <strong>✅ Assertion stays in the test:</strong>
+                <pre>await loginPage.signIn(email, password);
+await expect(page).toHaveURL('/dashboard');</pre>
+            </div>
+        </div>
+
+        <p>Mixing assertions into page objects makes them harder to reuse (what if one test needs to verify a <em>failed</em> login instead?) and harder to debug (the failure now points into a shared class instead of the specific test).</p>
+
+        <!-- SECTION 4 -->
+        <h2 id="section4"><span class="level intermediate">INTERMEDIATE</span>4. Integrating Page Objects with Fixtures</h2>
+
+        <pre>// fixtures/pages.ts
+import { test as base } from '@playwright/test';
+import { LoginPage } from './pages/LoginPage';
+
+export const test = base.extend<{ loginPage: LoginPage }>({
+  loginPage: async ({ page }, use) => {
+    await use(new LoginPage(page));
+  },
+});
+
+// Usage in tests
+import { test, expect } from './fixtures/pages';
+
+test('valid login navigates to dashboard', async ({ loginPage, page }) => {
+  await loginPage.goto();
+  await loginPage.signIn('user@example.com', 'secret');
+  await expect(page).toHaveURL('/dashboard');
+});</pre>
+
+        <p>This is the recommended pattern — tests request a page object by name, exactly like requesting <code>page</code> itself, and never have to write <code>new LoginPage(page)</code> repeatedly.</p>
+
+        <!-- SECTION 5 -->
+        <h2 id="section5"><span class="level intermediate">INTERMEDIATE</span>5. Component Objects for Shared UI</h2>
+
+        <p>For UI elements that appear on many pages — a header, a modal, a data table — create a smaller <strong>component object</strong> and compose it into whichever page objects use it.</p>
+
+        <pre>// components/Header.ts
+export class Header {
+  constructor(private readonly page: Page) {}
+  readonly userMenu   = this.page.getByTestId('user-menu');
+  readonly signOutBtn = this.page.getByRole('menuitem', { name: 'Sign out' });
+
+  async signOut() {
+    await this.userMenu.click();
+    await this.signOutBtn.click();
+  }
+}
+
+// pages/DashboardPage.ts
+import { Header } from '../components/Header';
+
+export class DashboardPage {
+  readonly header = new Header(this.page);   // composition
+  constructor(private readonly page: Page) {}
+  async goto() { await this.page.goto('/dashboard'); }
+}</pre>
+
+        <div class="example">
+            <strong>Real-world payoff:</strong> a <code>Header</code> component object is reused across <code>DashboardPage</code>, <code>ProfilePage</code>, and <code>SettingsPage</code> without duplicating its locators or sign-out logic three times.
+        </div>
+
+        <!-- SECTION 6 -->
+        <h2 id="section6"><span class="level advanced">ADVANCED</span>6. Composing Multiple Page Objects</h2>
+
+        <pre>// fixtures/pages.ts
+type PageObjects = {
+  loginPage:     LoginPage;
+  dashboardPage: DashboardPage;
+  checkoutPage:  CheckoutPage;
+};
+
+export const test = base.extend<PageObjects>({
+  loginPage:     async ({ page }, use) => use(new LoginPage(page)),
+  dashboardPage: async ({ page }, use) => use(new DashboardPage(page)),
+  checkoutPage:  async ({ page }, use) => use(new CheckoutPage(page)),
+});
+
+test('complete purchase flow', async ({ loginPage, dashboardPage, checkoutPage, page }) => {
+  await loginPage.goto();
+  await loginPage.signIn('user@example.com', 'secret');
+  await dashboardPage.addItemToCart('Widget Pro');
+  await checkoutPage.completePayment({ card: '4111111111111111' });
+  await expect(page).toHaveURL('/confirmation');
+});</pre>
+
+        <p>Long end-to-end journeys become readable as a sequence of page-object method calls, each one expressing intent rather than DOM mechanics.</p>
+
+        <!-- SECTION 7 -->
+        <h2 id="section7"><span class="level advanced">ADVANCED</span>7. Page Objects vs Raw Locators — When to Bother</h2>
+
+        <div class="table-wrap">
+        <table class="table-compact">
+            <tr>
+                <th>Situation</th>
+                <th>Recommendation</th>
+            </tr>
+            <tr>
+                <td>Small suite, few pages, short-lived project</td>
+                <td>Raw locators inline may be simpler — POM adds overhead you might not need yet</td>
+            </tr>
+            <tr>
+                <td>Multiple tests reuse the same flow (login, navigation)</td>
+                <td>Extract a page object — the duplication cost already outweighs the setup cost</td>
+            </tr>
+            <tr>
+                <td>Large, growing suite maintained by a team</td>
+                <td>POM strongly recommended — the maintainability payoff compounds over time</td>
+            </tr>
+        </table>
+        </div>
+
+        <!-- SECTION 8 -->
+        <h2 id="section8"><span class="level advanced">ADVANCED</span>8. Common Pitfalls</h2>
+
+        <div class="warning">
+            <strong>⚠️ Pitfall 1 — "God" page objects:</strong> Cramming every locator and action for an entire application into one giant class defeats the purpose. Split by page or feature, and use component objects for anything shared.
+        </div>
+
+        <div class="warning">
+            <strong>⚠️ Pitfall 2 — Storing locators as plain fields evaluated once:</strong> Declaring <code>this.emailInput = this.page.locator(...)</code> is fine (locators are lazy), but caching the <em>result</em> of calling an action too early — e.g. storing a resolved element handle from before navigation — reintroduces the stale-element problems locators were designed to avoid. Stick to Locator objects, never <code>elementHandle()</code>, in page objects.
+        </div>
+
+        <!-- SUMMARY -->
+        <h2 style="margin-top: 40px;">📋 Quick Reference Summary</h2>
+
+        <div class="table-wrap">
+        <table>
+            <tr>
+                <th>Concept</th>
+                <th>Key Points</th>
+            </tr>
+            <tr>
+                <td><strong>Structure</strong></td>
+                <td>Constructor(page) + readonly locator properties + async action methods.</td>
+            </tr>
+            <tr>
+                <td><strong>Golden rule</strong></td>
+                <td>Actions in the page object; assertions stay in the test.</td>
+            </tr>
+            <tr>
+                <td><strong>Fixture integration</strong></td>
+                <td>Wrap `new PageObject(page)` in a test.extend() fixture for clean test signatures.</td>
+            </tr>
+            <tr>
+                <td><strong>Component objects</strong></td>
+                <td>Extract shared UI (header, modal, table) and compose into full page objects.</td>
+            </tr>
+            <tr>
+                <td><strong>When to use POM</strong></td>
+                <td>Worth it once a flow (like login) is reused across more than a couple of tests.</td>
+            </tr>
+        </table>
+        </div>
+
+        <div style="margin-top: 40px; padding: 20px; background: #ecf0f1; border-radius: 5px;">
+            <h3>🎓 Learning Path</h3>
+            <p><strong>Beginner:</strong> Master sections 1, 2, 3</p>
+            <p><strong>Intermediate:</strong> Understand sections 4, 5</p>
+            <p><strong>Advanced:</strong> Deep dive into sections 6, 7, 8</p>
+        </div>
+
+    </div>
+</body>
+</html>

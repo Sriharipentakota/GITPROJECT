@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tosca Test Data Management (TDM): Complete Guide</title>
+    <link rel="stylesheet" href="/guides/guide-base.css">
+</head>
+<body>
+    <div class="container">
+        <h1>📊 Tosca Test Data Management (TDM): Complete Guide</h1>
+        <p style="font-size: 1.1em; color: #7f8c8d; margin-bottom: 20px;">
+            Separating test data from test logic so one test case can run many scenarios
+        </p>
+
+        <div class="toc">
+            <h3>📚 Table of Contents</h3>
+            <ul>
+                <li><a href="#section1">1. Why Separate Data from Logic?</a></li>
+                <li><a href="#section2">2. Excel TDM: The Simplest Approach</a></li>
+                <li><a href="#section3">3. Data Partitions and Results</a></li>
+                <li><a href="#section4">4. Database TDM</a></li>
+                <li><a href="#section5">5. Buffer-Based Data (Runtime Capture)</a></li>
+                <li><a href="#section6">6. The Tricentis TDM Server</a></li>
+                <li><a href="#section7">7. Data Masking and Provisioning</a></li>
+                <li><a href="#section8">8. Choosing the Right TDM Approach</a></li>
+                <li><a href="#section9">9. Common Pitfalls</a></li>
+                <li><a href="#section10">10. Best Practices</a></li>
+            </ul>
+        </div>
+
+        <!-- SECTION 1 -->
+        <h2 id="section1"><span class="level beginner">BEGINNER</span>1. Why Separate Data from Logic?</h2>
+
+        <h3>Definition</h3>
+        <p><strong>Test Data Management (TDM)</strong> in Tosca externalises the data values a Test Case uses — usernames, order quantities, expected messages — into a data source outside the Test Case itself: an Excel workbook, a database query, or Tosca's dedicated TDM Server. This lets one Test Case definition run once per row of data, called a <strong>partition</strong>, each producing an independent result.</p>
+
+        <div class="example">
+            <strong>Real-world analogy:</strong> TDM is like a mail merge in a word processor. You write the letter template once (the Test Case), plug in a contacts spreadsheet (Excel TDM), and the software produces one personalised letter per contact row (partition). Change the contacts list — the letter template stays untouched.
+        </div>
+
+        <h3>The Problem Without TDM</h3>
+        <p>Without externalised data, testing three different login scenarios (valid admin, valid regular user, invalid credentials) would require three near-duplicate Test Cases, each hard-coding its own values — tripling the maintenance surface for what is really one scenario shape.</p>
+
+        <!-- SECTION 2 -->
+        <h2 id="section2"><span class="level beginner">BEGINNER</span>2. Excel TDM: The Simplest Approach</h2>
+
+        <p>The most common entry point into TDM is binding a Test Case to an Excel workbook, where each row supplies one full set of parameter values.</p>
+
+        <pre>// Excel TDM binding
+1. Create Excel file:
+   | Username        | Password   | ExpectedMsg        |
+   | alice@test.com  | pass123    | Welcome, Alice     |
+   | bob@test.com    | pass456    | Welcome, Bob       |
+
+2. Link in TCM:
+   TestCase → Properties → TestData → Select Excel file
+   Map column "Username" → {P:Username}
+   Map column "Password" → {P:Password}
+
+3. TOSCA creates one partition per row → runs TC twice</pre>
+
+        <div class="note">
+            <strong>💡 Tip:</strong> Excel TDM is the easiest way for non-technical team members to contribute test data — a business analyst can add a new row to cover a new scenario without touching TCM at all, as long as the Test Case is already bound to that workbook.
+        </div>
+
+        <!-- SECTION 3 -->
+        <h2 id="section3"><span class="level beginner">BEGINNER</span>3. Data Partitions and Results</h2>
+
+        <p>Each row in the bound data source becomes a <strong>partition</strong> — effectively a full, independent instance of the Test Case's steps, executed with that row's values, and reported as its own pass/fail result.</p>
+
+        <pre>// Excel: TestData_Login.xlsx
+Row 1: Username=alice@test.com, Password=pass123, Role=Admin
+Row 2: Username=bob@test.com,   Password=pass456, Role=User
+Row 3: Username=invalid,        Password=wrong,   Role=None
+
+// TCM maps rows → 3 partitions of TC001_Login
+// Run produces 3 results:
+Partition 1 (alice) → Passed
+Partition 2 (bob)   → Passed
+Partition 3 (invalid) → Failed (login rejected — expected)</pre>
+
+        <div class="example">
+            <strong>Note on "expected failures":</strong> Partition 3 above is designed to test that invalid credentials are rejected. Its Verify step should assert the rejection message, so a "Failed" login attempt actually shows as a <em>Passed</em> partition (the assertion about rejection succeeded) — don't confuse "the login failed" with "the test failed."
+        </div>
+
+        <!-- SECTION 4 -->
+        <h2 id="section4"><span class="level intermediate">INTERMEDIATE</span>4. Database TDM</h2>
+
+        <p>For larger or more dynamic data sets, Tosca can pull partitions directly from a SQL query against a live database, using a Tosca DB Module connection.</p>
+
+        <pre>// Add DB connection in TCM → Modules → Tosca DB module
+Connection: TestDB
+  Driver:   MSSQL / Oracle / MySQL
+  Server:   db.test.internal
+  Database: TestEnv
+
+// SQL query as data source
+SELECT username, password, role
+FROM test_users
+WHERE env = 'QA' AND active = 1
+
+// Result rows become partitions — same as Excel TDM</pre>
+
+        <div class="table-wrap">
+        <table class="table-compact">
+            <tr>
+                <th>Aspect</th>
+                <th>Excel TDM</th>
+                <th>Database TDM</th>
+            </tr>
+            <tr>
+                <td>Best for</td>
+                <td>Small, manually curated data sets</td>
+                <td>Large, dynamic, or environment-synced data sets</td>
+            </tr>
+            <tr>
+                <td>Who maintains it</td>
+                <td>Any team member with Excel access</td>
+                <td>Requires DB access/query knowledge</td>
+            </tr>
+            <tr>
+                <td>Freshness</td>
+                <td>Static until manually updated</td>
+                <td>Always reflects live database state at run time</td>
+            </tr>
+        </table>
+        </div>
+
+        <!-- SECTION 5 -->
+        <h2 id="section5"><span class="level intermediate">INTERMEDIATE</span>5. Buffer-Based Data (Runtime Capture)</h2>
+
+        <p>Not all test data is known ahead of time. Data generated by the application itself during a run — an order confirmation number, a generated invoice ID — is captured into a <strong>Buffer</strong> using an Output step, then referenced in later steps. This is a complementary data source to Excel/Database TDM, used for values that simply don't exist until the test creates them.</p>
+
+        <pre>// Buffer-based TDM (capture from previous step)
+Step 3: OrderID [Output]   → stored as {B:OrderID}
+Step 7: ConfirmOrderID [Verify] = {B:OrderID}</pre>
+
+        <div class="note">
+            <strong>💡 Tip:</strong> See the Steering guide for the full mechanics of Buffers, including arithmetic and conditional use. TDM handles data that exists <em>before</em> the run starts; Buffers handle data that is only known <em>during</em> the run.
+        </div>
+
+        <!-- SECTION 6 -->
+        <h2 id="section6"><span class="level advanced">ADVANCED</span>6. The Tricentis TDM Server</h2>
+
+        <p>For enterprise-scale test data needs — especially where multiple teams or parallel DEX agents might otherwise grab and corrupt the same test record — Tricentis offers a dedicated <strong>TDM Server</strong> product. It provisions, reserves, and resets test data across environments as a managed service, rather than relying on static Excel files or ad-hoc SQL queries.</p>
+
+        <div class="table-wrap">
+        <table class="table-compact">
+            <tr>
+                <th>Capability</th>
+                <th>What It Solves</th>
+            </tr>
+            <tr>
+                <td>Reservation</td>
+                <td>Prevents two parallel test runs from picking the same "available" test user/account and colliding</td>
+            </tr>
+            <tr>
+                <td>Provisioning</td>
+                <td>Creates fresh, valid test records on demand rather than relying on a finite pre-seeded pool</td>
+            </tr>
+            <tr>
+                <td>Reset</td>
+                <td>Returns modified test data to a known-good state after a run for reuse</td>
+            </tr>
+        </table>
+        </div>
+
+        <div class="example">
+            <strong>When you need this:</strong> once you introduce Distributed Execution (DEX) with many agents running in parallel, static Excel-row data sources become a source of race conditions — two agents may pick the same "unused" customer record simultaneously. TDM Server-level reservation eliminates that class of flaky failure.
+        </div>
+
+        <!-- SECTION 7 -->
+        <h2 id="section7"><span class="level advanced">ADVANCED</span>7. Data Masking and Provisioning</h2>
+
+        <p>When test data is sourced from production-like databases, regulatory and privacy requirements (GDPR, HIPAA, PCI-DSS) typically forbid using real customer PII directly in non-production test environments. TDM Server-class solutions include <strong>data masking</strong> — replacing real names, emails, and identifiers with realistic but fictitious substitutes while preserving referential integrity and data shape (e.g. still-valid formatted card numbers, consistent name-to-email pairing).</p>
+
+        <pre>// Conceptual masking transform
+Original:  Name=Jane Doe, Email=jane.doe@realcompany.com, SSN=123-45-6789
+Masked:    Name=Test User42, Email=test.user42@example.test, SSN=000-00-0042
+// Referential integrity preserved: same masked record used consistently
+// across all tables/tests referencing that customer</pre>
+
+        <!-- SECTION 8 -->
+        <h2 id="section8"><span class="level intermediate">INTERMEDIATE</span>8. Choosing the Right TDM Approach</h2>
+
+        <div class="comparison">
+            <div>
+                <strong>Use Excel TDM when:</strong>
+                <pre>- Data set is small (a handful to a few dozen rows)
+- Non-technical team members maintain it
+- Data rarely changes between runs
+- You're just getting started with data-driving</pre>
+            </div>
+            <div>
+                <strong>Use Database/TDM Server when:</strong>
+                <pre>- Data set is large or must reflect live state
+- Multiple parallel DEX agents run against it
+- Regulatory masking is required
+- Data must be reserved/reset automatically</pre>
+            </div>
+        </div>
+
+        <!-- SECTION 9 -->
+        <h2 id="section9"><span class="level intermediate">INTERMEDIATE</span>9. Common Pitfalls</h2>
+
+        <ul style="margin: 15px 0; margin-left: 20px;">
+            <li><strong>Hard-coded literals disguised as "temporary":</strong> a literal test value left in a Test Step "just for now" often survives for years, defeating the purpose of TDM entirely.</li>
+            <li><strong>Shared mutable data without reservation:</strong> two parallel runs modifying the same Excel row's referenced account causes intermittent, hard-to-reproduce failures.</li>
+            <li><strong>Stale expected values:</strong> an Excel column with a hard-coded "ExpectedMsg" that no longer matches the application after a legitimate UI text change causes false failures.</li>
+            <li><strong>Using real PII in test data:</strong> pulling unmasked production data into lower environments creates compliance risk.</li>
+        </ul>
+
+        <!-- SECTION 10 -->
+        <h2 id="section10"><span class="level beginner">BEGINNER</span>10. Best Practices</h2>
+
+        <h3>1. Start with Excel, Graduate to DB/TDM Server as You Scale</h3>
+        <p>Don't over-engineer data management for a two-scenario proof of concept — but plan the migration path once DEX and parallel execution enter the picture.</p>
+
+        <h3>2. Keep One Row = One Complete, Independent Scenario</h3>
+        <pre>// Good: each row is self-contained and meaningful on its own
+| Username | Password | ExpectedResult      |
+| valid1   | correct  | Login succeeds      |
+| valid2   | wrong    | "Invalid password"  |
+| locked1  | correct  | "Account locked"    |</pre>
+
+        <h3>3. Version-Control Your Excel Data Files</h3>
+        <p>Store TDM Excel files alongside other project artifacts in source control so data changes are reviewable and reversible.</p>
+
+        <h3>4. Mask Anything Derived from Production</h3>
+        <p>Never copy raw production exports into test data sources without a masking pass.</p>
+
+        <h3>5. Reserve Shared Records Before Scaling Parallel Runs</h3>
+        <p>Before introducing DEX with multiple concurrent agents, confirm your data source has a reservation/locking mechanism, or restructure so each agent gets its own data slice.</p>
+
+        <!-- SUMMARY -->
+        <h2 style="margin-top: 40px;">📋 Quick Reference Summary</h2>
+
+        <div class="table-wrap">
+        <table>
+            <tr>
+                <th>Concept</th>
+                <th>Key Points</th>
+            </tr>
+            <tr>
+                <td><strong>TDM</strong></td>
+                <td>Externalises test data from test logic so one Test Case can run many scenarios.</td>
+            </tr>
+            <tr>
+                <td><strong>Excel TDM</strong></td>
+                <td>Simplest binding; one row = one partition; easy for non-technical maintenance.</td>
+            </tr>
+            <tr>
+                <td><strong>Partition</strong></td>
+                <td>One full, independent run of a Test Case with one row's data; own pass/fail result.</td>
+            </tr>
+            <tr>
+                <td><strong>Database TDM</strong></td>
+                <td>SQL query supplies partitions; reflects live data at run time.</td>
+            </tr>
+            <tr>
+                <td><strong>Buffer-based data</strong></td>
+                <td>Captures runtime-generated values (order IDs) — complements static TDM sources.</td>
+            </tr>
+            <tr>
+                <td><strong>TDM Server</strong></td>
+                <td>Enterprise service for provisioning, reserving, resetting, and masking test data.</td>
+            </tr>
+        </table>
+        </div>
+
+        <div style="margin-top: 40px; padding: 20px; background: #ecf0f1; border-radius: 5px;">
+            <h3>🎓 Learning Path</h3>
+            <p><strong>Beginner:</strong> Master sections 1, 2, 3, 10</p>
+            <p><strong>Intermediate:</strong> Understand sections 4, 5, 8, 9</p>
+            <p><strong>Advanced:</strong> Deep dive into sections 6, 7</p>
+        </div>
+
+    </div>
+</body>
+</html>

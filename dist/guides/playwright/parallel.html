@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Playwright Parallel Execution: Complete Guide</title>
+    <link rel="stylesheet" href="/guides/guide-base.css">
+</head>
+<body>
+    <div class="container">
+        <h1>⚡ Playwright Parallel Execution: Complete Guide</h1>
+        <p style="font-size: 1.1em; color: #7f8c8d; margin-bottom: 20px;">
+            Workers, fullyParallel, serial groups, worker-scoped fixtures, and sharding across CI machines
+        </p>
+
+        <div class="toc">
+            <h3>📚 Table of Contents</h3>
+            <ul>
+                <li><a href="#section1">1. Workers — Independent Test Processes</a></li>
+                <li><a href="#section2">2. Default Behavior: Per-File Parallelism</a></li>
+                <li><a href="#section3">3. fullyParallel: true</a></li>
+                <li><a href="#section4">4. Controlling Worker Count</a></li>
+                <li><a href="#section5">5. describe.parallel and describe.serial</a></li>
+                <li><a href="#section6">6. Worker-Scoped Fixtures for Expensive Setup</a></li>
+                <li><a href="#section7">7. Avoiding Shared Mutable State</a></li>
+                <li><a href="#section8">8. Sharding Across CI Machines</a></li>
+                <li><a href="#section9">9. Common Pitfalls</a></li>
+            </ul>
+        </div>
+
+        <!-- SECTION 1 -->
+        <h2 id="section1"><span class="level beginner">BEGINNER</span>1. Workers — Independent Test Processes</h2>
+
+        <p>Playwright achieves parallelism using <strong>workers</strong> — independent Node.js processes, each with its own browser instance. Workers don't share memory, which means tests running in different workers can never accidentally interfere with each other's in-process state.</p>
+
+        <div class="example">
+            <strong>Why this matters for speed:</strong> a 10-minute serial test suite can compress to roughly 2 minutes on a 4-worker CI runner — the same total work spread across four independent "lanes" running simultaneously.
+        </div>
+
+        <!-- SECTION 2 -->
+        <h2 id="section2"><span class="level beginner">BEGINNER</span>2. Default Behavior: Per-File Parallelism</h2>
+
+        <p>By default, Playwright parallelizes at the <strong>file</strong> level: different spec files run concurrently across workers, but tests <em>within the same file</em> run serially, one after another, in a single worker.</p>
+
+        <pre>tests/login.spec.ts    → Worker 1: test1 → test2 → test3
+tests/checkout.spec.ts → Worker 2: test1 → test2 → test3
+tests/search.spec.ts   → Worker 3: test1 → test2 → test3</pre>
+
+        <!-- SECTION 3 -->
+        <h2 id="section3"><span class="level intermediate">INTERMEDIATE</span>3. fullyParallel: true</h2>
+
+        <p>Setting <code>fullyParallel: true</code> breaks the file-level grouping entirely — every individual test, regardless of which file it's in, gets its own worker slot and can run concurrently with any other test.</p>
+
+        <pre>export default defineConfig({
+  fullyParallel: true,   // every test in its own worker — fastest mode
+});</pre>
+
+        <div class="warning">
+            <strong>⚠️ Common Pitfall:</strong> <code>fullyParallel</code> is only safe when tests have no shared state and don't depend on running in a particular order. A suite full of tests that secretly rely on running after one another will produce confusing, intermittent failures once this is enabled.
+        </div>
+
+        <!-- SECTION 4 -->
+        <h2 id="section4"><span class="level intermediate">INTERMEDIATE</span>4. Controlling Worker Count</h2>
+
+        <pre>// playwright.config.ts
+export default defineConfig({
+  workers: process.env.CI ? 4 : undefined, // fixed in CI, auto locally
+});</pre>
+
+        <pre>npx playwright test --workers=8       // explicit count
+npx playwright test --workers=50%     // half of available CPU cores</pre>
+
+        <p>The default is half the number of logical CPU cores. Setting <code>workers: 1</code> disables parallelism entirely — useful when debugging a flaky test that only fails under concurrent load.</p>
+
+        <!-- SECTION 5 -->
+        <h2 id="section5"><span class="level intermediate">INTERMEDIATE</span>5. describe.parallel and describe.serial</h2>
+
+        <div class="table-wrap">
+        <table class="table-compact">
+            <tr>
+                <th>Modifier</th>
+                <th>Effect</th>
+            </tr>
+            <tr>
+                <td><code>test.describe.parallel()</code></td>
+                <td>Opts a describe block into parallel execution within its file, even without fullyParallel</td>
+            </tr>
+            <tr>
+                <td><code>test.describe.serial()</code></td>
+                <td>Forces tests to run in strict sequence, even when fullyParallel is globally enabled</td>
+            </tr>
+        </table>
+        </div>
+
+        <h3>Ordered Lifecycle Test</h3>
+        <pre>test.describe.serial('blog post lifecycle', () => {
+  let postId: string;
+
+  test('create post', async ({ page }) => {
+    await page.goto('/admin/posts/new');
+    await page.getByLabel('Title').fill('Hello World');
+    await page.getByRole('button', { name: 'Publish' }).click();
+    await page.waitForURL(/\/posts\/(\d+)/);
+    postId = page.url().split('/').pop()!;
+  });
+
+  test('edit post', async ({ page }) => {
+    await page.goto(`/admin/posts/${postId}/edit`);
+    await page.getByLabel('Title').fill('Hello World (revised)');
+    await page.getByRole('button', { name: 'Save' }).click();
+  });
+
+  test('delete post', async ({ page }) => {
+    await page.goto(`/admin/posts/${postId}`);
+    await page.getByRole('button', { name: 'Delete' }).click();
+  });
+});</pre>
+
+        <div class="note">
+            <strong>💡 Tip:</strong> Reach for <code>describe.serial</code> sparingly — sharing state between tests (like <code>postId</code> above) couples them tightly, meaning a failure in "create post" cascades into "edit" and "delete" failing too, which can make root-causing a failure slower.
+        </div>
+
+        <!-- SECTION 6 -->
+        <h2 id="section6"><span class="level advanced">ADVANCED</span>6. Worker-Scoped Fixtures for Expensive Setup</h2>
+
+        <pre>import { test as base } from '@playwright/test';
+
+const test = base.extend({
+  expensiveClient: [async ({}, use) => {
+    const client = await createHeavyClient();
+    await use(client);
+    await client.close();
+  }, { scope: 'worker' }],   // created once per worker, shared by every test in it
+});</pre>
+
+        <p>Because a worker persists across many tests, a worker-scoped fixture amortizes an expensive one-time cost (like establishing a database connection or authenticating a shared client) across every test that runs in that worker, instead of repeating it per test.</p>
+
+        <!-- SECTION 7 -->
+        <h2 id="section7"><span class="level advanced">ADVANCED</span>7. Avoiding Shared Mutable State</h2>
+
+        <pre>// ❌ BAD — shared module-level counter causes a race condition
+let count = 0;
+test('a', async () => { count++; });
+test('b', async () => { count++; });
+
+// ✅ GOOD — each test is self-contained, uses only page-local state
+test('a', async ({ page }) => { /* uses only page-local state */ });
+test('b', async ({ page }) => { /* uses only page-local state */ });</pre>
+
+        <div class="warning">
+            <strong>⚠️ Common Pitfall:</strong> Module-level variables (declared outside any <code>test()</code> call) are shared across every test in the <em>same worker</em>, but each worker has its own independent copy — so a counter that "seems to work" locally with one worker can produce wildly different, non-deterministic results once multiple workers run concurrently in CI.
+        </div>
+
+        <!-- SECTION 8 -->
+        <h2 id="section8"><span class="level advanced">ADVANCED</span>8. Sharding Across CI Machines</h2>
+
+        <p>For very large suites, <strong>sharding</strong> splits the entire test suite across multiple CI machines — a level of parallelism above workers, distributing work across separate hosts entirely.</p>
+
+        <pre># Machine 1
+npx playwright test --shard=1/3 --reporter=blob
+# Machine 2
+npx playwright test --shard=2/3 --reporter=blob
+# Machine 3
+npx playwright test --shard=3/3 --reporter=blob
+
+# After all shards finish, merge their blob reports into one HTML report
+npx playwright merge-reports --reporter html ./blob-report</pre>
+
+        <h3>GitHub Actions Sharding Matrix</h3>
+        <pre>jobs:
+  test:
+    strategy:
+      matrix:
+        shardIndex: [1, 2, 3]
+        shardTotal: [3]
+    steps:
+      - run: npx playwright test
+               --shard=${{ matrix.shardIndex }}/${{ matrix.shardTotal }}
+               --reporter=blob
+      - uses: actions/upload-artifact@v4
+        with:
+          name: blob-report-${{ matrix.shardIndex }}
+          path: blob-report/
+
+  merge-reports:
+    needs: test
+    steps:
+      - uses: actions/download-artifact@v4
+        with: { pattern: blob-report-*, merge-multiple: true }
+      - run: npx playwright merge-reports --reporter html ./blob-report</pre>
+
+        <div class="example">
+            <strong>Workers vs. sharding:</strong> workers parallelize <em>within</em> one machine's CPU cores; sharding parallelizes <em>across</em> separate machines entirely. Combine both — each shard machine still runs its subset of tests across multiple workers.
+        </div>
+
+        <!-- SECTION 9 -->
+        <h2 id="section9"><span class="level advanced">ADVANCED</span>9. Common Pitfalls</h2>
+
+        <div class="warning">
+            <strong>⚠️ Pitfall 1 — Database collisions under parallelism:</strong> If two parallel tests both create a user with the same hardcoded email, one will fail with a "duplicate" error. Generate unique test data (e.g. with a UUID or timestamp suffix) so concurrently-running tests never collide.
+        </div>
+
+        <div class="warning">
+            <strong>⚠️ Pitfall 2 — Forgetting maxFailures for fast feedback:</strong> On a very large parallel suite, a systemic bug (like a broken deployment) can cause hundreds of unrelated failures before you notice. Setting <code>maxFailures: 10</code> in the config stops the run early once a threshold of failures is reached, saving CI time and cost.
+        </div>
+
+        <!-- SUMMARY -->
+        <h2 style="margin-top: 40px;">📋 Quick Reference Summary</h2>
+
+        <div class="table-wrap">
+        <table>
+            <tr>
+                <th>Concept</th>
+                <th>Key Points</th>
+            </tr>
+            <tr>
+                <td><strong>Workers</strong></td>
+                <td>Independent Node.js processes with their own browser — no shared memory.</td>
+            </tr>
+            <tr>
+                <td><strong>Default</strong></td>
+                <td>Files run in parallel; tests within a file run serially, unless fullyParallel is set.</td>
+            </tr>
+            <tr>
+                <td><strong>fullyParallel: true</strong></td>
+                <td>Every test gets its own worker — fastest, but requires fully independent tests.</td>
+            </tr>
+            <tr>
+                <td><strong>describe.serial</strong></td>
+                <td>Forces sequential order for a group, even under fullyParallel.</td>
+            </tr>
+            <tr>
+                <td><strong>Worker-scoped fixtures</strong></td>
+                <td>Amortize expensive setup (DB connections) across all tests in one worker.</td>
+            </tr>
+            <tr>
+                <td><strong>Sharding</strong></td>
+                <td>--shard=M/N splits the suite across CI machines; merge-reports combines results.</td>
+            </tr>
+        </table>
+        </div>
+
+        <div style="margin-top: 40px; padding: 20px; background: #ecf0f1; border-radius: 5px;">
+            <h3>🎓 Learning Path</h3>
+            <p><strong>Beginner:</strong> Master sections 1, 2</p>
+            <p><strong>Intermediate:</strong> Understand sections 3, 4, 5</p>
+            <p><strong>Advanced:</strong> Deep dive into sections 6, 7, 8, 9</p>
+        </div>
+
+    </div>
+</body>
+</html>

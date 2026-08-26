@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tosca Mobile Testing: Complete Guide</title>
+    <link rel="stylesheet" href="/guides/guide-base.css">
+</head>
+<body>
+    <div class="container">
+        <h1>📱 Tosca Mobile Testing: Complete Guide</h1>
+        <p style="font-size: 1.1em; color: #7f8c8d; margin-bottom: 20px;">
+            Testing native iOS and Android apps with the same scan-and-assemble model used for the web
+        </p>
+
+        <div class="toc">
+            <h3>📚 Table of Contents</h3>
+            <ul>
+                <li><a href="#section1">1. What Is the Mobile Engine?</a></li>
+                <li><a href="#section2">2. Device Configuration</a></li>
+                <li><a href="#section3">3. Scanning a Mobile App</a></li>
+                <li><a href="#section4">4. Gestures: Tap, Swipe, Pinch</a></li>
+                <li><a href="#section5">5. Building a Mobile Test Case</a></li>
+                <li><a href="#section6">6. Native App vs Mobile Web Testing</a></li>
+                <li><a href="#section7">7. Cross-Platform Matrices with DEX</a></li>
+                <li><a href="#section8">8. Device Farms and Real Devices vs Emulators</a></li>
+                <li><a href="#section9">9. Common Pitfalls</a></li>
+                <li><a href="#section10">10. Best Practices</a></li>
+            </ul>
+        </div>
+
+        <!-- SECTION 1 -->
+        <h2 id="section1"><span class="level beginner">BEGINNER</span>1. What Is the Mobile Engine?</h2>
+
+        <h3>Definition</h3>
+        <p>Tosca's <strong>Mobile Engine</strong> enables automated testing of native iOS and Android apps, as well as mobile-optimised web apps in mobile browsers. It uses the exact same scan-model-and-assemble approach as desktop web testing — scan the app once to build a Module tree, then build Test Cases against it exactly as you would for a web application.</p>
+
+        <div class="example">
+            <strong>Real-world analogy:</strong> Mobile testing in Tosca is like having the same driving test examiner assess candidates on different car models (iOS, Android). The examiner follows the same checklist regardless of the car — check mirrors, signal, brake — and adapts naturally to each car's controls. The test script (checklist) doesn't change; only the vehicle (device) does.
+        </div>
+
+        <h3>Under the Hood: XCUITest and UIAutomator2</h3>
+        <p>For iOS, Tosca communicates through Apple's <strong>XCUITest</strong> framework; for Android, it uses <strong>UIAutomator2/Appium</strong>. Testers don't need to interact with these frameworks directly — Tosca abstracts them behind the same Module/TestStep model used everywhere else in the platform.</p>
+
+        <!-- SECTION 2 -->
+        <h2 id="section2"><span class="level beginner">BEGINNER</span>2. Device Configuration</h2>
+
+        <p>Every mobile Test Case requires a <strong>Device Configuration</strong>, specifying which physical device or emulator to target, what OS version, and which app to launch.</p>
+
+        <pre>// Device Configuration (set in TCM → Modules → Mobile)
+DeviceConfig: iPhone15_iOS17
+  Platform:      iOS
+  DeviceName:    iPhone 15
+  OSVersion:     17.0
+  AppBundleID:   com.example.myapp
+  LaunchMode:    App (native) | Browser (mobile web)</pre>
+
+        <div class="table-wrap">
+        <table class="table-compact">
+            <tr>
+                <th>Property</th>
+                <th>Meaning</th>
+            </tr>
+            <tr>
+                <td>Platform</td>
+                <td>iOS or Android</td>
+            </tr>
+            <tr>
+                <td>DeviceName / OSVersion</td>
+                <td>Which physical/emulated device profile to target</td>
+            </tr>
+            <tr>
+                <td>AppBundleID</td>
+                <td>The app package/bundle identifier to launch (native apps only)</td>
+            </tr>
+            <tr>
+                <td>LaunchMode</td>
+                <td>Whether to launch the native app or a mobile browser session</td>
+            </tr>
+        </table>
+        </div>
+
+        <div class="note">
+            <strong>💡 Tip:</strong> A Device Configuration is attached to the Execution List, not baked into individual Test Cases — this is what makes running the same Test Case against multiple devices simply a matter of swapping which configuration is attached.
+        </div>
+
+        <!-- SECTION 3 -->
+        <h2 id="section3"><span class="level beginner">BEGINNER</span>3. Scanning a Mobile App</h2>
+
+        <pre>// Scanning a mobile app
+1. Connect device / start emulator
+2. TCM → Scan → Choose Mobile Engine
+3. Interact with app → TOSCA records controls
+4. Controls become Module Attributes (same as web)</pre>
+
+        <div class="example">
+            <strong>Step by step:</strong>
+            <pre>1. Connect a physical device via USB, or start an emulator/simulator
+2. Ensure the Mobile Engine Host machine can see the device
+3. In TCM, right-click Modules → Scan Application → Mobile Engine
+4. Tap through the app's screens; TOSCA highlights and records
+   each recognised control just like TBox Web does for a browser
+5. Rename attributes with business-friendly names as usual</pre>
+        </div>
+
+        <!-- SECTION 4 -->
+        <h2 id="section4"><span class="level intermediate">INTERMEDIATE</span>4. Gestures: Tap, Swipe, Pinch</h2>
+
+        <p>Mobile interaction includes gesture types that have no direct desktop-web equivalent. Tosca's Mobile Engine supports these as built-in Test Step actions.</p>
+
+        <pre>// Gestures in test steps
+Swipe:  direction=Up, duration=500ms
+Pinch:  scale=0.5
+Tap:    coordinate-based or control-based</pre>
+
+        <div class="table-wrap">
+        <table class="table-compact">
+            <tr>
+                <th>Gesture</th>
+                <th>Typical Use</th>
+            </tr>
+            <tr>
+                <td>Tap</td>
+                <td>Equivalent of a click; can target a recognised control or raw screen coordinates</td>
+            </tr>
+            <tr>
+                <td>Swipe</td>
+                <td>Scrolling a list, dismissing a card, navigating a carousel</td>
+            </tr>
+            <tr>
+                <td>Pinch</td>
+                <td>Zooming in/out on maps, images, or PDF viewers within the app</td>
+            </tr>
+        </table>
+        </div>
+
+        <!-- SECTION 5 -->
+        <h2 id="section5"><span class="level intermediate">INTERMEDIATE</span>5. Building a Mobile Test Case</h2>
+
+        <pre>Module: iOS_LoginScreen
+  Attribute: UsernameField   [Input]   → tap + type
+  Attribute: PasswordField   [Input]   → tap + type
+  Attribute: SignInButton     [Input]   → tap
+  Attribute: WelcomeText     [Verify]
+
+TestCase: TC_Mobile_Login
+  Step 1: iOS_LoginScreen.UsernameField = {P:MobileUser}
+  Step 2: iOS_LoginScreen.PasswordField = {P:MobilePass}
+  Step 3: iOS_LoginScreen.SignInButton  ← tap (no value)
+  Step 4: iOS_LoginScreen.WelcomeText  [Verify] = "Hello!"</pre>
+
+        <p>This should look immediately familiar — it is structurally identical to a web login Test Case. The Module Attribute's ActionMode (Input/Verify) and the Test Case's step ordering follow exactly the same rules as any other Tosca technology.</p>
+
+        <!-- SECTION 6 -->
+        <h2 id="section6"><span class="level advanced">ADVANCED</span>6. Native App vs Mobile Web Testing</h2>
+
+        <div class="table-wrap">
+        <table class="table-compact">
+            <tr>
+                <th>Aspect</th>
+                <th>Native App</th>
+                <th>Mobile Web</th>
+            </tr>
+            <tr>
+                <td>Launch mechanism</td>
+                <td>AppBundleID launches the installed app directly</td>
+                <td>Mobile browser navigates to a URL</td>
+            </tr>
+            <tr>
+                <td>Underlying engine</td>
+                <td>XCUITest (iOS) / UIAutomator2 (Android)</td>
+                <td>TBox Web, same as desktop browser testing</td>
+            </tr>
+            <tr>
+                <td>Gestures available</td>
+                <td>Full native gesture set (tap, swipe, pinch, native alerts)</td>
+                <td>Standard web interactions plus touch-emulated gestures</td>
+            </tr>
+            <tr>
+                <td>Best for</td>
+                <td>Dedicated iOS/Android apps distributed via app stores</td>
+                <td>Responsive web apps also accessed via desktop browsers</td>
+            </tr>
+        </table>
+        </div>
+
+        <!-- SECTION 7 -->
+        <h2 id="section7"><span class="level advanced">ADVANCED</span>7. Cross-Platform Matrices with DEX</h2>
+
+        <p>A single logical scenario (e.g. "user can log in") often needs verification across several device/OS combinations. Rather than duplicating the Test Case per device, DEX's agent-routing (see the Distributed Execution guide) lets one Test Case run against multiple Device Configurations in parallel.</p>
+
+        <pre>ExecutionList: Mobile_Regression
+  Agent Requirements per TC:
+    TC_Login:
+      Run on Agent[iPhone15_iOS17]
+      Run on Agent[Pixel7_Android13]
+      Run on Agent[Galaxy_Android14]
+  → 3 parallel runs, one per device
+  → Results show per-device pass/fail</pre>
+
+        <div class="example">
+            <strong>Why this matters:</strong> mobile fragmentation (many device/OS combinations) is one of the biggest testing challenges in mobile development. Reusing one Test Case definition across a device matrix via DEX avoids the maintenance nightmare of N duplicated Test Cases for N devices.
+        </div>
+
+        <!-- SECTION 8 -->
+        <h2 id="section8"><span class="level intermediate">INTERMEDIATE</span>8. Device Farms and Real Devices vs Emulators</h2>
+
+        <p>Mobile test execution can target either emulators/simulators (software-simulated devices) or real physical devices connected to a <strong>Mobile Engine Host</strong> machine, or devices provisioned from a cloud device farm through Tosca Cloud/DEX.</p>
+
+        <div class="table-wrap">
+        <table>
+            <tr>
+                <th>Target</th>
+                <th>Trade-off</th>
+            </tr>
+            <tr>
+                <td>Emulator/Simulator</td>
+                <td>Fast, cheap, easy to scale — but may miss real hardware-specific bugs (camera, sensors, performance)</td>
+            </tr>
+            <tr>
+                <td>Real device (local)</td>
+                <td>Authentic behaviour — but limited by physical device inventory and USB/host capacity</td>
+            </tr>
+            <tr>
+                <td>Cloud device farm</td>
+                <td>Wide real-device coverage on demand — subject to cloud provider availability and cost</td>
+            </tr>
+        </table>
+        </div>
+
+        <!-- SECTION 9 -->
+        <h2 id="section9"><span class="level intermediate">INTERMEDIATE</span>9. Common Pitfalls</h2>
+
+        <ul style="margin: 15px 0; margin-left: 20px;">
+            <li><strong>Relying solely on emulators:</strong> missing real-hardware issues (camera permissions, GPS, push notifications) that only manifest on physical devices.</li>
+            <li><strong>Duplicating Test Cases per device instead of using DEX routing:</strong> multiplying maintenance effort unnecessarily.</li>
+            <li><strong>Coordinate-based taps instead of control-based:</strong> raw coordinate taps break the moment screen resolution or layout changes; prefer targeting recognised Module Attributes.</li>
+            <li><strong>Ignoring native OS dialogs:</strong> permission prompts (camera, location, notifications) that appear unpredictably on first launch, requiring a Recovery Scenario to handle gracefully.</li>
+        </ul>
+
+        <!-- SECTION 10 -->
+        <h2 id="section10"><span class="level beginner">BEGINNER</span>10. Best Practices</h2>
+
+        <h3>1. Prefer Control-Based Interaction Over Raw Coordinates</h3>
+        <p>Scan and reference actual Module Attributes rather than hard-coding screen coordinates for taps.</p>
+
+        <h3>2. Build a Small Device Matrix, Not an Exhaustive One</h3>
+        <pre>// Good starting matrix
+- Latest iOS + one common iPhone model
+- Latest Android + one common mid-range device
+- Previous major OS version of each, if support requires it</pre>
+
+        <h3>3. Handle OS Permission Dialogs with Recovery Scenarios</h3>
+        <p>Attach a Recovery Scenario at the Execution List level that dismisses common permission prompts (see the Recovery Scenarios guide).</p>
+
+        <h3>4. Use DEX to Multiply Coverage, Not Test Case Count</h3>
+        <p>Write one Test Case per scenario; let DEX agent routing run it against your device matrix.</p>
+
+        <h3>5. Mix Emulators for Speed and Real Devices for Confidence</h3>
+        <p>Use emulators for fast day-to-day feedback; schedule periodic real-device runs (or a cloud device farm) before major releases.</p>
+
+        <!-- SUMMARY -->
+        <h2 style="margin-top: 40px;">📋 Quick Reference Summary</h2>
+
+        <div class="table-wrap">
+        <table>
+            <tr>
+                <th>Concept</th>
+                <th>Key Points</th>
+            </tr>
+            <tr>
+                <td><strong>Mobile Engine</strong></td>
+                <td>Tests native iOS/Android apps and mobile web using the same Module/TestCase model.</td>
+            </tr>
+            <tr>
+                <td><strong>Device Configuration</strong></td>
+                <td>Specifies platform, device, OS version, app bundle ID; attached to the Execution List.</td>
+            </tr>
+            <tr>
+                <td><strong>Gestures</strong></td>
+                <td>Tap, Swipe, Pinch — mobile-specific interactions beyond standard click/type.</td>
+            </tr>
+            <tr>
+                <td><strong>Native vs Mobile Web</strong></td>
+                <td>Native uses XCUITest/UIAutomator2; mobile web reuses TBox Web.</td>
+            </tr>
+            <tr>
+                <td><strong>Cross-platform matrix</strong></td>
+                <td>One Test Case, routed via DEX to run on multiple devices in parallel.</td>
+            </tr>
+            <tr>
+                <td><strong>Device targets</strong></td>
+                <td>Emulator (fast/cheap), real device (authentic), cloud device farm (on-demand coverage).</td>
+            </tr>
+        </table>
+        </div>
+
+        <div style="margin-top: 40px; padding: 20px; background: #ecf0f1; border-radius: 5px;">
+            <h3>🎓 Learning Path</h3>
+            <p><strong>Beginner:</strong> Master sections 1, 2, 3, 10</p>
+            <p><strong>Intermediate:</strong> Understand sections 4, 5, 8, 9</p>
+            <p><strong>Advanced:</strong> Deep dive into sections 6, 7</p>
+        </div>
+
+    </div>
+</body>
+</html>

@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Playwright Assertions with expect(): Complete Guide</title>
+    <link rel="stylesheet" href="/guides/guide-base.css">
+</head>
+<body>
+    <div class="container">
+        <h1>✅ Playwright Assertions with expect(): Complete Guide</h1>
+        <p style="font-size: 1.1em; color: #7f8c8d; margin-bottom: 20px;">
+            Web-first auto-retrying assertions, soft assertions, and polling custom conditions
+        </p>
+
+        <div class="toc">
+            <h3>📚 Table of Contents</h3>
+            <ul>
+                <li><a href="#section1">1. Two Flavors of expect()</a></li>
+                <li><a href="#section2">2. Core Locator Assertions</a></li>
+                <li><a href="#section3">3. Text and Value Assertions</a></li>
+                <li><a href="#section4">4. Attribute, Class, and CSS Assertions</a></li>
+                <li><a href="#section5">5. Page and Response Assertions</a></li>
+                <li><a href="#section6">6. Negation and Custom Timeouts</a></li>
+                <li><a href="#section7">7. Soft Assertions</a></li>
+                <li><a href="#section8">8. expect.poll() for Custom Conditions</a></li>
+                <li><a href="#section9">9. Common Pitfalls</a></li>
+            </ul>
+        </div>
+
+        <!-- SECTION 1 -->
+        <h2 id="section1"><span class="level beginner">BEGINNER</span>1. Two Flavors of expect()</h2>
+
+        <p>Playwright's <code>expect()</code> behaves differently depending on what you pass it:</p>
+
+        <div class="table-wrap">
+        <table class="table-compact">
+            <tr>
+                <th>Flavor</th>
+                <th>Accepts</th>
+                <th>Behavior</th>
+            </tr>
+            <tr>
+                <td>Web-first</td>
+                <td>A <code>Locator</code> or <code>Page</code></td>
+                <td>Auto-retries on a polling interval until it passes or times out (default 5s)</td>
+            </tr>
+            <tr>
+                <td>Generic</td>
+                <td>A plain JS value (number, string, array, object)</td>
+                <td>Evaluates once, no retry — identical to Jest/Vitest</td>
+            </tr>
+        </table>
+        </div>
+
+        <pre>// Web-first — retries automatically
+await expect(page.getByText('Saved')).toBeVisible();
+
+// Generic — evaluates immediately, once
+expect(count).toBe(5);
+expect(arr).toEqual([1, 2, 3]);</pre>
+
+        <div class="warning">
+            <strong>⚠️ Common Pitfall:</strong> Always <code>await</code> web-first assertions. Without <code>await</code>, the check starts and the test moves on immediately — any failure is reported asynchronously (or not at all before the test ends), which is one of the most confusing bugs to diagnose in a Playwright suite.
+        </div>
+
+        <!-- SECTION 2 -->
+        <h2 id="section2"><span class="level beginner">BEGINNER</span>2. Core Locator Assertions</h2>
+
+        <pre>await expect(locator).toBeVisible();
+await expect(locator).toBeHidden();
+await expect(locator).toBeEnabled();
+await expect(locator).toBeDisabled();
+await expect(locator).toBeChecked();
+await expect(locator).toBeEditable();
+await expect(locator).toBeEmpty();</pre>
+
+        <h3>Login Flow with State Assertions</h3>
+        <pre>test('login flow assertions', async ({ page }) => {
+  await page.goto('/login');
+
+  // Button disabled before input
+  await expect(page.getByRole('button', { name: 'Sign in' })).toBeDisabled();
+
+  await page.getByLabel('Email').fill('user@example.com');
+  await page.getByLabel('Password').fill('secret');
+
+  // Button enables after fill
+  await expect(page.getByRole('button', { name: 'Sign in' })).toBeEnabled();
+});</pre>
+
+        <!-- SECTION 3 -->
+        <h2 id="section3"><span class="level beginner">BEGINNER</span>3. Text and Value Assertions</h2>
+
+        <div class="comparison">
+            <div>
+                <strong>toHaveText() — full match:</strong>
+                <pre>await expect(locator).toHaveText('Exact text');
+await expect(locator).toHaveText(/regex/);</pre>
+            </div>
+            <div>
+                <strong>toContainText() — partial match:</strong>
+                <pre>await expect(locator).toContainText('substring');</pre>
+            </div>
+        </div>
+
+        <pre>await expect(locator).toHaveValue('user@example.com');      // input value
+await expect(locator).toHaveValues(['js', 'ts']);           // multi-select</pre>
+
+        <!-- SECTION 4 -->
+        <h2 id="section4"><span class="level intermediate">INTERMEDIATE</span>4. Attribute, Class, and CSS Assertions</h2>
+
+        <pre>await expect(locator).toHaveAttribute('aria-expanded', 'true');
+await expect(locator).toHaveClass('btn-primary');
+await expect(locator).toHaveClass(/active/);
+await expect(locator).toHaveCSS('color', 'rgb(0, 128, 0)');
+await expect(locator).toHaveCount(5);</pre>
+
+        <div class="note">
+            <strong>💡 Tip:</strong> <code>toHaveClass()</code> checks the <em>entire</em> <code>class</code> attribute string by default when passed an exact string — use a regex like <code>/active/</code> to match just one class among several without listing them all.
+        </div>
+
+        <!-- SECTION 5 -->
+        <h2 id="section5"><span class="level intermediate">INTERMEDIATE</span>5. Page and Response Assertions</h2>
+
+        <pre>await expect(page).toHaveURL('/dashboard');
+await expect(page).toHaveURL(/dashboard/);
+await expect(page).toHaveTitle('My App');
+
+const response = await page.request.get('/api/health');
+await expect(response).toBeOK();   // status 200-299</pre>
+
+        <!-- SECTION 6 -->
+        <h2 id="section6"><span class="level intermediate">INTERMEDIATE</span>6. Negation and Custom Timeouts</h2>
+
+        <pre>await expect(locator).not.toBeVisible();
+await expect(locator).not.toBeChecked();
+
+await expect(locator).toBeVisible({ timeout: 15_000 }); // override default 5s window</pre>
+
+        <div class="example">
+            <strong>When to raise the timeout:</strong> a specific assertion waiting on a genuinely slow operation (a large file processing, a third-party widget loading) — not as a blanket fix for a suite that "sometimes fails." A raised timeout that papers over a real bug just makes the test slower to fail instead of fixing the flakiness.
+        </div>
+
+        <!-- SECTION 7 -->
+        <h2 id="section7"><span class="level advanced">ADVANCED</span>7. Soft Assertions</h2>
+
+        <p><code>expect.soft()</code> records a failure without immediately stopping the test — all soft failures are collected and reported together at the end, which is invaluable when you want a complete picture of everything wrong on a page in one run instead of fixing failures one at a time.</p>
+
+        <pre>test('profile page completeness check', async ({ page }) => {
+  await page.goto('/profile');
+
+  await expect.soft(page.getByTestId('avatar')).toBeVisible();
+  await expect.soft(page.getByTestId('display-name')).not.toBeEmpty();
+  await expect.soft(page.getByTestId('bio')).toContainText('engineer');
+  await expect.soft(page.getByRole('link', { name: 'Edit profile' })).toBeVisible();
+
+  // All four checks run regardless of earlier failures;
+  // the test is marked failed at the end if any of them failed
+});</pre>
+
+        <div class="warning">
+            <strong>⚠️ Common Pitfall:</strong> Soft assertions don't stop execution, so code that depends on a soft-failed condition (e.g. clicking an element that turned out not to be visible) can throw an unrelated hard error afterward. Use soft assertions for independent checks on the same page, not for a sequence where each step depends on the last succeeding.
+        </div>
+
+        <!-- SECTION 8 -->
+        <h2 id="section8"><span class="level advanced">ADVANCED</span>8. expect.poll() for Custom Conditions</h2>
+
+        <p>Web-first assertions only work on a <code>Locator</code> or <code>Page</code>. When you need to retry a <em>custom async function</em> — like polling a REST endpoint for a background job's status — use <code>expect.poll()</code>.</p>
+
+        <pre>await expect.poll(
+  async () => {
+    const res = await request.get('/api/job/status');
+    return (await res.json()).status;
+  },
+  { timeout: 30_000, intervals: [2_000, 5_000, 10_000] }
+).toBe('completed');</pre>
+
+        <p><code>intervals</code> lets you back off progressively — check quickly at first, then less frequently — which is friendlier to the server under test than polling at a fixed rapid rate for 30 seconds straight.</p>
+
+        <!-- SECTION 9 -->
+        <h2 id="section9"><span class="level advanced">ADVANCED</span>9. Common Pitfalls</h2>
+
+        <div class="warning">
+            <strong>⚠️ Pitfall 1 — Mixing up toHaveText() and toContainText():</strong> Using <code>toHaveText()</code> when you meant a partial match causes assertions to fail the moment surrounding text changes even slightly (e.g. a badge count added next to a label). Use <code>toContainText()</code> unless you specifically need to lock down the entire string.
+        </div>
+
+        <div class="warning">
+            <strong>⚠️ Pitfall 2 — Asserting on generic values instead of the locator directly:</strong> Calling <code>await locator.textContent()</code> and then <code>expect(text).toBe('Saved')</code> loses auto-retry entirely — the text is read once, immediately, before the UI may have finished updating. Prefer <code>await expect(locator).toHaveText('Saved')</code> which retries the read itself.
+        </div>
+
+        <!-- SUMMARY -->
+        <h2 style="margin-top: 40px;">📋 Quick Reference Summary</h2>
+
+        <div class="table-wrap">
+        <table>
+            <tr>
+                <th>Concept</th>
+                <th>Key Points</th>
+            </tr>
+            <tr>
+                <td><strong>Web-first vs generic</strong></td>
+                <td>Locator/Page → auto-retry; plain values → one-shot, like Jest.</td>
+            </tr>
+            <tr>
+                <td><strong>toHaveText vs toContainText</strong></td>
+                <td>Full match vs partial match; both accept string or RegExp.</td>
+            </tr>
+            <tr>
+                <td><strong>.not</strong></td>
+                <td>Negates any assertion: expect(locator).not.toBeVisible().</td>
+            </tr>
+            <tr>
+                <td><strong>Custom timeout</strong></td>
+                <td>{ timeout: ms } on any web-first assertion overrides the 5s default.</td>
+            </tr>
+            <tr>
+                <td><strong>expect.soft()</strong></td>
+                <td>Collects failures without stopping the test — use for independent checks.</td>
+            </tr>
+            <tr>
+                <td><strong>expect.poll()</strong></td>
+                <td>Retries a custom async function when there's no locator to observe.</td>
+            </tr>
+        </table>
+        </div>
+
+        <div style="margin-top: 40px; padding: 20px; background: #ecf0f1; border-radius: 5px;">
+            <h3>🎓 Learning Path</h3>
+            <p><strong>Beginner:</strong> Master sections 1, 2, 3</p>
+            <p><strong>Intermediate:</strong> Understand sections 4, 5, 6</p>
+            <p><strong>Advanced:</strong> Deep dive into sections 7, 8, 9</p>
+        </div>
+
+    </div>
+</body>
+</html>

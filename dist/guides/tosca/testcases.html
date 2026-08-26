@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tosca Test Cases & Test Steps: Complete Guide</title>
+    <link rel="stylesheet" href="/guides/guide-base.css">
+</head>
+<body>
+    <div class="container">
+        <h1>📋 Tosca Test Cases & Test Steps: Complete Guide</h1>
+        <p style="font-size: 1.1em; color: #7f8c8d; margin-bottom: 20px;">
+            Assembling business-readable test logic on top of your Module model
+        </p>
+
+        <div class="toc">
+            <h3>📚 Table of Contents</h3>
+            <ul>
+                <li><a href="#section1">1. What Is a Test Case?</a></li>
+                <li><a href="#section2">2. Anatomy of a Test Step</a></li>
+                <li><a href="#section3">3. Building Your First Test Case</a></li>
+                <li><a href="#section4">4. Value Sources: Literals, Parameters, Buffers</a></li>
+                <li><a href="#section5">5. Reuse via Embedded (Nested) Test Cases</a></li>
+                <li><a href="#section6">6. Test Case Folder Organisation</a></li>
+                <li><a href="#section7">7. TestStepValues and TestSheets</a></li>
+                <li><a href="#section8">8. Conditions and Recovery on Steps</a></li>
+                <li><a href="#section9">9. Common Pitfalls</a></li>
+                <li><a href="#section10">10. Best Practices</a></li>
+            </ul>
+        </div>
+
+        <!-- SECTION 1 -->
+        <h2 id="section1"><span class="level beginner">BEGINNER</span>1. What Is a Test Case?</h2>
+
+        <h3>Definition</h3>
+        <p>A <strong>Test Case</strong> in Tosca is a container holding an ordered list of <strong>Test Steps</strong>. Each Test Step references a Module Attribute and supplies the value to use when that step executes. The Test Case captures <em>what</em> should happen and <em>with what data</em> — the <em>how</em> (which control, which technology, which selector) lives entirely in the Module.</p>
+
+        <div class="example">
+            <strong>Real-world analogy:</strong> A Tosca test case is like a recipe card. The ingredients (data values) are listed on the card, but the cooking instructions (how to whisk eggs, how to click a button) live in the module — the "kitchen manual." You can write a hundred recipes that reference "whisk eggs" without redefining how whisking works each time.
+        </div>
+
+        <h3>Why Separate Test Cases from Modules?</h3>
+        <ul style="margin: 15px 0; margin-left: 20px;">
+            <li>Test Cases stay readable by business stakeholders — no technical selectors visible.</li>
+            <li>A single Module can be reused across dozens of unrelated Test Cases.</li>
+            <li>Changing test data or scenario ordering never touches the underlying UI model.</li>
+        </ul>
+
+        <!-- SECTION 2 -->
+        <h2 id="section2"><span class="level beginner">BEGINNER</span>2. Anatomy of a Test Step</h2>
+
+        <p>Every Test Step consists of, at minimum: a reference to a Module (or Module Attribute), and a value. Optionally it may also carry a description, a Condition, and an attached Recovery Scenario.</p>
+
+        <pre>TestCase: TC001_Login
+  TestStep 1: Navigate to Login
+    Module: Browser → Goto URL
+    Value: {P:BaseURL}/login
+  TestStep 2: Enter credentials
+    Module: LoginPage.Username
+    Value: {P:TestUser}
+  TestStep 3: Enter password
+    Module: LoginPage.Password
+    Value: {P:TestPassword}
+  TestStep 4: Click Login
+    Module: LoginPage.LoginButton
+  TestStep 5: Verify welcome
+    Module: Dashboard.WelcomeLabel [Verify]
+    Value: "Welcome, {P:TestUser}"</pre>
+
+        <div class="note">
+            <strong>💡 Tip:</strong> Step 4 has no value because clicking a button is an action, not a data entry — the LoginButton attribute's ActionMode (Input) is enough to trigger the click at execution time.
+        </div>
+
+        <!-- SECTION 3 -->
+        <h2 id="section3"><span class="level beginner">BEGINNER</span>3. Building Your First Test Case</h2>
+
+        <div class="example">
+            <strong>Step by step in TCM:</strong>
+            <pre>1. Right-click the TestCases folder → New TestCase → name it "TC001_Login"
+2. Drag the "LoginPage" Module onto the TestCase → TCM creates one Test Step per attribute
+3. Delete/reorder steps you don't need for this scenario
+4. Fill in values for each step (literal text, or {P:...} / {B:...} references)
+5. Drag "Dashboard" Module in for the final Verify step
+6. Right-click the TestCase → Run to execute it standalone</pre>
+        </div>
+
+        <h3>Reading a Test Case Like a Story</h3>
+        <p>A well-built Test Case should read almost like a numbered set of user instructions:</p>
+        <pre>1. Go to {P:BaseURL}/login
+2. Enter Username = {P:TestUser}
+3. Enter Password = {P:TestPassword}
+4. Click Login
+5. Verify Welcome message = "Welcome, {P:TestUser}"</pre>
+
+        <!-- SECTION 4 -->
+        <h2 id="section4"><span class="level intermediate">INTERMEDIATE</span>4. Value Sources: Literals, Parameters, Buffers</h2>
+
+        <p>A Test Step's value can come from three sources, and mixing them within the same string is fully supported:</p>
+
+        <div class="table-wrap">
+        <table class="table-compact">
+            <tr>
+                <th>Value Source</th>
+                <th>Syntax</th>
+                <th>Use Case</th>
+            </tr>
+            <tr>
+                <td>Literal</td>
+                <td><code>"admin@test.com"</code></td>
+                <td>Fixed, hard-coded value that never changes</td>
+            </tr>
+            <tr>
+                <td>Configuration Parameter</td>
+                <td><code>{P:ParamName}</code></td>
+                <td>Environment-specific or reusable constants (URL, credentials)</td>
+            </tr>
+            <tr>
+                <td>Buffer</td>
+                <td><code>{B:BufferName}</code></td>
+                <td>Runtime value captured from an earlier step</td>
+            </tr>
+        </table>
+        </div>
+
+        <pre>// Mixed value: literal text + parameter + buffer in one string
+Value: "Order {B:OrderID} confirmed for {P:TestUser}"</pre>
+
+        <div class="warning">
+            <strong>⚠️ Common Pitfall:</strong> Hard-coding environment URLs or credentials as literals directly in Test Steps means every test case needs manual editing when the environment changes. Always prefer <code>{P:...}</code> references — see the Configuration Parameters guide for the full parameter hierarchy.
+        </div>
+
+        <!-- SECTION 5 -->
+        <h2 id="section5"><span class="level intermediate">INTERMEDIATE</span>5. Reuse via Embedded (Nested) Test Cases</h2>
+
+        <p>A Test Step can reference an entire other Test Case instead of a single Module attribute. This lets you build a library of reusable flows — a "Login" Test Case used as a step inside "Place Order" and "Reset Password" — without duplicating logic.</p>
+
+        <pre>// Referencing another test case as a step
+TestCase: TC002_PlaceOrder
+  TestStep 1: [TestCase] TC001_Login   ← reuse
+  TestStep 2: Add item to cart
+  ...</pre>
+
+        <pre>TestCase: TC_SearchProduct
+  ├── Step 1: Login (embedded TC001_Login)
+  ├── Step 2: SearchBar.SearchInput
+  │     Value: {B:ProductName}   ← from Buffer
+  ├── Step 3: SearchBar.SearchButton
+  ├── Step 4: ResultsGrid.FirstResult [Verify]
+  │     Value: {B:ProductName}   ← assert same value
+  └── Step 5: Logout (embedded TC_Logout)</pre>
+
+        <div class="example">
+            <strong>Why this matters:</strong> if the login flow gains a new "Accept Cookies" step, you fix it once inside TC001_Login. Every Test Case that embeds TC001_Login — potentially hundreds — picks up the fix automatically the next time it runs.
+        </div>
+
+        <!-- SECTION 6 -->
+        <h2 id="section6"><span class="level intermediate">INTERMEDIATE</span>6. Test Case Folder Organisation</h2>
+
+        <p>As a project grows past a handful of test cases, folder structure becomes essential for navigation, execution scoping, and reporting.</p>
+
+        <pre>TestCases/
+├── Smoke/
+│   ├── TC001_Login
+│   └── TC002_HomepageLoad
+├── Regression/
+│   ├── UserManagement/
+│   │   ├── TC010_CreateUser
+│   │   ├── TC011_EditUser
+│   │   └── TC012_DeleteUser
+│   └── Orders/
+│       ├── TC020_PlaceOrder
+│       └── TC021_CancelOrder
+└── Shared/
+    ├── TC_Login          ← reusable building block
+    └── TC_Logout</pre>
+
+        <div class="table-wrap">
+        <table>
+            <tr>
+                <th>Folder</th>
+                <th>Convention</th>
+            </tr>
+            <tr>
+                <td>Smoke</td>
+                <td>Fast, critical-path checks run on every deployment</td>
+            </tr>
+            <tr>
+                <td>Regression</td>
+                <td>Full feature coverage, organised by business area</td>
+            </tr>
+            <tr>
+                <td>Shared</td>
+                <td>Reusable embedded test cases (login, logout, navigation)</td>
+            </tr>
+        </table>
+        </div>
+
+        <!-- SECTION 7 -->
+        <h2 id="section7"><span class="level advanced">ADVANCED</span>7. TestStepValues and TestSheets</h2>
+
+        <p>Under the hood, each Test Step's data lives in a structure Tosca calls a <strong>TestStepValue</strong>, and the full grid of steps for a Test Case is its <strong>TestSheet</strong>. Understanding this distinction matters once you start data-driving Test Cases with multiple partitions (see Test Data Management).</p>
+
+        <pre>TestSheet: TC001_Login
+┌───────┬──────────────────────┬────────────────────────┐
+│ Step  │ Module.Attribute      │ TestStepValue           │
+├───────┼──────────────────────┼────────────────────────┤
+│ 1     │ Browser.GotoURL       │ {P:BaseURL}/login       │
+│ 2     │ LoginPage.Username    │ {P:TestUser}            │
+│ 3     │ LoginPage.Password    │ {P:TestPassword}        │
+│ 4     │ LoginPage.LoginButton │ (no value — click)      │
+│ 5     │ Dashboard.WelcomeLabel│ "Welcome, {P:TestUser}" │
+└───────┴──────────────────────┴────────────────────────┘</pre>
+
+        <p>When a Test Case is bound to an Excel or database data source (TDM), Tosca effectively creates one instance of this TestSheet per data row — each becomes an independent execution partition with its own pass/fail result.</p>
+
+        <!-- SECTION 8 -->
+        <h2 id="section8"><span class="level advanced">ADVANCED</span>8. Conditions and Recovery on Steps</h2>
+
+        <p>Individual Test Steps (and whole Test Cases) can carry two kinds of resilience logic layered on top of the base step definition:</p>
+
+        <ul style="margin: 15px 0; margin-left: 20px;">
+            <li><strong>Condition:</strong> a Buffer/Parameter comparison that determines whether the step executes at all (see the Steering guide for full syntax).</li>
+            <li><strong>Recovery Scenario:</strong> a fallback Test Case that runs automatically if this step fails, potentially retrying it (see the Recovery Scenarios guide).</li>
+        </ul>
+
+        <pre>TestStep: LoginPage.LoginButton
+  Condition: {B:AlreadyLoggedIn} = "false"
+  RecoveryScenario: TC_ClosePopup (Priority 1)</pre>
+
+        <div class="note">
+            <strong>💡 Tip:</strong> Conditions and Recovery are optional properties on any step — you don't need to touch them until a real scenario calls for conditional branching or resilience against known intermittent failures.
+        </div>
+
+        <!-- SECTION 9 -->
+        <h2 id="section9"><span class="level intermediate">INTERMEDIATE</span>9. Common Pitfalls</h2>
+
+        <ul style="margin: 15px 0; margin-left: 20px;">
+            <li><strong>Duplicating flows instead of embedding:</strong> copy-pasting login steps into every Test Case instead of embedding a shared TC_Login means every UI change requires editing dozens of Test Cases again.</li>
+            <li><strong>Over-long Test Cases:</strong> a single Test Case with 80 steps covering five unrelated scenarios is hard to debug and re-run selectively — split it into focused, embeddable pieces.</li>
+            <li><strong>Hard-coded values everywhere:</strong> literals sprinkled through steps instead of Parameters/Buffers make environment switches and data-driving painful later.</li>
+            <li><strong>Missing final assertions:</strong> a Test Case with only Input steps and no Verify step "passes" even if the feature is completely broken, because nothing was actually checked.</li>
+        </ul>
+
+        <!-- SECTION 10 -->
+        <h2 id="section10"><span class="level beginner">BEGINNER</span>10. Best Practices</h2>
+
+        <h3>1. One Test Case, One Scenario</h3>
+        <p>Keep each Test Case focused on verifying a single business scenario end-to-end.</p>
+
+        <h3>2. Always End with a Verification</h3>
+        <p>Every meaningful Test Case should include at least one Verify step — otherwise a passing run proves nothing.</p>
+
+        <h3>3. Extract Shared Flows Early</h3>
+        <pre>// Instead of repeating login steps in 20 test cases:
+Shared/TC_Login   ← build once
+TC020_PlaceOrder  → Step 1: [TestCase] TC_Login
+TC030_ViewProfile → Step 1: [TestCase] TC_Login
+TC040_Logout      → Step 1: [TestCase] TC_Login</pre>
+
+        <h3>4. Name Steps for Readability</h3>
+        <p>Give each Test Step a clear description ("Click Login", not "Step 4") so logs and reports are self-explanatory.</p>
+
+        <h3>5. Favor Parameters and Buffers Over Literals</h3>
+        <p>Reserve literal values for things that genuinely never change (e.g. a fixed expected label text); use <code>{P:...}</code> and <code>{B:...}</code> for anything environment- or run-dependent.</p>
+
+        <!-- SUMMARY -->
+        <h2 style="margin-top: 40px;">📋 Quick Reference Summary</h2>
+
+        <div class="table-wrap">
+        <table>
+            <tr>
+                <th>Concept</th>
+                <th>Key Points</th>
+            </tr>
+            <tr>
+                <td><strong>Test Case</strong></td>
+                <td>Ordered container of Test Steps representing one business scenario.</td>
+            </tr>
+            <tr>
+                <td><strong>Test Step</strong></td>
+                <td>References a Module Attribute and supplies a value; optional Condition/Recovery.</td>
+            </tr>
+            <tr>
+                <td><strong>Embedded Test Case</strong></td>
+                <td>A Test Case used as a step inside another — Tosca's reuse mechanism.</td>
+            </tr>
+            <tr>
+                <td><strong>Value sources</strong></td>
+                <td>Literal, {P:Parameter}, {B:Buffer} — freely combinable in one value.</td>
+            </tr>
+            <tr>
+                <td><strong>TestSheet</strong></td>
+                <td>The full grid of steps and values for a Test Case; one instance per data partition.</td>
+            </tr>
+            <tr>
+                <td><strong>Folder organisation</strong></td>
+                <td>Smoke / Regression / Shared structure keeps large suites navigable.</td>
+            </tr>
+        </table>
+        </div>
+
+        <div style="margin-top: 40px; padding: 20px; background: #ecf0f1; border-radius: 5px;">
+            <h3>🎓 Learning Path</h3>
+            <p><strong>Beginner:</strong> Master sections 1, 2, 3, 10</p>
+            <p><strong>Intermediate:</strong> Understand sections 4, 5, 6, 9</p>
+            <p><strong>Advanced:</strong> Deep dive into sections 7, 8</p>
+        </div>
+
+    </div>
+</body>
+</html>

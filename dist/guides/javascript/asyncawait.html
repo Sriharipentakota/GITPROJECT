@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JavaScript Async / Await: Complete Guide</title>
+    <link rel="stylesheet" href="/guides/guide-base.css">
+</head>
+<body>
+    <div class="container">
+        <h1>⏳ JavaScript Async / Await: Complete Guide</h1>
+        <p style="font-size: 1.1em; color: #7f8c8d; margin-bottom: 20px;">
+            A comprehensive journey from fundamental concepts to advanced techniques
+        </p>
+
+        <div class="toc">
+            <h3>📚 Table of Contents</h3>
+            <ul>
+                <li><a href="#section1">1. What is Async/Await?</a></li>
+                <li><a href="#section2">2. async Functions Always Return a Promise</a></li>
+                <li><a href="#section3">3. The await Keyword</a></li>
+                <li><a href="#section4">4. Error Handling with try/catch/finally</a></li>
+                <li><a href="#section5">5. Sequential vs Parallel Execution</a></li>
+                <li><a href="#section6">6. Awaiting Non-Promises</a></li>
+                <li><a href="#section7">7. Async/Await Inside Loops</a></li>
+                <li><a href="#section8">8. Top-Level Await</a></li>
+                <li><a href="#section9">9. Common Pitfalls</a></li>
+                <li><a href="#section10">10. Best Practices</a></li>
+            </ul>
+        </div>
+
+        <!-- SECTION 1 -->
+        <h2 id="section1"><span class="level beginner">BEGINNER</span>1. What is Async/Await?</h2>
+
+        <p><code>async</code>/<code>await</code> is syntax built on top of Promises that lets asynchronous code READ like synchronous code — no <code>.then()</code> chains needed.</p>
+
+        <div class="example">
+            <strong>Real-world analogy:</strong> An async function is a chef's recipe that may involve waiting. <code>await</code> is a step like "wait for the pasta to boil" — the chef pauses just THIS recipe, but the rest of the kitchen (the event loop) keeps running.
+        </div>
+
+        <pre>// Promise-based (.then chain)
+function loadUser() {
+    return fetch("/api/user")
+        .then(res => res.json())
+        .then(user => console.log(user));
+}
+
+// Same logic with async/await — reads top to bottom
+async function loadUser2() {
+    const res = await fetch("/api/user");
+    const user = await res.json();
+    console.log(user);
+}</pre>
+
+        <!-- SECTION 2 -->
+        <h2 id="section2"><span class="level beginner">BEGINNER</span>2. async Functions Always Return a Promise</h2>
+
+        <p>Marking a function <code>async</code> guarantees it returns a Promise — even if the code inside looks like it's returning a plain value.</p>
+
+        <pre>async function getNumber() {
+    return 42; // automatically wrapped: Promise.resolve(42)
+}
+
+console.log(getNumber());          // Promise { 42 }  — NOT 42 directly!
+getNumber().then(n => console.log(n)); // 42 — must unwrap with .then() or await
+
+// Throwing inside an async function REJECTS the returned promise
+async function fail() {
+    throw new Error("boom");
+}
+fail().catch(e => console.log(e.message)); // "boom"</pre>
+
+        <div class="warning">
+            <strong>⚠️ Common Pitfall:</strong> Calling an async function does NOT block or wait — it immediately returns a pending Promise. You must <code>await</code> it (inside another async function) or use <code>.then()</code> to get the actual resolved value.
+        </div>
+
+        <!-- SECTION 3 -->
+        <h2 id="section3"><span class="level beginner">BEGINNER</span>3. The await Keyword</h2>
+
+        <p><code>await</code> pauses execution of the CURRENT async function until the Promise to its right settles, then "unwraps" it into the resolved value — no <code>.then()</code> callback needed.</p>
+
+        <pre>function delay(ms, value) {
+    return new Promise(resolve => setTimeout(() => resolve(value), ms));
+}
+
+async function run() {
+    console.log("before");
+    const result = await delay(1000, "done!");
+    console.log(result); // "done!" — printed after the 1-second pause
+    console.log("after");
+}
+run();
+// Output order: "before" immediately, then (after 1s) "done!" then "after"</pre>
+
+        <div class="note">
+            <strong>💡 Tip:</strong> <code>await</code> only pauses the ASYNC FUNCTION it's inside — it does NOT block the rest of the program. Other code (other functions, UI events, timers) keeps running normally while an async function is paused at an <code>await</code>.
+        </div>
+
+        <p><code>await</code> can only be used directly inside a function marked <code>async</code> (with one modern exception — see Section 8).</p>
+        <pre>// function loadData() {
+//     const data = await fetch(url); // ❌ SyntaxError — not inside an async function
+// }
+
+async function loadData() {
+    const data = await fetch(url); // ✅ works
+}</pre>
+
+        <!-- SECTION 4 -->
+        <h2 id="section4"><span class="level intermediate">INTERMEDIATE</span>4. Error Handling with try/catch/finally</h2>
+
+        <p>A rejected <code>await</code> throws — exactly like a synchronous <code>throw</code> — so wrap it in a regular <code>try/catch</code> block.</p>
+
+        <pre>async function loadUser(id) {
+    try {
+        const res = await fetch(`/api/users/${id}`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const user = await res.json();
+        return user;
+    } catch (err) {
+        console.error("Failed to load user:", err.message);
+        return null; // graceful fallback
+    } finally {
+        hideSpinner(); // always runs, success or failure
+    }
+}
+
+function hideSpinner() { console.log("spinner hidden"); }</pre>
+
+        <div class="comparison">
+            <div>
+                <strong>Promise-chain error handling:</strong>
+                <pre>function loadUser(id) {
+    return fetch(`/api/users/${id}`)
+        .then(res => res.json())
+        .catch(err => {
+            console.error(err);
+            return null;
+        });
+}</pre>
+            </div>
+            <div>
+                <strong>async/await error handling:</strong>
+                <pre>async function loadUser(id) {
+    try {
+        const res = await fetch(`/api/users/${id}`);
+        return await res.json();
+    } catch (err) {
+        console.error(err);
+        return null;
+    }
+}</pre>
+            </div>
+        </div>
+
+        <!-- SECTION 5 -->
+        <h2 id="section5"><span class="level intermediate">INTERMEDIATE</span>5. Sequential vs Parallel Execution</h2>
+
+        <p>Awaiting one thing after another RUNS them sequentially — each waits for the previous one to finish. If the operations are independent, this wastes time. Use <code>Promise.all()</code> to run them in parallel.</p>
+
+        <pre>// ❌ Sequential — total time = timeA + timeB (e.g. 2s + 2s = 4s)
+async function loadSequential() {
+    const user = await fetchUser();   // waits ~2s
+    const posts = await fetchPosts(); // THEN waits another ~2s
+    return { user, posts };
+}
+
+// ✅ Parallel — total time = max(timeA, timeB) (e.g. max(2s, 2s) = 2s)
+async function loadParallel() {
+    const [user, posts] = await Promise.all([
+        fetchUser(),
+        fetchPosts()
+    ]);
+    return { user, posts };
+}</pre>
+
+        <div class="warning">
+            <strong>⚠️ When You SHOULD Be Sequential:</strong> If the second call depends on the result of the first (e.g. you need the user's ID before fetching their posts), sequential awaits are correct and necessary — parallelizing would be impossible or wrong.
+        </div>
+
+        <pre>// Correct sequential use — posts genuinely depend on user.id
+async function loadUserAndPosts() {
+    const user = await fetchUser();          // must finish first
+    const posts = await fetchPosts(user.id); // needs user.id from above
+    return { user, posts };
+}</pre>
+
+        <!-- SECTION 6 -->
+        <h2 id="section6"><span class="level advanced">ADVANCED</span>6. Awaiting Non-Promises</h2>
+
+        <p><code>await</code> works fine on a value that ISN'T a Promise — it just returns that value immediately (wrapped as if it were <code>Promise.resolve(value)</code>), no error.</p>
+
+        <pre>async function test() {
+    const x = await 42;       // not a promise — returns 42 directly
+    console.log(x);           // 42
+
+    const y = await "hello";  // same idea
+    console.log(y);           // "hello"
+
+    const z = await Promise.resolve(99); // works the same as a real promise
+    console.log(z);           // 99
+}
+test();</pre>
+
+        <!-- SECTION 7 -->
+        <h2 id="section7"><span class="level advanced">ADVANCED</span>7. Async/Await Inside Loops</h2>
+
+        <p><code>forEach()</code> does NOT wait for async callbacks — it fires them all and moves on immediately. Use <code>for...of</code> for sequential async work, or <code>Promise.all</code> + <code>map</code> for parallel async work.</p>
+
+        <pre>const ids = [1, 2, 3];
+
+// ❌ WRONG — forEach ignores the promises returned by its async callback
+async function processAllWrong() {
+    ids.forEach(async (id) => {
+        await process(id);
+    });
+    console.log("Done"); // logs almost IMMEDIATELY, before any processing finishes!
+}
+
+// ✅ CORRECT — for...of properly awaits each iteration, one at a time
+async function processSequential() {
+    for (const id of ids) {
+        await process(id);
+    }
+    console.log("Done"); // logs only after ALL are processed, in order
+}
+
+// ✅ CORRECT — Promise.all + map for concurrent processing
+async function processParallel() {
+    await Promise.all(ids.map(id => process(id)));
+    console.log("Done"); // logs after all finish, but they ran concurrently
+}
+
+function process(id) {
+    return new Promise(resolve => setTimeout(() => { console.log("processed", id); resolve(); }, 100));
+}</pre>
+
+        <!-- SECTION 8 -->
+        <h2 id="section8"><span class="level advanced">ADVANCED</span>8. Top-Level Await</h2>
+
+        <p>Modern ES modules (files loaded with <code>type="module"</code>, or <code>.mjs</code>) allow <code>await</code> directly at the top level, OUTSIDE any async function.</p>
+
+        <pre>// Inside an ES module (e.g. &lt;script type="module"&gt; or a .mjs file):
+const response = await fetch("/api/config");
+const config = await response.json();
+console.log(config); // works without wrapping in an async function!
+
+// This is NOT allowed in regular (non-module) scripts or CommonJS files —
+// you'd need to wrap it in an async IIFE there instead:
+(async () => {
+    const response = await fetch("/api/config");
+    console.log(await response.json());
+})();</pre>
+
+        <!-- SECTION 9 -->
+        <h2 id="section9"><span class="level advanced">ADVANCED</span>9. Common Pitfalls</h2>
+
+        <h3>1. Forgetting await Entirely</h3>
+        <pre>async function getData() {
+    return fetchData();
+}
+
+async function run() {
+    const data = getData(); // ❌ forgot await — data is a Promise, not the resolved value!
+    console.log(data);      // Promise { <pending> }
+
+    const data2 = await getData(); // ✅ correct
+    console.log(data2);            // actual resolved value
+}</pre>
+
+        <h3>2. Unnecessary Sequential Awaits</h3>
+        <pre>// ❌ Slower than necessary — these don't depend on each other
+async function loadDashboard() {
+    const stats = await fetchStats();
+    const notifications = await fetchNotifications();
+    return { stats, notifications };
+}
+
+// ✅ Run independent calls in parallel
+async function loadDashboardFast() {
+    const [stats, notifications] = await Promise.all([
+        fetchStats(),
+        fetchNotifications()
+    ]);
+    return { stats, notifications };
+}</pre>
+
+        <h3>3. Missing try/catch Around await</h3>
+        <pre>// ❌ An unhandled rejection crashes/rejects silently up the call stack
+async function loadUser() {
+    const res = await fetch("/api/user"); // if this rejects, no catch here
+    return res.json();
+}
+
+// ✅ Always wrap risky awaits
+async function loadUserSafe() {
+    try {
+        const res = await fetch("/api/user");
+        return await res.json();
+    } catch (err) {
+        console.error(err);
+        return null;
+    }
+}</pre>
+
+        <h3>4. Using forEach for Async Work</h3>
+        <pre>// ❌ Does not wait — see Section 7 for the full explanation
+items.forEach(async (item) => await save(item));
+
+// ✅ Use for...of or Promise.all + map instead
+for (const item of items) { await save(item); }</pre>
+
+        <!-- SECTION 10 -->
+        <h2 id="section10"><span class="level intermediate">INTERMEDIATE</span>10. Best Practices</h2>
+
+        <h3>1. Always Wrap await in try/catch</h3>
+        <pre>// ✅ Predictable failure handling
+async function safeFetch(url) {
+    try {
+        const res = await fetch(url);
+        return await res.json();
+    } catch (err) {
+        return { error: err.message };
+    }
+}</pre>
+
+        <h3>2. Use Promise.all for Independent Operations</h3>
+        <pre>// ✅ Faster, still readable
+const [a, b, c] = await Promise.all([fetchA(), fetchB(), fetchC()]);</pre>
+
+        <h3>3. Use for...of, Not forEach, for Sequential Async Work</h3>
+        <pre>// ✅ Correctly waits for each iteration
+for (const id of ids) {
+    await processOne(id);
+}</pre>
+
+        <h3>4. Don't Mix .then() and await Unnecessarily</h3>
+        <pre>// ✅ Pick one style per function for consistency
+async function load() {
+    const data = await fetchData();
+    return data;
+}
+
+// ❌ Mixing styles adds confusion
+async function loadMixed() {
+    return fetchData().then(data => data);
+}</pre>
+
+        <h3>5. Name Async Functions Clearly</h3>
+        <pre>// ✅ The name signals it returns a promise / does async work
+async function fetchUserProfile(id) { /* ... */ }</pre>
+
+        <!-- SUMMARY -->
+        <h2 style="margin-top: 40px;">📋 Quick Reference Summary</h2>
+
+        <div class="table-wrap">
+        <table>
+            <tr>
+                <th>Concept</th>
+                <th>Key Points</th>
+            </tr>
+            <tr>
+                <td><strong>async function</strong></td>
+                <td>Always returns a Promise, even when returning a plain value.</td>
+            </tr>
+            <tr>
+                <td><strong>await</strong></td>
+                <td>Pauses the async function (not the whole program) until the Promise settles.</td>
+            </tr>
+            <tr>
+                <td><strong>Error handling</strong></td>
+                <td>Rejected awaits throw — use standard <code>try/catch/finally</code>.</td>
+            </tr>
+            <tr>
+                <td><strong>Sequential vs parallel</strong></td>
+                <td>Independent awaits should use <code>Promise.all</code>, not one after another.</td>
+            </tr>
+            <tr>
+                <td><strong>Loops</strong></td>
+                <td><code>forEach</code> ignores async callbacks — use <code>for...of</code> or <code>Promise.all + map</code>.</td>
+            </tr>
+            <tr>
+                <td><strong>Top-level await</strong></td>
+                <td>Allowed directly in ES modules; needs an async IIFE elsewhere.</td>
+            </tr>
+        </table>
+        </div>
+
+        <div style="margin-top: 40px; padding: 20px; background: #ecf0f1; border-radius: 5px;">
+            <h3>🎓 Learning Path</h3>
+            <p><strong>Beginner:</strong> Master sections 1, 2, 3</p>
+            <p><strong>Intermediate:</strong> Understand sections 4, 5, 10</p>
+            <p><strong>Advanced:</strong> Deep dive into sections 6, 7, 8, 9</p>
+        </div>
+
+    </div>
+</body>
+</html>

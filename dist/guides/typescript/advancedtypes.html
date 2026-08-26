@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TypeScript Advanced & Utility Types: Complete Guide</title>
+    <link rel="stylesheet" href="/guides/guide-base.css">
+</head>
+<body>
+    <div class="container">
+        <h1>🧠 TypeScript Advanced & Utility Types: Complete Guide</h1>
+        <p style="font-size: 1.1em; color: #7f8c8d; margin-bottom: 20px;">
+            A comprehensive journey from fundamental concepts to advanced techniques
+        </p>
+
+        <div class="toc">
+            <h3>📚 Table of Contents</h3>
+            <ul>
+                <li><a href="#section1">1. Why Utility Types Exist</a></li>
+                <li><a href="#section2">2. Partial, Required, and Readonly</a></li>
+                <li><a href="#section3">3. Pick and Omit</a></li>
+                <li><a href="#section4">4. Record</a></li>
+                <li><a href="#section5">5. Extract, Exclude, and NonNullable</a></li>
+                <li><a href="#section6">6. Mapped Types</a></li>
+                <li><a href="#section7">7. Conditional Types</a></li>
+                <li><a href="#section8">8. infer in Conditional Types</a></li>
+                <li><a href="#section9">9. Template Literal Types</a></li>
+                <li><a href="#section10">10. Best Practices</a></li>
+            </ul>
+        </div>
+
+        <!-- SECTION 1 -->
+        <h2 id="section1"><span class="level intermediate">INTERMEDIATE</span>1. Why Utility Types Exist</h2>
+
+        <h3>Definition</h3>
+        <p>Utility types are built-in generic type transformations, shipped with TypeScript itself, that let you derive a new type from an existing one instead of hand-writing near-duplicate interfaces.</p>
+
+        <div class="example">
+            <strong>Real-world analogy:</strong> Utility types are like photo filters — you don't redraw the picture, you apply a transformation ("make everything optional", "keep only these fields") to a type you already have.
+        </div>
+
+        <pre>interface User {
+    id: number;
+    name: string;
+    email: string;
+}
+
+// Without utility types, you'd hand-write a near-duplicate:
+interface UserUpdate {
+    id?: number;
+    name?: string;
+    email?: string;
+}
+
+// With a utility type, derive it instead:
+type UserUpdateBetter = Partial<User>;</pre>
+
+        <!-- SECTION 2 -->
+        <h2 id="section2"><span class="level intermediate">INTERMEDIATE</span>2. Partial, Required, and Readonly</h2>
+
+        <h3>Partial&lt;T&gt; — Makes All Properties Optional</h3>
+        <pre>interface Task {
+    id: number;
+    title: string;
+    done: boolean;
+}
+
+function updateTask(task: Task, changes: Partial<Task>): Task {
+    return { ...task, ...changes };
+}
+
+updateTask({ id: 1, title: "Write", done: false }, { done: true });</pre>
+
+        <h3>Required&lt;T&gt; — Makes All Properties Mandatory</h3>
+        <pre>interface Config {
+    host?: string;
+    port?: number;
+}
+
+function connect(config: Required<Config>) {
+    console.log(`${config.host}:${config.port}`);
+}
+
+connect({ host: "localhost", port: 8080 });   // ✅ both now required
+// connect({ host: "localhost" });             // ❌ Error: 'port' is missing</pre>
+
+        <h3>Readonly&lt;T&gt; — Makes All Properties Immutable</h3>
+        <pre>interface Point { x: number; y: number; }
+
+const frozen: Readonly<Point> = { x: 1, y: 2 };
+// frozen.x = 5;   // ❌ Error: Cannot assign to 'x' because it is read-only</pre>
+
+        <!-- SECTION 3 -->
+        <h2 id="section3"><span class="level intermediate">INTERMEDIATE</span>3. Pick and Omit</h2>
+
+        <h3>Pick&lt;T, Keys&gt; — Select a Subset of Properties</h3>
+        <pre>interface User {
+    id: number;
+    name: string;
+    email: string;
+    passwordHash: string;
+}
+
+type PublicUser = Pick<User, "id" | "name" | "email">;
+// { id: number; name: string; email: string }
+
+const safeUser: PublicUser = { id: 1, name: "Kim", email: "kim@example.com" };</pre>
+
+        <h3>Omit&lt;T, Keys&gt; — Remove a Subset of Properties</h3>
+        <pre>type UserWithoutPassword = Omit<User, "passwordHash">;
+// { id: number; name: string; email: string }
+
+const publicProfile: UserWithoutPassword = {
+    id: 1,
+    name: "Kim",
+    email: "kim@example.com"
+};</pre>
+
+        <div class="note">
+            <strong>💡 Tip:</strong> <code>Pick</code> and <code>Omit</code> are opposites of each other and are frequently used to shape DTOs (data transfer objects) from a larger domain model.
+        </div>
+
+        <!-- SECTION 4 -->
+        <h2 id="section4"><span class="level intermediate">INTERMEDIATE</span>4. Record</h2>
+
+        <p><code>Record&lt;Keys, Type&gt;</code> builds an object type whose keys are drawn from <code>Keys</code> and whose values are all of type <code>Type</code> — a type-safe dictionary.</p>
+
+        <pre>type Role = "admin" | "editor" | "viewer";
+
+const rolePermissions: Record<Role, string[]> = {
+    admin: ["read", "write", "delete"],
+    editor: ["read", "write"],
+    viewer: ["read"]
+};
+
+// rolePermissions.superuser;   // ❌ Error: not a valid Role
+
+type ErrorMessages = Record<string, string>;
+const messages: ErrorMessages = {
+    required: "This field is required",
+    invalid: "This value is invalid"
+};</pre>
+
+        <!-- SECTION 5 -->
+        <h2 id="section5"><span class="level advanced">ADVANCED</span>5. Extract, Exclude, and NonNullable</h2>
+
+        <h3>Extract&lt;T, U&gt; — Keep Only Matching Members</h3>
+        <pre>type Status = "pending" | "active" | "closed" | "archived";
+type ActiveStatus = Extract<Status, "pending" | "active">;
+// "pending" | "active"</pre>
+
+        <h3>Exclude&lt;T, U&gt; — Remove Matching Members</h3>
+        <pre>type InactiveStatus = Exclude<Status, "pending" | "active">;
+// "closed" | "archived"
+
+type EventType = "click" | "hover" | "scroll" | "keydown";
+type MouseEvent2 = Exclude<EventType, "keydown">;
+// "click" | "hover" | "scroll"</pre>
+
+        <h3>NonNullable&lt;T&gt; — Strip null and undefined</h3>
+        <pre>type MaybeString = string | null | undefined;
+type DefiniteString = NonNullable<MaybeString>;
+// string
+
+function process(value: NonNullable<MaybeString>) {
+    console.log(value.trim());   // safe - no null/undefined possible
+}</pre>
+
+        <!-- SECTION 6 -->
+        <h2 id="section6"><span class="level advanced">ADVANCED</span>6. Mapped Types</h2>
+
+        <p>Mapped types let you build your own utility types by iterating over an existing type's keys with <code>[K in keyof T]</code>.</p>
+
+        <pre>type MyPartial<T> = {
+    [K in keyof T]?: T[K];
+};
+
+type MyReadonly<T> = {
+    readonly [K in keyof T]: T[K];
+};
+
+interface Task { id: number; title: string; }
+
+type ReadonlyTask = MyReadonly<Task>;
+// { readonly id: number; readonly title: string; }</pre>
+
+        <h3>Key Remapping with as</h3>
+        <pre>type Getters<T> = {
+    [K in keyof T as `get${Capitalize<string & K>}`]: () => T[K];
+};
+
+interface Person { name: string; age: number; }
+
+type PersonGetters = Getters<Person>;
+// { getName: () => string; getAge: () => number; }</pre>
+
+        <h3>Removing Modifiers with - </h3>
+        <pre>type Mutable<T> = {
+    -readonly [K in keyof T]: T[K];
+};
+
+type RequiredFields<T> = {
+    [K in keyof T]-?: T[K];
+};
+
+interface Frozen { readonly id?: number; }
+type Unfrozen = Mutable<Required<Frozen>>;
+// { id: number; }</pre>
+
+        <!-- SECTION 7 -->
+        <h2 id="section7"><span class="level advanced">ADVANCED</span>7. Conditional Types</h2>
+
+        <p>Conditional types choose between two types based on a type-level check, using the familiar <code>T extends U ? X : Y</code> syntax.</p>
+
+        <pre>type IsString<T> = T extends string ? true : false;
+
+type A = IsString<"hello">;   // true
+type B = IsString<42>;        // false</pre>
+
+        <h3>Practical Conditional Type</h3>
+        <pre>type Flatten<T> = T extends (infer Item)[] ? Item : T;
+
+type A1 = Flatten<string[]>;   // string
+type A2 = Flatten<number>;     // number (unchanged, not an array)</pre>
+
+        <h3>Distribution Over Unions (Recap)</h3>
+        <pre>type NonNull<T> = T extends null | undefined ? never : T;
+
+type Cleaned = NonNull<string | null | number | undefined>;
+// string | number  (never members are dropped from the resulting union)</pre>
+
+        <!-- SECTION 8 -->
+        <h2 id="section8"><span class="level advanced">ADVANCED</span>8. infer in Conditional Types</h2>
+
+        <p>The <code>infer</code> keyword captures a type from within a conditional check so you can reuse it in the result — it powers many of TypeScript's most useful built-in utilities.</p>
+
+        <pre>// A simplified reimplementation of the built-in ReturnType<T>
+type MyReturnType<T> = T extends (...args: any[]) => infer R ? R : never;
+
+function getUser() {
+    return { id: 1, name: "Val" };
+}
+
+type User = MyReturnType<typeof getUser>;
+// { id: number; name: string; }</pre>
+
+        <h3>Extracting Array Element and Promise Types</h3>
+        <pre>type ElementType<T> = T extends (infer E)[] ? E : never;
+type Unwrapped = ElementType<string[]>;   // string
+
+type Awaited2<T> = T extends Promise<infer V> ? V : T;
+type ResolvedType = Awaited2<Promise<number>>;   // number</pre>
+
+        <div class="note">
+            <strong>💡 Tip:</strong> TypeScript ships a real <code>Awaited&lt;T&gt;</code> utility type (recursive, handling nested promises) used internally to type <code>async</code>/<code>await</code> — see the Async/Await with Types guide.
+        </div>
+
+        <!-- SECTION 9 -->
+        <h2 id="section9"><span class="level advanced">ADVANCED</span>9. Template Literal Types</h2>
+
+        <p>Template literal types build new string literal types by combining literal types the same way JavaScript template literals combine strings.</p>
+
+        <pre>type Direction = "top" | "bottom" | "left" | "right";
+type Margin = `margin-${Direction}`;
+// "margin-top" | "margin-bottom" | "margin-left" | "margin-right"
+
+const style: Margin = "margin-top";
+// const bad: Margin = "margin-center";   // ❌ Error</pre>
+
+        <h3>Combining Multiple Unions</h3>
+        <pre>type Size = "sm" | "md" | "lg";
+type Color = "red" | "blue";
+
+type ClassName = `btn-${Size}-${Color}`;
+// "btn-sm-red" | "btn-sm-blue" | "btn-md-red" | "btn-md-blue" | "btn-lg-red" | "btn-lg-blue"</pre>
+
+        <h3>Real-World Use: Typed Event Names</h3>
+        <pre>type EntityName = "user" | "post" | "comment";
+type EventName = `${EntityName}:${"created" | "updated" | "deleted"}`;
+// "user:created" | "user:updated" | ... 9 total combinations
+
+function on(event: EventName, handler: () => void) { /* ... */ }
+on("user:created", () => console.log("A user was created"));
+// on("user:renamed", () => {});   // ❌ Error: not a valid EventName</pre>
+
+        <!-- SECTION 10 -->
+        <h2 id="section10"><span class="level advanced">ADVANCED</span>10. Best Practices</h2>
+
+        <h3>1. Reach for Built-in Utilities Before Writing Your Own</h3>
+        <pre>// ✅ Good - use what's already there
+type UserUpdate = Partial<Pick<User, "name" | "email">>;
+interface User { id: number; name: string; email: string; }</pre>
+
+        <h3>2. Name Complex Derived Types</h3>
+        <pre>// ✅ Good - reusable, self-documenting
+type PublicUser = Omit<User, "passwordHash">;
+interface User { passwordHash: string; }</pre>
+
+        <h3>3. Use Record for Dictionary-Shaped Data</h3>
+        <pre>// ✅ Good
+const cache: Record<string, number> = {};</pre>
+
+        <h3>4. Keep Conditional Types Readable</h3>
+        <pre>// ✅ Break deeply nested conditionals into named helper types
+type IsArray<T> = T extends unknown[] ? true : false;
+type ArrayOrNever<T> = IsArray<T> extends true ? T : never;</pre>
+
+        <h3>5. Reserve infer for Genuine Type Extraction Needs</h3>
+        <p>Most day-to-day code should use <code>ReturnType&lt;T&gt;</code>, <code>Parameters&lt;T&gt;</code>, and <code>Awaited&lt;T&gt;</code> rather than writing new <code>infer</code>-based types from scratch.</p>
+
+        <!-- SUMMARY -->
+        <h2 style="margin-top: 40px;">📋 Quick Reference Summary</h2>
+
+        <div class="table-wrap">
+        <table>
+            <tr>
+                <th>Utility / Feature</th>
+                <th>Key Points</th>
+            </tr>
+            <tr>
+                <td><strong>Partial / Required / Readonly</strong></td>
+                <td>Toggle optionality and mutability across all properties</td>
+            </tr>
+            <tr>
+                <td><strong>Pick / Omit</strong></td>
+                <td>Select or remove a specific subset of properties</td>
+            </tr>
+            <tr>
+                <td><strong>Record&lt;K, V&gt;</strong></td>
+                <td>Type-safe dictionary keyed by a union or string type</td>
+            </tr>
+            <tr>
+                <td><strong>Extract / Exclude</strong></td>
+                <td>Filter members in or out of a union type</td>
+            </tr>
+            <tr>
+                <td><strong>NonNullable&lt;T&gt;</strong></td>
+                <td>Strips null and undefined from a type</td>
+            </tr>
+            <tr>
+                <td><strong>Mapped types</strong></td>
+                <td><code>[K in keyof T]</code> to build custom utility types, with <code>as</code> for key remapping</td>
+            </tr>
+            <tr>
+                <td><strong>Conditional types</strong></td>
+                <td><code>T extends U ? X : Y</code>, distributes over naked unions</td>
+            </tr>
+            <tr>
+                <td><strong>infer</strong></td>
+                <td>Captures a type inside a conditional for reuse (powers ReturnType, Awaited)</td>
+            </tr>
+            <tr>
+                <td><strong>Template literal types</strong></td>
+                <td>Combine string literal unions into new precise string types</td>
+            </tr>
+        </table>
+        </div>
+
+        <div style="margin-top: 40px; padding: 20px; background: #ecf0f1; border-radius: 5px;">
+            <h3>🎓 Learning Path</h3>
+            <p><strong>Beginner:</strong> Not applicable - this is an advanced-tier guide</p>
+            <p><strong>Intermediate:</strong> Master sections 1, 2, 3, 4</p>
+            <p><strong>Advanced:</strong> Deep dive into sections 5, 6, 7, 8, 9, 10</p>
+        </div>
+
+    </div>
+</body>
+</html>

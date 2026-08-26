@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TypeScript Union & Intersection Types: Complete Guide</title>
+    <link rel="stylesheet" href="/guides/guide-base.css">
+</head>
+<body>
+    <div class="container">
+        <h1>🔀 TypeScript Union & Intersection Types: Complete Guide</h1>
+        <p style="font-size: 1.1em; color: #7f8c8d; margin-bottom: 20px;">
+            A comprehensive journey from fundamental concepts to advanced techniques
+        </p>
+
+        <div class="toc">
+            <h3>📚 Table of Contents</h3>
+            <ul>
+                <li><a href="#section1">1. What are Union Types?</a></li>
+                <li><a href="#section2">2. Working with Union Values</a></li>
+                <li><a href="#section3">3. Union Types with Objects</a></li>
+                <li><a href="#section4">4. What are Intersection Types?</a></li>
+                <li><a href="#section5">5. Combining Interfaces via Intersection</a></li>
+                <li><a href="#section6">6. Discriminated Unions</a></li>
+                <li><a href="#section7">7. Union vs Intersection - Choosing Correctly</a></li>
+                <li><a href="#section8">8. Distributive Conditional Behavior</a></li>
+                <li><a href="#section9">9. Common Pitfalls with Unions and Intersections</a></li>
+                <li><a href="#section10">10. Best Practices</a></li>
+            </ul>
+        </div>
+
+        <!-- SECTION 1 -->
+        <h2 id="section1"><span class="level beginner">BEGINNER</span>1. What are Union Types?</h2>
+
+        <h3>Definition</h3>
+        <p>A union type describes a value that can be <strong>one of several types</strong>, written with a pipe <code>|</code> between each option.</p>
+
+        <div class="example">
+            <strong>Real-world analogy:</strong> A union type is like a form field that accepts "phone number OR email" — the value must be exactly one of the listed options, never something outside that set.
+        </div>
+
+        <pre>let id: string | number;
+
+id = "abc123";   // ✅ OK
+id = 42;         // ✅ OK
+// id = true;    // ❌ Error: Type 'boolean' is not assignable</pre>
+
+        <h3>Unions in Function Parameters</h3>
+        <pre>function printId(id: string | number) {
+    console.log(`Your ID is: ${id}`);
+}
+
+printId(101);         // Your ID is: 101
+printId("A-102");     // Your ID is: A-102</pre>
+
+        <!-- SECTION 2 -->
+        <h2 id="section2"><span class="level beginner">BEGINNER</span>2. Working with Union Values</h2>
+
+        <p>TypeScript only lets you use members that exist on <strong>every</strong> type in the union, until you narrow it down.</p>
+
+        <pre>function formatId(id: string | number) {
+    // id.toUpperCase();   // ❌ Error: 'toUpperCase' doesn't exist on 'number'
+    // id.toFixed(2);      // ❌ Error: 'toFixed' doesn't exist on 'string'
+
+    console.log(id.toString());   // ✅ OK - both types have toString()
+}</pre>
+
+        <h3>Narrowing with typeof</h3>
+        <pre>function formatId(id: string | number): string {
+    if (typeof id === "string") {
+        return id.toUpperCase();   // ✅ narrowed to string
+    }
+    return id.toFixed(0);          // ✅ narrowed to number
+}
+
+formatId("abc");   // "ABC"
+formatId(42);       // "42"</pre>
+
+        <div class="note">
+            <strong>💡 Tip:</strong> This "narrow before using" requirement is the same safety mechanism that protects <code>unknown</code>. It forces you to handle every possibility explicitly instead of guessing.
+        </div>
+
+        <!-- SECTION 3 -->
+        <h2 id="section3"><span class="level intermediate">INTERMEDIATE</span>3. Union Types with Objects</h2>
+
+        <pre>interface Cat {
+    kind: "cat";
+    meow(): void;
+}
+
+interface Dog {
+    kind: "dog";
+    bark(): void;
+}
+
+type Pet = Cat | Dog;
+
+function speak(pet: Pet) {
+    if (pet.kind === "cat") {
+        pet.meow();   // ✅ narrowed to Cat
+    } else {
+        pet.bark();   // ✅ narrowed to Dog
+    }
+}</pre>
+
+        <h3>Arrays of Union Types</h3>
+        <pre>type Shape =
+    | { kind: "circle"; radius: number }
+    | { kind: "square"; side: number };
+
+const shapes: Shape[] = [
+    { kind: "circle", radius: 5 },
+    { kind: "square", side: 4 }
+];</pre>
+
+        <!-- SECTION 4 -->
+        <h2 id="section4"><span class="level intermediate">INTERMEDIATE</span>4. What are Intersection Types?</h2>
+
+        <p>An intersection type combines multiple types into one, requiring the value to satisfy <strong>all</strong> of them simultaneously, written with an ampersand <code>&amp;</code>.</p>
+
+        <pre>type Named = { name: string };
+type Aged = { age: number };
+
+type Person = Named & Aged;
+
+const person: Person = { name: "Kim", age: 34 };
+// const invalid: Person = { name: "Kim" };   // ❌ Error: missing 'age'</pre>
+
+        <div class="example">
+            <strong>Real-world analogy:</strong> An intersection type is like a job posting that requires "5 years experience AND a CS degree AND a driver's license" — every requirement must be met at once, not just one of them.
+        </div>
+
+        <h3>Intersecting More Than Two Types</h3>
+        <pre>type Identifiable = { id: number };
+type Timestamped = { createdAt: Date };
+type Named2 = { name: string };
+
+type Record1 = Identifiable & Timestamped & Named2;
+
+const record: Record1 = { id: 1, createdAt: new Date(), name: "Log entry" };</pre>
+
+        <!-- SECTION 5 -->
+        <h2 id="section5"><span class="level intermediate">INTERMEDIATE</span>5. Combining Interfaces via Intersection</h2>
+
+        <pre>interface Serializable {
+    serialize(): string;
+}
+
+interface Comparable<T> {
+    compareTo(other: T): number;
+}
+
+type Sortable<T> = Serializable & Comparable<T>;
+
+class Money implements Sortable<Money> {
+    constructor(private cents: number) {}
+
+    serialize(): string {
+        return `$${(this.cents / 100).toFixed(2)}`;
+    }
+
+    compareTo(other: Money): number {
+        return this.cents - other.cents;
+    }
+}</pre>
+
+        <div class="note">
+            <strong>💡 Tip:</strong> Intersections work naturally with <code>type</code> aliases to merge behavior contracts. You could achieve something similar with <code>interface Foo extends A, B</code>, but intersections are more flexible for combining arbitrary types, including primitives and unions.
+        </div>
+
+        <!-- SECTION 6 -->
+        <h2 id="section6"><span class="level advanced">ADVANCED</span>6. Discriminated Unions</h2>
+
+        <p>A discriminated union is a union of object types that share a common <strong>literal property</strong> (the "discriminant" or "tag"), letting TypeScript narrow the exact variant with a simple check.</p>
+
+        <pre>type Result =
+    | { status: "success"; data: string }
+    | { status: "error"; message: string }
+    | { status: "loading" };
+
+function render(result: Result): string {
+    switch (result.status) {
+        case "success":
+            return `Data: ${result.data}`;      // ✅ narrowed - data exists
+        case "error":
+            return `Error: ${result.message}`;  // ✅ narrowed - message exists
+        case "loading":
+            return "Loading...";
+    }
+}</pre>
+
+        <h3>Exhaustiveness Checking with never</h3>
+        <pre>function render(result: Result): string {
+    switch (result.status) {
+        case "success":
+            return `Data: ${result.data}`;
+        case "error":
+            return `Error: ${result.message}`;
+        case "loading":
+            return "Loading...";
+        default:
+            // If a new variant is added to Result and not handled above,
+            // this line will fail to compile because 'result' won't be 'never'.
+            const exhaustiveCheck: never = result;
+            return exhaustiveCheck;
+    }
+}</pre>
+
+        <div class="example">
+            <strong>Real-world use case:</strong> Discriminated unions are the standard TypeScript pattern for modeling API response states (<code>loading</code> / <code>success</code> / <code>error</code>), Redux actions, and parsed AST nodes.
+        </div>
+
+        <!-- SECTION 7 -->
+        <h2 id="section7"><span class="level advanced">ADVANCED</span>7. Union vs Intersection - Choosing Correctly</h2>
+
+        <div class="table-wrap">
+        <table class="table-compact">
+            <tr>
+                <th>Aspect</th>
+                <th>Union (A | B)</th>
+                <th>Intersection (A & B)</th>
+            </tr>
+            <tr>
+                <td>Meaning</td>
+                <td>Value is A OR B</td>
+                <td>Value is A AND B</td>
+            </tr>
+            <tr>
+                <td>Members you can access</td>
+                <td>Only what's common to all members</td>
+                <td>Everything from every combined type</td>
+            </tr>
+            <tr>
+                <td>Typical use case</td>
+                <td>Function accepts multiple input shapes; state machines</td>
+                <td>Mixing in shared behavior; combining role-based fields</td>
+            </tr>
+            <tr>
+                <td>Requires narrowing to use fully</td>
+                <td>✅ Yes</td>
+                <td>❌ No — everything is available immediately</td>
+            </tr>
+        </table>
+        </div>
+
+        <h3>Conflicting Property Types in Intersections</h3>
+        <pre>type A = { value: string };
+type B = { value: number };
+
+type Combined = A & B;
+// 'value' becomes type 'string & number', which is effectively 'never'
+// since no value can be both a string and a number simultaneously
+
+// const x: Combined = { value: "text" };   // ❌ Error</pre>
+
+        <!-- SECTION 8 -->
+        <h2 id="section8"><span class="level advanced">ADVANCED</span>8. Distributive Conditional Behavior with Unions</h2>
+
+        <p>When a union type is passed through a conditional type, TypeScript applies the conditional to <strong>each member individually</strong> and unions the results — this is called distribution.</p>
+
+        <pre>type ToArray<T> = T extends any ? T[] : never;
+
+type Result1 = ToArray<string | number>;
+// Distributes to: ToArray<string> | ToArray<number>
+// Result1 = string[] | number[]  (NOT (string | number)[])</pre>
+
+        <div class="warning">
+            <strong>⚠️ Common Pitfall:</strong> This distribution can be surprising. Wrapping the type parameter in a tuple (<code>[T] extends [any] ? T[] : never</code>) disables distribution when you actually want the union treated as one unit.
+        </div>
+
+        <!-- SECTION 9 -->
+        <h2 id="section9"><span class="level advanced">ADVANCED</span>9. Common Pitfalls with Unions and Intersections</h2>
+
+        <h3>Pitfall 1: Forgetting to Narrow</h3>
+        <pre>function getLength(value: string | string[]) {
+    // return value.length;   // Actually works here since both have .length,
+    //                           but subtler cases will fail without narrowing
+    if (Array.isArray(value)) {
+        return value.length;
+    }
+    return value.length;
+}</pre>
+
+        <h3>Pitfall 2: Overlapping Discriminant Values</h3>
+        <pre>// ❌ Bad - both variants use the same literal value for 'type'
+type Event =
+    | { type: "click"; x: number }
+    | { type: "click"; y: number };   // duplicate discriminant, narrowing breaks</pre>
+
+        <h3>Pitfall 3: Accidentally Creating never via Intersection</h3>
+        <pre>type StringOnly = { id: string };
+type NumberOnly = { id: number };
+
+// type Broken = StringOnly & NumberOnly;   // id becomes 'never' - unusable</pre>
+
+        <!-- SECTION 10 -->
+        <h2 id="section10"><span class="level advanced">ADVANCED</span>10. Best Practices</h2>
+
+        <h3>1. Use Discriminated Unions for State Modeling</h3>
+        <pre>// ✅ Good
+type AsyncState<T> =
+    | { status: "idle" }
+    | { status: "loading" }
+    | { status: "success"; data: T }
+    | { status: "error"; error: string };</pre>
+
+        <h3>2. Always Narrow Before Accessing Non-Shared Members</h3>
+        <pre>// ✅ Good
+if (typeof value === "string") { /* use string members */ }</pre>
+
+        <h3>3. Use Intersections to Compose Small Reusable Pieces</h3>
+        <pre>// ✅ Good
+type WithId = { id: string };
+type WithTimestamps = { createdAt: Date; updatedAt: Date };
+type Entity = WithId & WithTimestamps;</pre>
+
+        <h3>4. Add an Exhaustiveness Check on Every Discriminated Union switch</h3>
+        <pre>// ✅ Good - catches missing cases when the union grows
+default: {
+    const _exhaustive: never = value;
+    throw new Error(`Unhandled case: ${_exhaustive}`);
+}</pre>
+
+        <h3>5. Watch for never When Intersecting Conflicting Primitives</h3>
+        <pre>// ❌ Avoid intersecting types with the same key but incompatible primitive types</pre>
+
+        <!-- SUMMARY -->
+        <h2 style="margin-top: 40px;">📋 Quick Reference Summary</h2>
+
+        <div class="table-wrap">
+        <table>
+            <tr>
+                <th>Concept</th>
+                <th>Key Points</th>
+            </tr>
+            <tr>
+                <td><strong>Union (A | B)</strong></td>
+                <td>Value is one of several types; must narrow to access non-shared members</td>
+            </tr>
+            <tr>
+                <td><strong>Intersection (A &amp; B)</strong></td>
+                <td>Value satisfies all combined types simultaneously</td>
+            </tr>
+            <tr>
+                <td><strong>Discriminated union</strong></td>
+                <td>Shared literal "tag" property enables precise narrowing via switch/if</td>
+            </tr>
+            <tr>
+                <td><strong>Exhaustiveness check</strong></td>
+                <td>Assign to <code>never</code> in the default case to catch unhandled variants</td>
+            </tr>
+            <tr>
+                <td><strong>Conflicting intersections</strong></td>
+                <td>Same key with incompatible primitive types collapses to <code>never</code></td>
+            </tr>
+            <tr>
+                <td><strong>Distribution</strong></td>
+                <td>Conditional types distribute over naked union type parameters</td>
+            </tr>
+        </table>
+        </div>
+
+        <div style="margin-top: 40px; padding: 20px; background: #ecf0f1; border-radius: 5px;">
+            <h3>🎓 Learning Path</h3>
+            <p><strong>Beginner:</strong> Master sections 1, 2</p>
+            <p><strong>Intermediate:</strong> Understand sections 3, 4, 5</p>
+            <p><strong>Advanced:</strong> Deep dive into sections 6, 7, 8, 9, 10</p>
+        </div>
+
+    </div>
+</body>
+</html>

@@ -30,9 +30,51 @@ function extractVideoId(input) {
 
 export default function VideoModal({ topic, phaseId, onClose }) {
   const overlayRef = useRef(null)
+  const iframeRef = useRef(null)
   const videoId = extractVideoId(topic.videoId)
   const hasVideo = videoId !== ''
   const theme = phaseThemes[phaseId]
+
+  // Mobile browsers (mainly iOS Safari) can leave the fullscreened video
+  // undersized — with visible gaps — after a landscape rotation, because the
+  // fullscreen element's box isn't reliably recalculated from CSS alone on
+  // rotation. Forcing the iframe's actual pixel size from JS on every
+  // resize/orientation change while fullscreen is active is the standard
+  // workaround; the inline size is cleared again on exiting fullscreen so
+  // the iframe goes back to filling its normal 16:9 box in the modal.
+  useEffect(() => {
+    const iframe = iframeRef.current
+    if (!iframe) return
+
+    const isFullscreen = () =>
+      document.fullscreenElement === iframe || document.webkitFullscreenElement === iframe
+
+    const syncSize = () => {
+      if (!isFullscreen()) return
+      iframe.style.width = `${window.innerWidth}px`
+      iframe.style.height = `${window.innerHeight}px`
+    }
+
+    const handleFullscreenChange = () => {
+      if (isFullscreen()) {
+        syncSize()
+      } else {
+        iframe.style.width = ''
+        iframe.style.height = ''
+      }
+    }
+
+    document.addEventListener('fullscreenchange', handleFullscreenChange)
+    document.addEventListener('webkitfullscreenchange', handleFullscreenChange)
+    window.addEventListener('resize', syncSize)
+    window.addEventListener('orientationchange', syncSize)
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange)
+      document.removeEventListener('webkitfullscreenchange', handleFullscreenChange)
+      window.removeEventListener('resize', syncSize)
+      window.removeEventListener('orientationchange', syncSize)
+    }
+  }, [])
 
   // Close on Escape key
   useEffect(() => {
@@ -55,9 +97,9 @@ export default function VideoModal({ topic, phaseId, onClose }) {
     <div
       ref={overlayRef}
       onClick={handleOverlayClick}
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
+      className="video-modal-overlay fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm"
     >
-      <div className="relative w-full max-w-3xl bg-gray-900 rounded-2xl shadow-2xl border border-gray-700 overflow-hidden flex flex-col">
+      <div className="video-modal-card relative bg-gray-900 shadow-2xl border-gray-700 overflow-hidden flex flex-col">
 
         {/* Modal header */}
         <div className={`flex items-start justify-between gap-3 px-5 py-4 border-b border-gray-800 ${theme.sectionBg}`}>
@@ -85,15 +127,19 @@ export default function VideoModal({ topic, phaseId, onClose }) {
           </button>
         </div>
 
-        {/* Video area */}
-        <div className="relative w-full bg-black" style={{ paddingTop: '56.25%' }}>
+        {/* Video area — fills whatever vertical space the header/footer leave
+            (correct in both portrait and landscape phone orientations); on a
+            genuinely large viewport (see .video-modal-video-area's media
+            query) it becomes a fixed 16:9 box instead, matching the original
+            desktop card look. */}
+        <div className="video-modal-video-area relative w-full bg-black">
           {hasVideo ? (
             <iframe
+              ref={iframeRef}
               className="absolute inset-0 w-full h-full"
               src={`https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1`}
               title={topic.name}
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
             />
           ) : (
             <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 text-center px-6">

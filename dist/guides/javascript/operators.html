@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JavaScript Operators: Complete Guide</title>
+    <link rel="stylesheet" href="/guides/guide-base.css">
+</head>
+<body>
+    <div class="container">
+        <h1>⚙️ JavaScript Operators: Complete Guide</h1>
+        <p style="font-size: 1.1em; color: #7f8c8d; margin-bottom: 20px;">
+            A comprehensive journey from fundamental concepts to advanced techniques
+        </p>
+
+        <div class="toc">
+            <h3>📚 Table of Contents</h3>
+            <ul>
+                <li><a href="#section1">1. What is an Operator?</a></li>
+                <li><a href="#section2">2. Arithmetic Operators</a></li>
+                <li><a href="#section3">3. Comparison Operators</a></li>
+                <li><a href="#section4">4. Logical Operators & Short-Circuiting</a></li>
+                <li><a href="#section5">5. Nullish Coalescing (??)</a></li>
+                <li><a href="#section6">6. Assignment Operators</a></li>
+                <li><a href="#section7">7. The Ternary Operator</a></li>
+                <li><a href="#section8">8. Operator Precedence</a></li>
+                <li><a href="#section9">9. Other Useful Operators</a></li>
+                <li><a href="#section10">10. Best Practices</a></li>
+            </ul>
+        </div>
+
+        <!-- SECTION 1 -->
+        <h2 id="section1"><span class="level beginner">BEGINNER</span>1. What is an Operator?</h2>
+
+        <p>An <strong>operator</strong> is a symbol that performs an operation on one or more values, called <strong>operands</strong>. <code>a + b</code> has two operands (<code>a</code> and <code>b</code>) joined by the <code>+</code> operator.</p>
+
+        <div class="example">
+            <strong>Real-world analogy:</strong> Operators are tools in a toolbox. A hammer (<code>+</code>) drives nails. A measuring tape (<code>===</code>) checks if two lengths match exactly. Each tool has one job — using the wrong one causes problems.
+        </div>
+
+        <h3>Types of Operators</h3>
+        <ul style="margin: 15px 0; margin-left: 20px;">
+            <li><strong>Arithmetic:</strong> <code>+ - * / % **</code></li>
+            <li><strong>Comparison:</strong> <code>=== !== > < >= <=</code></li>
+            <li><strong>Logical:</strong> <code>&& || ! ??</code></li>
+            <li><strong>Assignment:</strong> <code>= += -= *= /=</code></li>
+            <li><strong>Ternary (conditional):</strong> <code>? :</code></li>
+        </ul>
+
+        <h3>Unary vs Binary</h3>
+        <pre>// Unary — one operand
+-5;          // negation
+!true;       // logical NOT
+typeof 42;   // type check
+
+// Binary — two operands
+5 + 3;
+a && b;
+
+// Ternary — three operands (the only one!)
+condition ? a : b;</pre>
+
+        <!-- SECTION 2 -->
+        <h2 id="section2"><span class="level beginner">BEGINNER</span>2. Arithmetic Operators</h2>
+
+        <pre>10 + 3;   // 13 — addition
+10 - 3;   // 7  — subtraction
+10 * 3;   // 30 — multiplication
+10 / 3;   // 3.333... — division
+10 % 3;   // 1  — remainder (modulo)
+10 ** 3;  // 1000 — exponentiation (10 to the power of 3)</pre>
+
+        <h3>The + Operator Is Special</h3>
+        <p>Unlike other arithmetic operators, <code>+</code> also means string concatenation. If either operand is a string, JavaScript concatenates instead of adding.</p>
+        <pre>5 + 3;         // 8   — both numbers, adds
+"5" + 3;       // "53" — string wins, concatenates
+5 + "3";       // "53" — same, order doesn't matter
+5 + 3 + "!";   // "8!" — left to right: 5+3=8, then 8+"!"="8!"
+"5" + 3 + 3;   // "533" — left to right: "5"+3="53", then "53"+3="533"</pre>
+
+        <h3>Increment / Decrement</h3>
+        <pre>let x = 5;
+x++;           // post-increment: use x, THEN add 1 → x becomes 6
+console.log(x); // 6
+
+let y = 5;
+console.log(++y); // pre-increment: add 1 FIRST, then use y → 6
+console.log(y);   // 6
+
+let a = 5;
+console.log(a++); // 5 (returns old value, then increments)
+console.log(a);   // 6</pre>
+
+        <div class="note">
+            <strong>💡 Tip:</strong> <code>%</code> (modulo) is one of the most practically useful operators — it's how you check "is this number even?" (<code>n % 2 === 0</code>), wrap around an array index, or detect every Nth item.
+        </div>
+
+        <!-- SECTION 3 -->
+        <h2 id="section3"><span class="level beginner">BEGINNER</span>3. Comparison Operators</h2>
+
+        <p>JavaScript has two flavors of equality: <strong>strict</strong> (<code>===</code>/<code>!==</code>) which checks type AND value, and <strong>loose</strong> (<code>==</code>/<code>!=</code>) which coerces types before comparing.</p>
+
+        <div class="table-wrap">
+        <table class="table-compact">
+            <tr>
+                <th>Expression</th>
+                <th>Result</th>
+                <th>Why</th>
+            </tr>
+            <tr><td><code>5 === 5</code></td><td>true</td><td>Same type, same value</td></tr>
+            <tr><td><code>5 === "5"</code></td><td>false</td><td>Different types — strict blocks coercion</td></tr>
+            <tr><td><code>5 == "5"</code></td><td>true</td><td>Loose equality coerces "5" to 5 first</td></tr>
+            <tr><td><code>null == undefined</code></td><td>true</td><td>Special case: these two are loosely equal to each other only</td></tr>
+            <tr><td><code>null === undefined</code></td><td>false</td><td>Different types under strict comparison</td></tr>
+            <tr><td><code>NaN === NaN</code></td><td>false</td><td>NaN is never equal to anything, including itself</td></tr>
+        </table>
+        </div>
+
+        <div class="warning">
+            <strong>⚠️ Common Pitfall:</strong> Always prefer <code>===</code>/<code>!==</code> over <code>==</code>/<code>!=</code>. Loose equality has confusing edge cases like <code>"" == 0</code> being <code>true</code> and <code>[] == false</code> being <code>true</code>. The one common exception is <code>value == null</code> to check for both <code>null</code> and <code>undefined</code> at once.
+        </div>
+
+        <pre>5 > 3;    // true
+5 < 3;    // false
+5 >= 5;   // true
+5 <= 4;   // false
+
+"apple" < "banana"; // true — strings compare lexicographically (dictionary order)
+"10" < "9";          // true! — string comparison, not numeric ("1" < "9" character-wise)</pre>
+
+        <!-- SECTION 4 -->
+        <h2 id="section4"><span class="level intermediate">INTERMEDIATE</span>4. Logical Operators & Short-Circuiting</h2>
+
+        <p>Logical operators don't just return <code>true</code>/<code>false</code> — they return one of their actual operands, based on <strong>short-circuit evaluation</strong>.</p>
+
+        <h3>&& (AND) — Stops at First Falsy</h3>
+        <pre>true && "hello";    // "hello" — left was truthy, so returns right
+false && "hello";   // false    — left was falsy, stops immediately, right never evaluated
+0 && expensiveCall(); // 0      — expensiveCall() is NEVER called!
+
+// Common pattern: guard before running code
+isLoggedIn && showDashboard();  // showDashboard() only runs if isLoggedIn is truthy</pre>
+
+        <h3>|| (OR) — Stops at First Truthy</h3>
+        <pre>false || "fallback";  // "fallback" — left was falsy, returns right
+"hi" || "fallback";   // "hi"       — left was truthy, stops immediately
+0 || "default";       // "default" — 0 is falsy, so it's replaced too (see pitfall below!)</pre>
+
+        <h3>! (NOT)</h3>
+        <pre>!true;      // false
+!0;         // true  — 0 is falsy, so !0 is true
+!!"hello";  // true  — double-negation is a common trick to force a real boolean
+!!"";       // false</pre>
+
+        <div class="warning">
+            <strong>⚠️ Common Pitfall — The || Fallback Trap:</strong> <code>settings.volume || 10</code> looks like "use volume, or default to 10" — but if <code>volume</code> is legitimately <code>0</code> (silent), <code>||</code> treats it as falsy and replaces it with <code>10</code> anyway! This is exactly the problem <code>??</code> (Section 5) was created to solve.
+        </div>
+
+        <pre>const settings = { volume: 0 };
+settings.volume || 10;   // 10  — wrong! 0 is a valid volume, got overridden
+settings.volume ?? 10;   // 0   — correct! ?? only replaces null/undefined</pre>
+
+        <!-- SECTION 5 -->
+        <h2 id="section5"><span class="level intermediate">INTERMEDIATE</span>5. Nullish Coalescing (??)</h2>
+
+        <p>The <strong>nullish coalescing operator</strong> (<code>??</code>) returns its right-hand side ONLY when the left-hand side is <code>null</code> or <code>undefined</code> — never for other falsy values like <code>0</code>, <code>""</code>, or <code>false</code>.</p>
+
+        <pre>0 ?? "default";          // 0          — 0 is not nullish, kept as-is
+"" ?? "default";         // ""         — empty string kept
+false ?? "default";      // false      — kept
+null ?? "default";       // "default"  — null IS nullish
+undefined ?? "default";  // "default"  — undefined IS nullish</pre>
+
+        <div class="comparison">
+            <div>
+                <strong>|| (OR) — replaces ANY falsy value:</strong>
+                <pre>function getVolume(v) {
+    return v || 50;
+}
+getVolume(0);   // 50 — bug! 0 got replaced
+getVolume(null); // 50 — intended</pre>
+            </div>
+            <div>
+                <strong>?? (nullish) — replaces ONLY null/undefined:</strong>
+                <pre>function getVolume(v) {
+    return v ?? 50;
+}
+getVolume(0);    // 0  — correct! 0 is kept
+getVolume(null); // 50 — intended</pre>
+            </div>
+        </div>
+
+        <h3>Nullish Coalescing Assignment (??=)</h3>
+        <pre>const config = { theme: null };
+config.theme ??= "light";  // only assigns if theme is null/undefined
+console.log(config.theme); // "light"
+
+config.theme ??= "dark";   // theme is already "light", so nothing changes
+console.log(config.theme); // "light"</pre>
+
+        <div class="warning">
+            <strong>⚠️ Syntax Restriction:</strong> You cannot directly mix <code>??</code> with <code>&&</code> or <code>||</code> without parentheses — <code>a || b ?? c</code> throws a <code>SyntaxError</code>. Always parenthesize: <code>(a || b) ?? c</code>.
+        </div>
+
+        <!-- SECTION 6 -->
+        <h2 id="section6"><span class="level beginner">BEGINNER</span>6. Assignment Operators</h2>
+
+        <p>Compound assignment operators combine an operation with assignment — <code>x += 5</code> is shorthand for <code>x = x + 5</code>.</p>
+
+        <pre>let score = 50;
+score += 10;   // score = score + 10  → 60
+score -= 5;    // score = score - 5   → 55
+score *= 2;    // score = score * 2   → 110
+score /= 10;   // score = score / 10  → 11
+score **= 2;   // score = score ** 2  → 121
+score %= 5;    // score = score % 5   → 1</pre>
+
+        <h3>Logical Assignment Operators (Modern)</h3>
+        <pre>let a = null;
+a ??= "default";   // assign only if a is null/undefined → "default"
+
+let b = 0;
+b ||= 100;         // assign only if b is falsy → 100
+
+let c = "existing";
+c &&= "replaced";  // assign only if c is truthy → "replaced"</pre>
+
+        <!-- SECTION 7 -->
+        <h2 id="section7"><span class="level intermediate">INTERMEDIATE</span>7. The Ternary Operator</h2>
+
+        <p>The <strong>ternary (conditional) operator</strong> is the only operator that takes three operands: <code>condition ? valueIfTrue : valueIfFalse</code>. It's a compact expression form of <code>if/else</code>.</p>
+
+        <pre>const age = 20;
+const label = age >= 18 ? "adult" : "minor";
+console.log(label); // "adult"
+
+// Equivalent if/else:
+let label2;
+if (age >= 18) {
+    label2 = "adult";
+} else {
+    label2 = "minor";
+}</pre>
+
+        <h3>Chaining Ternaries (Use Sparingly)</h3>
+        <pre>const score = 75;
+const grade = score >= 90 ? "A"
+            : score >= 80 ? "B"
+            : score >= 70 ? "C"
+            : "F";
+console.log(grade); // "C"</pre>
+
+        <div class="warning">
+            <strong>⚠️ Readability Warning:</strong> Chained ternaries beyond 2-3 levels become hard to read. For more than a couple of branches, prefer <code>if/else if</code> or a lookup object/<code>switch</code> statement instead.
+        </div>
+
+        <!-- SECTION 8 -->
+        <h2 id="section8"><span class="level advanced">ADVANCED</span>8. Operator Precedence</h2>
+
+        <p>When an expression has multiple operators, <strong>precedence</strong> determines the order they're evaluated. Multiplication/division happen before addition/subtraction, just like in math class.</p>
+
+        <pre>2 + 3 * 4;      // 14, not 20 — * has higher precedence than +
+(2 + 3) * 4;    // 20 — parentheses override precedence
+
+10 > 5 && 3 < 1;  // false — comparisons happen before &&
+true || false && false; // true — && binds tighter than ||, evaluates as: true || (false && false)
+
+let x = 5;
+let y = x++ + ++x;  // x++ returns 5 (then x=6), ++x returns 7 (x=7 first)
+console.log(y);     // 12
+console.log(x);     // 7</pre>
+
+        <div class="table-wrap">
+        <table class="table-compact">
+            <tr>
+                <th>Precedence (high → low)</th>
+                <th>Operators</th>
+            </tr>
+            <tr><td>1</td><td><code>()</code> grouping</td></tr>
+            <tr><td>2</td><td><code>++ -- !</code> (unary)</td></tr>
+            <tr><td>3</td><td><code>**</code> (exponent)</td></tr>
+            <tr><td>4</td><td><code>* / %</code></td></tr>
+            <tr><td>5</td><td><code>+ -</code></td></tr>
+            <tr><td>6</td><td><code>&lt; &lt;= &gt; &gt;=</code></td></tr>
+            <tr><td>7</td><td><code>=== !== == !=</code></td></tr>
+            <tr><td>8</td><td><code>&&</code></td></tr>
+            <tr><td>9</td><td><code>|| ??</code></td></tr>
+            <tr><td>10</td><td><code>? :</code> (ternary)</td></tr>
+            <tr><td>11</td><td><code>= += -= ...</code> (assignment)</td></tr>
+        </table>
+        </div>
+
+        <div class="note">
+            <strong>💡 Tip:</strong> You don't need to memorize this whole table. When in doubt, add parentheses — they cost nothing and make intent explicit for the next reader (including future you).
+        </div>
+
+        <!-- SECTION 9 -->
+        <h2 id="section9"><span class="level advanced">ADVANCED</span>9. Other Useful Operators</h2>
+
+        <h3>Optional Chaining (?.)</h3>
+        <pre>const user = { address: null };
+console.log(user.address?.city);   // undefined — no error, even though address is null
+console.log(user.contact?.phone);  // undefined — safe even if contact doesn't exist at all
+user.greet?.();                    // calls greet() only if it exists</pre>
+
+        <h3>Comma Operator</h3>
+        <pre>// Evaluates each expression, returns the LAST one — rarely used, mostly in for loops
+for (let i = 0, j = 10; i < j; i++, j--) {
+    console.log(i, j);
+}</pre>
+
+        <h3>Spread Operator (...)</h3>
+        <pre>const arr = [1, 2, 3];
+const copy = [...arr, 4, 5];  // [1, 2, 3, 4, 5]
+
+const obj = { a: 1 };
+const merged = { ...obj, b: 2 }; // { a: 1, b: 2 }
+
+function sum(a, b, c) { return a + b + c; }
+console.log(sum(...arr)); // 6 — spreads array as individual arguments</pre>
+
+        <h3>typeof and instanceof</h3>
+        <pre>typeof "hi";              // "string"
+[] instanceof Array;      // true
+new Date() instanceof Date; // true</pre>
+
+        <!-- SECTION 10 -->
+        <h2 id="section10"><span class="level intermediate">INTERMEDIATE</span>10. Best Practices</h2>
+
+        <h3>1. Always Use === and !==</h3>
+        <pre>// ✅ Good
+if (status === "active") { }
+
+// ❌ Avoid
+if (status == "active") { }</pre>
+
+        <h3>2. Use ?? Instead of || for Defaults With Numbers/Booleans</h3>
+        <pre>// ✅ Correct for numeric/boolean defaults
+const timeout = options.timeout ?? 3000;
+
+// ❌ Buggy if timeout could legitimately be 0
+const timeout = options.timeout || 3000;</pre>
+
+        <h3>3. Parenthesize Mixed Logical Expressions</h3>
+        <pre>// ✅ Clear intent
+if ((isAdmin || isModerator) && isActive) { }
+
+// ❌ Ambiguous to read at a glance
+if (isAdmin || isModerator && isActive) { }</pre>
+
+        <h3>4. Avoid Chained Ternaries Beyond 2 Levels</h3>
+        <pre>// ✅ Readable
+function getGrade(score) {
+    if (score >= 90) return "A";
+    if (score >= 80) return "B";
+    return "C";
+}
+
+// ❌ Hard to scan
+const grade = score >= 90 ? "A" : score >= 80 ? "B" : "C";</pre>
+
+        <h3>5. Use Logical Assignment for Concise Defaults</h3>
+        <pre>// ✅ Modern and concise
+config.retries ??= 3;
+
+// Instead of
+if (config.retries === null || config.retries === undefined) {
+    config.retries = 3;
+}</pre>
+
+        <!-- SUMMARY -->
+        <h2 style="margin-top: 40px;">📋 Quick Reference Summary</h2>
+
+        <div class="table-wrap">
+        <table>
+            <tr>
+                <th>Concept</th>
+                <th>Key Points</th>
+            </tr>
+            <tr>
+                <td><strong>Arithmetic</strong></td>
+                <td><code>+ - * / % **</code>. <code>+</code> also concatenates strings when either operand is a string.</td>
+            </tr>
+            <tr>
+                <td><strong>Comparison</strong></td>
+                <td>Prefer <code>===</code>/<code>!==</code> (strict) over <code>==</code>/<code>!=</code> (loose, coerces types).</td>
+            </tr>
+            <tr>
+                <td><strong>&& / ||</strong></td>
+                <td>Short-circuit: <code>&&</code> stops at first falsy, <code>||</code> stops at first truthy.</td>
+            </tr>
+            <tr>
+                <td><strong>??</strong></td>
+                <td>Replaces only <code>null</code>/<code>undefined</code> — safe for 0, "", false defaults.</td>
+            </tr>
+            <tr>
+                <td><strong>Ternary</strong></td>
+                <td><code>cond ? a : b</code>. Great for simple branches, avoid deep chains.</td>
+            </tr>
+            <tr>
+                <td><strong>Precedence</strong></td>
+                <td><code>*</code>/<code>/</code> before <code>+</code>/<code>-</code>; use parentheses when unsure.</td>
+            </tr>
+        </table>
+        </div>
+
+        <div style="margin-top: 40px; padding: 20px; background: #ecf0f1; border-radius: 5px;">
+            <h3>🎓 Learning Path</h3>
+            <p><strong>Beginner:</strong> Master sections 1, 2, 3, 6</p>
+            <p><strong>Intermediate:</strong> Understand sections 4, 5, 7, 10</p>
+            <p><strong>Advanced:</strong> Deep dive into sections 8, 9</p>
+        </div>
+
+    </div>
+</body>
+</html>

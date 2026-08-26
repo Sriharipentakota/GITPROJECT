@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JavaScript Objects: Complete Guide</title>
+    <link rel="stylesheet" href="/guides/guide-base.css">
+</head>
+<body>
+    <div class="container">
+        <h1>🗂️ JavaScript Objects: Complete Guide</h1>
+        <p style="font-size: 1.1em; color: #7f8c8d; margin-bottom: 20px;">
+            A comprehensive journey from fundamental concepts to advanced techniques
+        </p>
+
+        <div class="toc">
+            <h3>📚 Table of Contents</h3>
+            <ul>
+                <li><a href="#section1">1. What is an Object?</a></li>
+                <li><a href="#section2">2. Creating & Accessing Properties</a></li>
+                <li><a href="#section3">3. Adding, Updating & Deleting Properties</a></li>
+                <li><a href="#section4">4. Methods and this</a></li>
+                <li><a href="#section5">5. Object Destructuring</a></li>
+                <li><a href="#section6">6. Spread, Merging & Shallow Copy</a></li>
+                <li><a href="#section7">7. Object.keys, values, entries</a></li>
+                <li><a href="#section8">8. Optional Chaining & Nullish Coalescing</a></li>
+                <li><a href="#section9">9. Common Pitfalls</a></li>
+                <li><a href="#section10">10. Best Practices</a></li>
+            </ul>
+        </div>
+
+        <!-- SECTION 1 -->
+        <h2 id="section1"><span class="level beginner">BEGINNER</span>1. What is an Object?</h2>
+
+        <p>An <strong>object</strong> is an unordered collection of <em>key-value pairs</em>, called properties. Keys are strings (or Symbols); values can be any type — including other objects, arrays, or functions.</p>
+
+        <div class="example">
+            <strong>Real-world analogy:</strong> An object is like a filing cabinet. Each drawer is labeled with a key and holds a document (the value). You open a drawer by its label, add new drawers, update contents, or remove a drawer entirely.
+        </div>
+
+        <pre>const person = {
+    name: "Alice",
+    age: 25,
+    isActive: true
+};
+
+console.log(person.name); // "Alice"</pre>
+
+        <!-- SECTION 2 -->
+        <h2 id="section2"><span class="level beginner">BEGINNER</span>2. Creating & Accessing Properties</h2>
+
+        <p>There are two ways to access a property: <strong>dot notation</strong> for known, valid identifier names, and <strong>bracket notation</strong> for dynamic keys or names that aren't valid identifiers.</p>
+
+        <pre>const user = { name: "Bob", age: 30, "favorite color": "blue" };
+
+// Dot notation — key is a literal, known in advance
+user.name;                // "Bob"
+
+// Bracket notation — key can be a variable or expression
+user["age"];               // 30
+const key = "name";
+user[key];                 // "Bob" — dynamic key lookup
+
+// Bracket notation is REQUIRED for keys that aren't valid identifiers
+user["favorite color"];    // "blue" — user.favorite color would be a syntax error</pre>
+
+        <h3>Shorthand Property Names</h3>
+        <pre>const name = "Charlie";
+const age = 28;
+
+// ✅ Shorthand — when the variable name matches the key you want
+const user2 = { name, age };
+console.log(user2); // { name: "Charlie", age: 28 }
+
+// Equivalent to the verbose form:
+const user3 = { name: name, age: age };</pre>
+
+        <!-- SECTION 3 -->
+        <h2 id="section3"><span class="level beginner">BEGINNER</span>3. Adding, Updating & Deleting Properties</h2>
+
+        <pre>const user = { name: "Alice" };
+
+// Add a new property
+user.role = "admin";
+console.log(user); // { name: "Alice", role: "admin" }
+
+// Update an existing property
+user.role = "editor";
+console.log(user.role); // "editor"
+
+// Delete a property
+delete user.role;
+console.log(user); // { name: "Alice" }
+
+// Checking if a property exists
+console.log("name" in user);          // true
+console.log(user.hasOwnProperty("name")); // true
+console.log(user.age === undefined);  // true — missing property access returns undefined, no error</pre>
+
+        <!-- SECTION 4 -->
+        <h2 id="section4"><span class="level intermediate">INTERMEDIATE</span>4. Methods and this</h2>
+
+        <p>A function stored as an object property is called a <strong>method</strong>. Inside a regular method, <code>this</code> refers to the object the method was called on.</p>
+
+        <pre>const counter = {
+    count: 0,
+    increment() {          // shorthand method syntax (preferred)
+        this.count++;
+        return this.count;
+    },
+    decrement: function() { // equivalent long form
+        this.count--;
+        return this.count;
+    }
+};
+
+console.log(counter.increment()); // 1
+console.log(counter.increment()); // 2
+console.log(counter.decrement()); // 1</pre>
+
+        <div class="warning">
+            <strong>⚠️ Arrow Functions as Methods:</strong> Arrow functions do NOT have their own <code>this</code> — they inherit it from the surrounding scope at the time they were defined. Using one as an object method almost always gives you the wrong <code>this</code>.
+        </div>
+
+        <pre>const obj = {
+    value: 10,
+    getValue: () => this.value // ❌ 'this' here is NOT obj
+};
+console.log(obj.getValue()); // undefined</pre>
+
+        <!-- SECTION 5 -->
+        <h2 id="section5"><span class="level intermediate">INTERMEDIATE</span>5. Object Destructuring</h2>
+
+        <p><strong>Destructuring</strong> unpacks object properties into individual variables in one line.</p>
+
+        <pre>const user = { name: "Dana", age: 40, city: "Austin" };
+
+const { name, age } = user;
+console.log(name, age); // "Dana" 40
+
+// Renaming while destructuring
+const { name: userName } = user;
+console.log(userName); // "Dana"
+
+// Default values (used only if the property is undefined/missing)
+const { country = "USA" } = user;
+console.log(country); // "USA" — user has no 'country' property
+
+// Nested destructuring
+const response = { data: { id: 1, meta: { verified: true } } };
+const { data: { id, meta: { verified } } } = response;
+console.log(id, verified); // 1  true</pre>
+
+        <h3>Destructuring in Function Parameters</h3>
+        <pre>function printUser({ name, age }) {
+    console.log(`${name} is ${age}`);
+}
+printUser({ name: "Eve", age: 22 }); // "Eve is 22"</pre>
+
+        <!-- SECTION 6 -->
+        <h2 id="section6"><span class="level intermediate">INTERMEDIATE</span>6. Spread, Merging & Shallow Copy</h2>
+
+        <pre>const defaults = { theme: "light", lang: "en" };
+const overrides = { theme: "dark" };
+
+// Merge — later properties win on conflicts
+const config = { ...defaults, ...overrides };
+console.log(config); // { theme: "dark", lang: "en" }
+
+// Shallow copy
+const copy = { ...defaults };
+copy.theme = "changed";
+console.log(defaults.theme); // "light" — original untouched at the top level</pre>
+
+        <div class="warning">
+            <strong>⚠️ Shallow Copy Only:</strong> Spread only copies TOP-LEVEL properties. If a property's value is itself an object, both the original and the copy point to the SAME nested object.
+        </div>
+
+        <pre>const original = { user: { name: "Frank" } };
+const shallow = { ...original };
+shallow.user.name = "George";
+console.log(original.user.name); // "George" — the nested object is shared!
+
+// For a real deep copy of JSON-safe data:
+const deep = JSON.parse(JSON.stringify(original));
+// or, in modern environments:
+const deep2 = structuredClone(original);</pre>
+
+        <!-- SECTION 7 -->
+        <h2 id="section7"><span class="level beginner">BEGINNER</span>7. Object.keys, values, entries</h2>
+
+        <p>These static methods let you iterate over an object's properties in ways arrays' methods can be used on.</p>
+
+        <pre>const scores = { alice: 90, bob: 75, carol: 88 };
+
+Object.keys(scores);    // ["alice", "bob", "carol"]
+Object.values(scores);  // [90, 75, 88]
+Object.entries(scores); // [["alice",90], ["bob",75], ["carol",88]]
+
+// Iterating with entries + destructuring
+Object.entries(scores).forEach(([name, score]) => {
+    console.log(name, score);
+});
+// "alice" 90   "bob" 75   "carol" 88
+
+// Building a new object from entries (round trip)
+const doubled = Object.fromEntries(
+    Object.entries(scores).map(([name, score]) => [name, score * 2])
+);
+console.log(doubled); // { alice: 180, bob: 150, carol: 176 }</pre>
+
+        <!-- SECTION 8 -->
+        <h2 id="section8"><span class="level advanced">ADVANCED</span>8. Optional Chaining & Nullish Coalescing</h2>
+
+        <p><strong>Optional chaining</strong> (<code>?.</code>) safely accesses deeply nested properties without throwing when an intermediate value is <code>null</code>/<code>undefined</code>. Pair it with <strong>nullish coalescing</strong> (<code>??</code>) for clean fallbacks.</p>
+
+        <pre>const user = { address: null };
+
+// Without optional chaining — throws!
+// console.log(user.address.city); // ❌ TypeError: Cannot read properties of null
+
+// With optional chaining — safe
+console.log(user.address?.city); // undefined — no error
+
+// Works on method calls too
+user.notify?.(); // calls notify() only if it exists, otherwise does nothing
+
+// Works on array access
+const users = null;
+console.log(users?.[0]?.name); // undefined — safe even though users itself is null
+
+// Combine with ?? for a real fallback value
+const city = user.address?.city ?? "Unknown";
+console.log(city); // "Unknown"</pre>
+
+        <!-- SECTION 9 -->
+        <h2 id="section9"><span class="level advanced">ADVANCED</span>9. Common Pitfalls</h2>
+
+        <h3>1. Objects Are Always Compared by Reference</h3>
+        <pre>console.log({ a: 1 } === { a: 1 }); // false — different objects, same shape
+const obj = { a: 1 };
+console.log(obj === obj); // true — same reference</pre>
+
+        <h3>2. Mutating a Shared Reference</h3>
+        <pre>function addAdminRole(user) {
+    user.role = "admin"; // mutates the CALLER's object, since objects pass by reference
+}
+const person = { name: "Hana" };
+addAdminRole(person);
+console.log(person); // { name: "Hana", role: "admin" } — original was changed!</pre>
+
+        <h3>3. const Does Not Make an Object Immutable</h3>
+        <pre>const settings = { volume: 50 };
+settings.volume = 100;   // ✅ allowed — const only locks the VARIABLE binding
+console.log(settings.volume); // 100
+
+// settings = {};        // ❌ TypeError — reassigning the binding IS blocked
+
+// True immutability requires Object.freeze
+const frozen = Object.freeze({ volume: 50 });
+frozen.volume = 100;      // silently fails (or throws in strict mode)
+console.log(frozen.volume); // 50 — unchanged</pre>
+
+        <h3>4. for...in Includes Inherited Properties</h3>
+        <pre>const base = { inherited: true };
+const obj2 = Object.create(base);
+obj2.own = true;
+
+for (const key in obj2) {
+    console.log(key); // "own" AND "inherited" — walks the prototype chain!
+}
+
+// Safer: only own properties
+for (const key of Object.keys(obj2)) {
+    console.log(key); // just "own"
+}</pre>
+
+        <!-- SECTION 10 -->
+        <h2 id="section10"><span class="level intermediate">INTERMEDIATE</span>10. Best Practices</h2>
+
+        <h3>1. Use Shorthand Syntax</h3>
+        <pre>// ✅ Concise
+const name = "Ivy", age = 33;
+const user = { name, age, greet() { return "Hi " + this.name; } };</pre>
+
+        <h3>2. Prefer Destructuring Over Repeated Dot Access</h3>
+        <pre>// ✅ Cleaner
+const { name, email, age } = user;
+
+// ❌ Repetitive
+const name2 = user.name;
+const email2 = user.email;
+const age2 = user.age;</pre>
+
+        <h3>3. Use Optional Chaining for Uncertain Nested Data</h3>
+        <pre>// ✅ Safe against missing API fields
+const city = response?.data?.address?.city ?? "Unknown";</pre>
+
+        <h3>4. Avoid Deep Mutation — Create New Objects Instead</h3>
+        <pre>// ✅ Predictable, easier to track changes (especially in React-like state)
+const updated = { ...config, timeout: 10000 };
+
+// ❌ Mutating shared state directly
+config.timeout = 10000;</pre>
+
+        <h3>5. Use Object.freeze for True Constants</h3>
+        <pre>const CONFIG = Object.freeze({
+    API_URL: "https://api.example.com",
+    MAX_RETRIES: 3
+});
+// Any attempt to modify CONFIG's properties is silently ignored (or throws in strict mode)</pre>
+
+        <!-- SUMMARY -->
+        <h2 style="margin-top: 40px;">📋 Quick Reference Summary</h2>
+
+        <div class="table-wrap">
+        <table>
+            <tr>
+                <th>Concept</th>
+                <th>Key Points</th>
+            </tr>
+            <tr>
+                <td><strong>Access</strong></td>
+                <td>Dot notation for known keys, bracket notation for dynamic/invalid-identifier keys.</td>
+            </tr>
+            <tr>
+                <td><strong>Mutation</strong></td>
+                <td>Assign to add/update; <code>delete obj.key</code> to remove. Objects are mutable by default.</td>
+            </tr>
+            <tr>
+                <td><strong>Methods</strong></td>
+                <td>Functions as properties. Use regular/shorthand methods for correct <code>this</code>.</td>
+            </tr>
+            <tr>
+                <td><strong>Destructuring</strong></td>
+                <td><code>const { a, b } = obj</code> unpacks properties, supports renaming and defaults.</td>
+            </tr>
+            <tr>
+                <td><strong>Spread</strong></td>
+                <td><code>{ ...obj, key: val }</code> shallow-copies and merges — nested objects still shared.</td>
+            </tr>
+            <tr>
+                <td><strong>Safe access</strong></td>
+                <td><code>obj?.a?.b</code> for optional chaining, <code>?? fallback</code> for nullish defaults.</td>
+            </tr>
+        </table>
+        </div>
+
+        <div style="margin-top: 40px; padding: 20px; background: #ecf0f1; border-radius: 5px;">
+            <h3>🎓 Learning Path</h3>
+            <p><strong>Beginner:</strong> Master sections 1, 2, 3, 7</p>
+            <p><strong>Intermediate:</strong> Understand sections 4, 5, 6, 10</p>
+            <p><strong>Advanced:</strong> Deep dive into sections 8, 9</p>
+        </div>
+
+    </div>
+</body>
+</html>

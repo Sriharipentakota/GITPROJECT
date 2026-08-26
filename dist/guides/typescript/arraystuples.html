@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TypeScript Arrays, Tuples & Enums: Complete Guide</title>
+    <link rel="stylesheet" href="/guides/guide-base.css">
+</head>
+<body>
+    <div class="container">
+        <h1>📚 TypeScript Arrays, Tuples & Enums: Complete Guide</h1>
+        <p style="font-size: 1.1em; color: #7f8c8d; margin-bottom: 20px;">
+            A comprehensive journey from fundamental concepts to advanced techniques
+        </p>
+
+        <div class="toc">
+            <h3>📚 Table of Contents</h3>
+            <ul>
+                <li><a href="#section1">1. Typing Arrays</a></li>
+                <li><a href="#section2">2. Array of Objects and Union Element Types</a></li>
+                <li><a href="#section3">3. readonly Arrays</a></li>
+                <li><a href="#section4">4. Introducing Tuples</a></li>
+                <li><a href="#section5">5. Optional and Rest Elements in Tuples</a></li>
+                <li><a href="#section6">6. Named Tuple Members</a></li>
+                <li><a href="#section7">7. Numeric Enums</a></li>
+                <li><a href="#section8">8. String Enums and const enum</a></li>
+                <li><a href="#section9">9. Enums vs Union Literal Types</a></li>
+                <li><a href="#section10">10. Best Practices</a></li>
+            </ul>
+        </div>
+
+        <!-- SECTION 1 -->
+        <h2 id="section1"><span class="level beginner">BEGINNER</span>1. Typing Arrays</h2>
+
+        <h3>Definition</h3>
+        <p>Arrays in TypeScript are annotated using either <code>T[]</code> or the equivalent generic form <code>Array&lt;T&gt;</code>, where <code>T</code> is the type of every element.</p>
+
+        <pre>let names: string[] = ["Alice", "Bob", "Carol"];
+let scores: Array<number> = [95, 88, 76];
+
+names.push("Dave");     // ✅ OK
+// names.push(42);      // ❌ Error: Argument of type 'number' is not
+//                          assignable to parameter of type 'string'</pre>
+
+        <div class="example">
+            <strong>Two equivalent syntaxes:</strong> <code>number[]</code> and <code>Array&lt;number&gt;</code> mean exactly the same thing. <code>T[]</code> is more common for simple types; <code>Array&lt;T&gt;</code> can read more clearly for complex generic types.
+        </div>
+
+        <h3>Empty Arrays Need Annotations</h3>
+        <pre>let results: number[] = [];   // ✅ explicit - safe to push numbers later
+// let results = [];          // inferred as any[] without an annotation
+
+results.push(10);
+// results.push("ten");       // ❌ Error, thanks to the annotation</pre>
+
+        <!-- SECTION 2 -->
+        <h2 id="section2"><span class="level beginner">BEGINNER</span>2. Array of Objects and Union Element Types</h2>
+
+        <h3>Array of Objects</h3>
+        <pre>interface Task {
+    id: number;
+    title: string;
+    done: boolean;
+}
+
+const tasks: Task[] = [
+    { id: 1, title: "Write guide", done: false },
+    { id: 2, title: "Review PR", done: true }
+];
+
+tasks.forEach((task) => console.log(task.title));</pre>
+
+        <h3>Arrays with Union Element Types</h3>
+        <pre>let mixed: (string | number)[] = ["id", 42, "name", 7];
+
+mixed.forEach((item) => {
+    if (typeof item === "string") {
+        console.log(item.toUpperCase());
+    } else {
+        console.log(item.toFixed(2));
+    }
+});</pre>
+
+        <h3>Multidimensional Arrays</h3>
+        <pre>const grid: number[][] = [
+    [1, 2, 3],
+    [4, 5, 6],
+    [7, 8, 9]
+];
+
+console.log(grid[1][2]);   // 6</pre>
+
+        <!-- SECTION 3 -->
+        <h2 id="section3"><span class="level intermediate">INTERMEDIATE</span>3. readonly Arrays</h2>
+
+        <p>Mark an array as immutable when it should never be mutated after creation, catching accidental <code>.push()</code>/<code>.sort()</code> calls at compile time.</p>
+
+        <pre>const weekdays: readonly string[] = ["Mon", "Tue", "Wed", "Thu", "Fri"];
+// weekdays.push("Sat");   // ❌ Error: Property 'push' does not exist
+//                            on type 'readonly string[]'
+
+// Equivalent generic form
+const numbers: ReadonlyArray<number> = [1, 2, 3];
+
+// Producing a new array is still fine
+const withSaturday = [...weekdays, "Sat"];   // ✅ OK - new array</pre>
+
+        <h3>as const for Fully Immutable Literals</h3>
+        <pre>const directions = ["north", "south", "east", "west"] as const;
+// type is readonly ["north", "south", "east", "west"]
+
+// directions.push("up");   // ❌ Error - readonly
+// directions[0] = "up";    // ❌ Error - readonly</pre>
+
+        <div class="note">
+            <strong>💡 Tip:</strong> <code>readonly</code> only prevents mutating methods and index assignment — it doesn't create a deep freeze. Nested objects inside a readonly array can still be mutated unless they're also readonly.
+        </div>
+
+        <!-- SECTION 4 -->
+        <h2 id="section4"><span class="level intermediate">INTERMEDIATE</span>4. Introducing Tuples</h2>
+
+        <p>A tuple is an array with a <strong>fixed length</strong> and a <strong>known type at each position</strong> — unlike a regular array where every element shares the same type.</p>
+
+        <pre>let point: [number, number] = [10, 20];
+let entry: [string, number] = ["age", 30];
+
+console.log(point[0]);   // 10 (typed as number)
+console.log(entry[0]);   // "age" (typed as string)
+console.log(entry[1]);   // 30 (typed as number)
+
+// let bad: [string, number] = [30, "age"];   // ❌ Error: order matters
+// point.push(30, 40);                         // technically allowed but discouraged</pre>
+
+        <h3>Real-World Example: useState-Style Tuples</h3>
+        <pre>function useToggle(initial: boolean): [boolean, () => void] {
+    let state = initial;
+    const toggle = () => { state = !state; };
+    return [state, toggle];
+}
+
+const [isOpen, toggleOpen] = useToggle(false);</pre>
+
+        <div class="example">
+            <strong>Real-world use case:</strong> React's <code>useState</code> hook returns a tuple <code>[value, setter]</code> so that destructuring assigns precise types to each position — something a same-typed array couldn't express.
+        </div>
+
+        <!-- SECTION 5 -->
+        <h2 id="section5"><span class="level intermediate">INTERMEDIATE</span>5. Optional and Rest Elements in Tuples</h2>
+
+        <h3>Optional Tuple Elements</h3>
+        <pre>let cssSize: [number, string?];
+
+cssSize = [10];          // ✅ OK - second element optional
+cssSize = [10, "px"];    // ✅ OK</pre>
+
+        <h3>Rest Elements in Tuples</h3>
+        <pre>type StringNumberBooleans = [string, number, ...boolean[]];
+
+const record1: StringNumberBooleans = ["hi", 1];
+const record2: StringNumberBooleans = ["hi", 1, true];
+const record3: StringNumberBooleans = ["hi", 1, true, false, true];</pre>
+
+        <h3>Combining Fixed and Variadic Segments</h3>
+        <pre>type LogEntry = [level: "info" | "warn" | "error", message: string, ...details: unknown[]];
+
+const entry: LogEntry = ["error", "Failed to save", { code: 500 }, "retrying"];</pre>
+
+        <!-- SECTION 6 -->
+        <h2 id="section6"><span class="level intermediate">INTERMEDIATE</span>6. Named Tuple Members</h2>
+
+        <p>Labels can be added to tuple positions purely for readability and better editor tooltips — they don't change runtime behavior.</p>
+
+        <pre>type RGB = [red: number, green: number, blue: number];
+
+function toHex([red, green, blue]: RGB): string {
+    return "#" + [red, green, blue]
+        .map((c) => c.toString(16).padStart(2, "0"))
+        .join("");
+}
+
+toHex([255, 0, 128]);   // "#ff0080"</pre>
+
+        <div class="note">
+            <strong>💡 Tip:</strong> Named tuple elements show up in editor hover hints as <code>red: number</code> instead of just <code>number</code>, making tuple-heavy APIs much easier to use correctly.
+        </div>
+
+        <!-- SECTION 7 -->
+        <h2 id="section7"><span class="level intermediate">INTERMEDIATE</span>7. Numeric Enums</h2>
+
+        <p>An <code>enum</code> defines a set of named constants. Numeric enums auto-increment starting from 0 unless you specify values.</p>
+
+        <pre>enum Direction {
+    Up,      // 0
+    Down,    // 1
+    Left,    // 2
+    Right    // 3
+}
+
+let move: Direction = Direction.Up;
+console.log(move);              // 0
+console.log(Direction[0]);      // "Up" - reverse mapping</pre>
+
+        <h3>Custom Starting Values</h3>
+        <pre>enum HttpStatus {
+    OK = 200,
+    Created = 201,
+    NotFound = 404,
+    ServerError = 500
+}
+
+function handleResponse(status: HttpStatus) {
+    if (status === HttpStatus.OK) {
+        console.log("Success!");
+    }
+}
+
+handleResponse(HttpStatus.OK);   // Success!</pre>
+
+        <!-- SECTION 8 -->
+        <h2 id="section8"><span class="level advanced">ADVANCED</span>8. String Enums and const enum</h2>
+
+        <h3>String Enums</h3>
+        <p>String enums require every member to have its own explicit value and don't support reverse mapping, but they're far more readable when logged or debugged.</p>
+
+        <pre>enum Direction {
+    Up = "UP",
+    Down = "DOWN",
+    Left = "LEFT",
+    Right = "RIGHT"
+}
+
+console.log(Direction.Up);        // "UP" (not 0)
+// console.log(Direction["UP"]);  // ❌ no reverse mapping for string enums</pre>
+
+        <h3>const enum — Zero Runtime Cost</h3>
+        <pre>const enum LogLevel {
+    Info,
+    Warn,
+    Error
+}
+
+let level = LogLevel.Warn;
+// Compiles down to: let level = 1;
+// No LogLevel object is generated in the output JS at all</pre>
+
+        <div class="warning">
+            <strong>⚠️ Common Pitfall:</strong> <code>const enum</code> is inlined at compile time, which means it cannot be used across certain module boundaries (e.g. with <code>isolatedModules</code>, common in Babel/ts-jest/esbuild setups). Check your build tooling before relying on it.
+        </div>
+
+        <!-- SECTION 9 -->
+        <h2 id="section9"><span class="level advanced">ADVANCED</span>9. Enums vs Union Literal Types</h2>
+
+        <p>Modern TypeScript style often favors string literal unions over enums, since they require no runtime code and integrate more naturally with plain JavaScript objects.</p>
+
+        <div class="comparison">
+            <div>
+                <strong>enum:</strong>
+                <pre>enum Status {
+    Pending = "PENDING",
+    Active = "ACTIVE",
+    Closed = "CLOSED"
+}
+
+function setStatus(s: Status) {}
+setStatus(Status.Active);
+// Generates a real JS object at runtime</pre>
+            </div>
+            <div>
+                <strong>Union literal:</strong>
+                <pre>type Status = "PENDING" | "ACTIVE" | "CLOSED";
+
+function setStatus(s: Status) {}
+setStatus("ACTIVE");
+// Zero runtime footprint</pre>
+            </div>
+        </div>
+
+        <div class="table-wrap">
+        <table class="table-compact">
+            <tr>
+                <th>Aspect</th>
+                <th>enum</th>
+                <th>Union literal type</th>
+            </tr>
+            <tr>
+                <td>Runtime code generated</td>
+                <td>✅ Yes (unless const enum)</td>
+                <td>❌ No</td>
+            </tr>
+            <tr>
+                <td>Works with plain string values</td>
+                <td>❌ No (needs the enum member)</td>
+                <td>✅ Yes</td>
+            </tr>
+            <tr>
+                <td>Namespacing (Status.Active)</td>
+                <td>✅ Yes</td>
+                <td>❌ No</td>
+            </tr>
+            <tr>
+                <td>Common in modern codebases</td>
+                <td>Less common</td>
+                <td>✅ Increasingly preferred</td>
+            </tr>
+        </table>
+        </div>
+
+        <!-- SECTION 10 -->
+        <h2 id="section10"><span class="level advanced">ADVANCED</span>10. Best Practices</h2>
+
+        <h3>1. Annotate Empty Arrays</h3>
+        <pre>// ✅ Good
+const ids: number[] = [];</pre>
+
+        <h3>2. Use Tuples for Fixed, Heterogeneous Structures</h3>
+        <pre>// ✅ Good - clear meaning at each position
+function divide(a: number, b: number): [quotient: number, remainder: number] {
+    return [Math.floor(a / b), a % b];
+}</pre>
+
+        <h3>3. Prefer Union Literals Over Enums for Simple Sets</h3>
+        <pre>// ✅ Often preferred in modern code
+type Theme = "light" | "dark" | "system";</pre>
+
+        <h3>4. Reach for enum When You Need Namespacing or Reverse Lookup</h3>
+        <pre>// ✅ Good use case - grouped, related constants
+enum Permission {
+    Read = "READ",
+    Write = "WRITE",
+    Admin = "ADMIN"
+}</pre>
+
+        <h3>5. Freeze Arrays That Represent Fixed Configuration</h3>
+        <pre>// ✅ Good
+const SUPPORTED_LOCALES = ["en", "fr", "es"] as const;
+type Locale = typeof SUPPORTED_LOCALES[number];   // "en" | "fr" | "es"</pre>
+
+        <!-- SUMMARY -->
+        <h2 style="margin-top: 40px;">📋 Quick Reference Summary</h2>
+
+        <div class="table-wrap">
+        <table>
+            <tr>
+                <th>Concept</th>
+                <th>Key Points</th>
+            </tr>
+            <tr>
+                <td><strong>T[] / Array&lt;T&gt;</strong></td>
+                <td>Homogeneous, variable-length collections</td>
+            </tr>
+            <tr>
+                <td><strong>readonly T[]</strong></td>
+                <td>Blocks mutating methods; use <code>as const</code> for literal-frozen arrays</td>
+            </tr>
+            <tr>
+                <td><strong>Tuples [T, U]</strong></td>
+                <td>Fixed-length, position-typed arrays; support optional/rest/named elements</td>
+            </tr>
+            <tr>
+                <td><strong>Numeric enum</strong></td>
+                <td>Auto-incrementing named constants; supports reverse mapping</td>
+            </tr>
+            <tr>
+                <td><strong>String enum</strong></td>
+                <td>Explicit string values per member; readable at runtime, no reverse mapping</td>
+            </tr>
+            <tr>
+                <td><strong>const enum</strong></td>
+                <td>Inlined at compile time, zero runtime object generated</td>
+            </tr>
+            <tr>
+                <td><strong>Union literal type</strong></td>
+                <td>Lightweight, no-runtime-cost alternative to simple enums</td>
+            </tr>
+        </table>
+        </div>
+
+        <div style="margin-top: 40px; padding: 20px; background: #ecf0f1; border-radius: 5px;">
+            <h3>🎓 Learning Path</h3>
+            <p><strong>Beginner:</strong> Master sections 1, 2</p>
+            <p><strong>Intermediate:</strong> Understand sections 3, 4, 5, 6, 7</p>
+            <p><strong>Advanced:</strong> Deep dive into sections 8, 9, 10</p>
+        </div>
+
+    </div>
+</body>
+</html>

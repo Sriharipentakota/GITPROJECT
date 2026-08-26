@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Playwright Installation & Setup: Complete Guide</title>
+    <link rel="stylesheet" href="/guides/guide-base.css">
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Playwright Installation & Setup: Complete Guide</h1>
+        <p style="font-size: 1.1em; color: #7f8c8d; margin-bottom: 20px;">
+            From zero to a running test suite — scaffolding, browsers, CLI, and CI
+        </p>
+
+        <div class="toc">
+            <h3>📚 Table of Contents</h3>
+            <ul>
+                <li><a href="#section1">1. What is Playwright?</a></li>
+                <li><a href="#section2">2. Bootstrapping with npm init playwright@latest</a></li>
+                <li><a href="#section3">3. The Generated Project Structure</a></li>
+                <li><a href="#section4">4. Installing and Managing Browsers</a></li>
+                <li><a href="#section5">5. Running Tests from the CLI</a></li>
+                <li><a href="#section6">6. UI Mode and Debug Mode</a></li>
+                <li><a href="#section7">7. The HTML Reporter</a></li>
+                <li><a href="#section8">8. Setting Up Continuous Integration</a></li>
+                <li><a href="#section9">9. Common Setup Pitfalls</a></li>
+            </ul>
+        </div>
+
+        <!-- SECTION 1 -->
+        <h2 id="section1"><span class="level beginner">BEGINNER</span>1. What is Playwright?</h2>
+
+        <p><strong>Playwright</strong> is a modern, open-source end-to-end testing framework created by Microsoft. A single API drives three browser engines — <strong>Chromium</strong> (Chrome/Edge), <strong>Firefox</strong>, and <strong>WebKit</strong> (Safari) — so one test file can validate your app across the entire browser landscape without rewriting anything per browser.</p>
+
+        <p>Unlike older tools that bolted a test runner and assertion library onto a browser driver, Playwright ships all three as one cohesive package: <code>@playwright/test</code>. You get a test runner, an <code>expect()</code> assertion library with auto-retrying matchers, parallel execution, and rich debugging artifacts (screenshots, video, traces) out of the box.</p>
+
+        <div class="example">
+            <strong>Why teams choose Playwright:</strong> auto-waiting eliminates most manual <code>sleep()</code> calls, a single install script downloads matching browser binaries (no version-mismatch surprises), and the Trace Viewer lets you time-travel through a failed test step by step.
+        </div>
+
+        <h3>Playwright vs. Alternatives</h3>
+        <div class="table-wrap">
+        <table class="table-compact">
+            <tr>
+                <th>Feature</th>
+                <th>Playwright</th>
+                <th>Selenium</th>
+                <th>Cypress</th>
+            </tr>
+            <tr>
+                <td>Browser engines</td>
+                <td>Chromium, Firefox, WebKit</td>
+                <td>Any via WebDriver</td>
+                <td>Chromium-family, Firefox</td>
+            </tr>
+            <tr>
+                <td>Auto-waiting</td>
+                <td>✅ Built in</td>
+                <td>❌ Manual waits</td>
+                <td>✅ Built in</td>
+            </tr>
+            <tr>
+                <td>Multi-tab / multi-origin</td>
+                <td>✅ Native</td>
+                <td>⚠️ Clunky</td>
+                <td>❌ Limited</td>
+            </tr>
+            <tr>
+                <td>Built-in test runner</td>
+                <td>✅ Yes</td>
+                <td>❌ No (needs JUnit/TestNG)</td>
+                <td>✅ Yes</td>
+            </tr>
+            <tr>
+                <td>True parallelism</td>
+                <td>✅ Multi-process workers</td>
+                <td>⚠️ Grid setup required</td>
+                <td>⚠️ Paid dashboard for parallel</td>
+            </tr>
+        </table>
+        </div>
+
+        <!-- SECTION 2 -->
+        <h2 id="section2"><span class="level beginner">BEGINNER</span>2. Bootstrapping with npm init playwright@latest</h2>
+
+        <p>The fastest way to start a new project is the official scaffolding wizard. It installs dependencies, downloads browsers, and generates a working example — all in one command.</p>
+
+        <pre>npm init playwright@latest</pre>
+
+        <p>The wizard asks four questions:</p>
+        <ul style="margin: 15px 0; margin-left: 20px;">
+            <li><strong>TypeScript or JavaScript?</strong> — TypeScript is the default and recommended choice</li>
+            <li><strong>Name of your Tests folder</strong> — defaults to <code>tests</code> (or <code>e2e</code>)</li>
+            <li><strong>Add a GitHub Actions workflow?</strong> — scaffolds <code>.github/workflows/playwright.yml</code></li>
+            <li><strong>Install Playwright browsers now?</strong> — downloads Chromium, Firefox, and WebKit</li>
+        </ul>
+
+        <div class="note">
+            <strong>💡 Tip:</strong> You can add Playwright to an <em>existing</em> project the same way — the wizard detects your package manager (npm, yarn, or pnpm) and merges into your existing <code>package.json</code> rather than overwriting it.
+        </div>
+
+        <h3>Adding to an Existing Project Manually</h3>
+        <pre>npm install -D @playwright/test
+npx playwright install</pre>
+
+        <!-- SECTION 3 -->
+        <h2 id="section3"><span class="level beginner">BEGINNER</span>3. The Generated Project Structure</h2>
+
+        <p>After the wizard finishes, you'll see a predictable layout:</p>
+
+        <pre>my-project/
+├── tests/
+│   └── example.spec.ts        # sample test — safe to delete
+├── tests-examples/
+│   └── demo-todo-app.spec.ts  # richer reference example
+├── playwright.config.ts       # central configuration
+├── package.json
+└── .github/
+    └── workflows/
+        └── playwright.yml      # CI workflow (if you opted in)</pre>
+
+        <h3>Minimal playwright.config.ts</h3>
+        <pre>import { defineConfig, devices } from '@playwright/test';
+
+export default defineConfig({
+  testDir: './tests',
+  timeout: 30_000,
+  retries: process.env.CI ? 2 : 0,
+  reporter: 'html',
+  use: {
+    baseURL: 'http://localhost:3000',
+    trace: 'on-first-retry',
+  },
+  projects: [
+    { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
+    { name: 'firefox',  use: { ...devices['Desktop Firefox'] } },
+    { name: 'webkit',   use: { ...devices['Desktop Safari'] } },
+  ],
+});</pre>
+
+        <div class="example">
+            <strong>What each piece does:</strong> <code>testDir</code> tells Playwright where to look for spec files, <code>use.baseURL</code> lets every test call <code>page.goto('/login')</code> instead of a full URL, and <code>projects</code> defines which browser engines every test runs against.
+        </div>
+
+        <!-- SECTION 4 -->
+        <h2 id="section4"><span class="level beginner">BEGINNER</span>4. Installing and Managing Browsers</h2>
+
+        <p>Playwright doesn't use the browsers already installed on your machine — it downloads its own tested, pinned versions of Chromium, Firefox, and WebKit so tests behave identically on every developer machine and CI runner.</p>
+
+        <pre>npx playwright install                # all three browsers
+npx playwright install chromium       # just one
+npx playwright install --with-deps    # + OS-level libraries (needed on fresh Linux CI images)</pre>
+
+        <div class="warning">
+            <strong>⚠️ Common Pitfall:</strong> On a fresh Ubuntu CI image, <code>npx playwright install</code> alone often fails at runtime with missing shared library errors. Always use <code>--with-deps</code> in Linux CI containers — it installs the OS packages (fonts, codecs, GTK libraries) that the browsers need to actually launch.
+        </div>
+
+        <h3>Where Browsers Are Stored</h3>
+        <p>Downloaded browsers live in a shared cache directory (<code>~/.cache/ms-playwright</code> on Linux/macOS, <code>%USERPROFILE%\AppData\Local\ms-playwright</code> on Windows) — not inside <code>node_modules</code>. This means multiple projects on the same machine reuse the same binaries instead of re-downloading them.</p>
+
+        <!-- SECTION 5 -->
+        <h2 id="section5"><span class="level beginner">BEGINNER</span>5. Running Tests from the CLI</h2>
+
+        <pre>npx playwright test                    # run every test
+npx playwright test login.spec.ts      # a single file
+npx playwright test --headed           # show the browser window
+npx playwright test --grep "checkout"  # filter by title text
+npx playwright test --project=chromium # run one browser project only
+npx playwright test --workers=4        # cap parallel workers</pre>
+
+        <div class="comparison">
+            <div>
+                <strong>Headless (default, CI-friendly):</strong>
+                <pre>npx playwright test
+# No visible window; fastest execution</pre>
+            </div>
+            <div>
+                <strong>Headed (local debugging):</strong>
+                <pre>npx playwright test --headed
+# Opens a real browser window you can watch</pre>
+            </div>
+        </div>
+
+        <!-- SECTION 6 -->
+        <h2 id="section6"><span class="level intermediate">INTERMEDIATE</span>6. UI Mode and Debug Mode</h2>
+
+        <p>Two interactive modes make failures far easier to diagnose than reading terminal output alone.</p>
+
+        <h3>UI Mode</h3>
+        <pre>npx playwright test --ui</pre>
+        <p>Opens a visual dashboard: a list of every test, a timeline you can scrub through, and a "watch mode" that re-runs tests automatically as you edit files. Each step shows a DOM snapshot — you can literally see what the page looked like when a locator resolved (or failed to).</p>
+
+        <h3>Debug Mode</h3>
+        <pre>npx playwright test --debug
+npx playwright test login.spec.ts --debug   # scoped to one file</pre>
+        <p>Launches the Playwright Inspector, which pauses <em>before</em> the first action and lets you step through the test line by line, inspect locators live against the running page, and even generate new locators by clicking on the page.</p>
+
+        <div class="note">
+            <strong>💡 Tip:</strong> Add <code>await page.pause()</code> anywhere in a test to drop into the Inspector at that exact point, without running the whole file in <code>--debug</code> mode.
+        </div>
+
+        <!-- SECTION 7 -->
+        <h2 id="section7"><span class="level intermediate">INTERMEDIATE</span>7. The HTML Reporter</h2>
+
+        <pre>npx playwright test --reporter=html
+npx playwright show-report            # serves the last report locally</pre>
+
+        <p>The HTML report is a self-contained, shareable artifact — attach screenshots, embedded videos, and full traces for every failed test, all viewable in a browser with zero server setup beyond <code>show-report</code>'s built-in static server.</p>
+
+        <div class="table-wrap">
+        <table>
+            <tr>
+                <th>Reporter</th>
+                <th>Best for</th>
+            </tr>
+            <tr>
+                <td><code>html</code></td>
+                <td>Local review and CI artifact upload — rich, interactive</td>
+            </tr>
+            <tr>
+                <td><code>dot</code></td>
+                <td>Fast local runs — one character per test</td>
+            </tr>
+            <tr>
+                <td><code>list</code></td>
+                <td>Verbose console output showing every test title</td>
+            </tr>
+            <tr>
+                <td><code>junit</code></td>
+                <td>Feeding results into non-native CI dashboards</td>
+            </tr>
+            <tr>
+                <td><code>github</code></td>
+                <td>Inline PR annotations on GitHub Actions</td>
+            </tr>
+        </table>
+        </div>
+
+        <!-- SECTION 8 -->
+        <h2 id="section8"><span class="level advanced">ADVANCED</span>8. Setting Up Continuous Integration</h2>
+
+        <p>A CI workflow needs to install dependencies, download browsers with their OS libraries, run the suite, and preserve the report as a downloadable artifact — especially important because a failed CI run's HTML report is often the only way to diagnose an environment-specific failure.</p>
+
+        <pre>name: Playwright Tests
+on: [push, pull_request]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20 }
+      - run: npm ci
+      - run: npx playwright install --with-deps
+      - run: npx playwright test
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 30</pre>
+
+        <div class="example">
+            <strong>Why <code>if: always()</code> matters:</strong> without it, the artifact upload step is skipped whenever tests fail — which is exactly the moment you most need the report. <code>if: always()</code> makes the upload run regardless of the test step's outcome.
+        </div>
+
+        <h3>package.json Convenience Scripts</h3>
+        <pre>{
+  "scripts": {
+    "test":        "npx playwright test",
+    "test:headed": "npx playwright test --headed",
+    "test:ui":     "npx playwright test --ui",
+    "test:debug":  "npx playwright test --debug",
+    "report":      "npx playwright show-report"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.48.0"
+  }
+}</pre>
+
+        <!-- SECTION 9 -->
+        <h2 id="section9"><span class="level advanced">ADVANCED</span>9. Common Setup Pitfalls</h2>
+
+        <div class="warning">
+            <strong>⚠️ Pitfall 1 — Version drift:</strong> <code>@playwright/test</code> and the downloaded browser binaries must stay in lockstep. If you bump the npm package version, always re-run <code>npx playwright install</code> so the binaries match. Mismatched versions can cause confusing, hard-to-reproduce failures.
+        </div>
+
+        <div class="warning">
+            <strong>⚠️ Pitfall 2 — Forgetting <code>--with-deps</code> on Linux:</strong> Docker images and minimal CI runners frequently lack the shared libraries WebKit and Firefox need. The error message ("error while loading shared libraries") is a strong signal to add <code>--with-deps</code>.
+        </div>
+
+        <div class="warning">
+            <strong>⚠️ Pitfall 3 — No <code>baseURL</code> configured:</strong> Without <code>use.baseURL</code> in the config, every <code>page.goto('/path')</code> call throws because Playwright has no origin to resolve the relative path against. Set it once in the config instead of hardcoding full URLs in every test.
+        </div>
+
+        <h3>Checking Your Installed Version</h3>
+        <pre>npx playwright --version</pre>
+
+        <!-- SUMMARY -->
+        <h2 style="margin-top: 40px;">📋 Quick Reference Summary</h2>
+
+        <div class="table-wrap">
+        <table>
+            <tr>
+                <th>Concept</th>
+                <th>Key Points</th>
+            </tr>
+            <tr>
+                <td><strong>Scaffold</strong></td>
+                <td><code>npm init playwright@latest</code> — generates config, sample test, optional CI workflow.</td>
+            </tr>
+            <tr>
+                <td><strong>Browsers</strong></td>
+                <td><code>npx playwright install [--with-deps]</code> — Playwright manages its own pinned binaries.</td>
+            </tr>
+            <tr>
+                <td><strong>Run tests</strong></td>
+                <td><code>npx playwright test</code>, with <code>--headed</code>, <code>--grep</code>, <code>--project</code>, <code>--workers</code> flags.</td>
+            </tr>
+            <tr>
+                <td><strong>Debugging</strong></td>
+                <td><code>--ui</code> for a visual dashboard, <code>--debug</code> or <code>page.pause()</code> for step-by-step Inspector.</td>
+            </tr>
+            <tr>
+                <td><strong>Reporting</strong></td>
+                <td><code>--reporter=html</code> + <code>npx playwright show-report</code> for a shareable, interactive report.</td>
+            </tr>
+            <tr>
+                <td><strong>CI</strong></td>
+                <td>Install with <code>--with-deps</code>, always upload the report artifact with <code>if: always()</code>.</td>
+            </tr>
+        </table>
+        </div>
+
+        <div style="margin-top: 40px; padding: 20px; background: #ecf0f1; border-radius: 5px;">
+            <h3>🎓 Learning Path</h3>
+            <p><strong>Beginner:</strong> Master sections 1, 2, 3, 4, 5</p>
+            <p><strong>Intermediate:</strong> Understand sections 6, 7</p>
+            <p><strong>Advanced:</strong> Deep dive into sections 8, 9</p>
+        </div>
+
+    </div>
+</body>
+</html>

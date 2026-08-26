@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JavaScript Events: Complete Guide</title>
+    <link rel="stylesheet" href="/guides/guide-base.css">
+</head>
+<body>
+    <div class="container">
+        <h1>⚡ JavaScript Events: Complete Guide</h1>
+        <p style="font-size: 1.1em; color: #7f8c8d; margin-bottom: 20px;">
+            A comprehensive journey from fundamental concepts to advanced techniques
+        </p>
+
+        <div class="toc">
+            <h3>📚 Table of Contents</h3>
+            <ul>
+                <li><a href="#section1">1. What is an Event?</a></li>
+                <li><a href="#section2">2. addEventListener</a></li>
+                <li><a href="#section3">3. The Event Object</a></li>
+                <li><a href="#section4">4. preventDefault()</a></li>
+                <li><a href="#section5">5. Event Bubbling & Capturing</a></li>
+                <li><a href="#section6">6. stopPropagation()</a></li>
+                <li><a href="#section7">7. Event Delegation</a></li>
+                <li><a href="#section8">8. Removing Listeners</a></li>
+                <li><a href="#section9">9. Common Pitfalls</a></li>
+                <li><a href="#section10">10. Best Practices</a></li>
+            </ul>
+        </div>
+
+        <!-- SECTION 1 -->
+        <h2 id="section1"><span class="level beginner">BEGINNER</span>1. What is an Event?</h2>
+
+        <p>An <strong>event</strong> is a signal that something happened — a user clicked, typed, scrolled, submitted a form, or the page finished loading. JavaScript lets you "listen" for these signals and react to them.</p>
+
+        <div class="example">
+            <strong>Real-world analogy:</strong> Events are like a fire alarm system. When something happens in one room (the target), the alarm fires there first, then travels up through the building — floor alarm, building alarm. That's bubbling.
+        </div>
+
+        <h3>Common Event Types</h3>
+        <ul style="margin: 15px 0; margin-left: 20px;">
+            <li><strong>Mouse:</strong> <code>click</code>, <code>dblclick</code>, <code>mouseover</code>, <code>mouseout</code></li>
+            <li><strong>Keyboard:</strong> <code>keydown</code>, <code>keyup</code></li>
+            <li><strong>Form:</strong> <code>submit</code>, <code>input</code>, <code>change</code>, <code>focus</code>, <code>blur</code></li>
+            <li><strong>Window:</strong> <code>load</code>, <code>resize</code>, <code>scroll</code>, <code>DOMContentLoaded</code></li>
+        </ul>
+
+        <!-- SECTION 2 -->
+        <h2 id="section2"><span class="level beginner">BEGINNER</span>2. addEventListener</h2>
+
+        <p><code>addEventListener(type, handler)</code> registers a function to run when an event fires. Always use it instead of assigning to <code>onclick</code> — <code>addEventListener</code> allows MULTIPLE handlers on the same element.</p>
+
+        <pre>const btn = document.querySelector("#btn");
+
+btn.addEventListener("click", () => {
+    console.log("Button clicked!");
+});
+
+// Multiple listeners on the SAME event — both run
+btn.addEventListener("click", () => console.log("First handler"));
+btn.addEventListener("click", () => console.log("Second handler"));
+// Clicking logs BOTH lines</pre>
+
+        <div class="comparison">
+            <div>
+                <strong>❌ onclick — overwrites previous handlers:</strong>
+                <pre>btn.onclick = () => console.log("A");
+btn.onclick = () => console.log("B");
+// Only "B" ever runs — "A" is GONE</pre>
+            </div>
+            <div>
+                <strong>✅ addEventListener — stacks handlers:</strong>
+                <pre>btn.addEventListener("click", () => console.log("A"));
+btn.addEventListener("click", () => console.log("B"));
+// Both "A" and "B" run</pre>
+            </div>
+        </div>
+
+        <!-- SECTION 3 -->
+        <h2 id="section3"><span class="level beginner">BEGINNER</span>3. The Event Object</h2>
+
+        <p>Every handler automatically receives an <strong>event object</strong> describing what happened.</p>
+
+        <pre>document.querySelector("#btn").addEventListener("click", (e) => {
+    console.log(e.target);        // the exact element that was clicked
+    console.log(e.currentTarget); // the element the listener is attached to
+    console.log(e.type);          // "click"
+});
+
+document.querySelector("input").addEventListener("keydown", (e) => {
+    console.log(e.key);      // e.g. "Enter", "Escape", "a"
+    console.log(e.code);     // e.g. "Enter", "KeyA" — physical key, layout-independent
+    if (e.key === "Enter") {
+        console.log("Enter was pressed");
+    }
+});</pre>
+
+        <div class="note">
+            <strong>💡 Tip:</strong> <code>e.target</code> and <code>e.currentTarget</code> are often the SAME element, but not always — <code>target</code> is where the event originated, <code>currentTarget</code> is where the listener you're inside was attached. This matters a lot for event delegation (Section 7).
+        </div>
+
+        <!-- SECTION 4 -->
+        <h2 id="section4"><span class="level intermediate">INTERMEDIATE</span>4. preventDefault()</h2>
+
+        <p>Many events have a built-in browser DEFAULT action — following a link, submitting a form and reloading the page. <code>e.preventDefault()</code> cancels that default so you can handle it yourself.</p>
+
+        <pre>const form = document.querySelector("form");
+
+form.addEventListener("submit", (e) => {
+    e.preventDefault(); // stops the page from reloading
+    const data = new FormData(form);
+    console.log("Submitting via JS instead:", Object.fromEntries(data));
+    // ... send data with fetch() instead of a full page reload
+});
+
+// Also common on links
+document.querySelector("a.tab-link").addEventListener("click", (e) => {
+    e.preventDefault(); // don't navigate away
+    showTab(e.target.dataset.tab);
+});</pre>
+
+        <!-- SECTION 5 -->
+        <h2 id="section5"><span class="level intermediate">INTERMEDIATE</span>5. Event Bubbling & Capturing</h2>
+
+        <p>Most events travel through THREE phases: <strong>capturing</strong> (top-down, from <code>document</code> to the target), the <strong>target</strong> phase, then <strong>bubbling</strong> (bottom-up, back to <code>document</code>). By default, listeners fire during the bubbling phase.</p>
+
+        <pre>&lt;div id="outer"&gt;
+    &lt;button id="inner"&gt;Click me&lt;/button&gt;
+&lt;/div&gt;
+
+document.querySelector("#outer").addEventListener("click", () => {
+    console.log("outer div handler");
+});
+document.querySelector("#inner").addEventListener("click", () => {
+    console.log("inner button handler");
+});
+
+// Clicking the button logs BOTH, in this order (bubbling — inside out):
+// "inner button handler"
+// "outer div handler"</pre>
+
+        <h3>Capturing Phase</h3>
+        <pre>// Pass { capture: true } to listen during the DOWNWARD (capturing) phase instead
+document.querySelector("#outer").addEventListener(
+    "click",
+    () => console.log("outer (capturing)"),
+    { capture: true }
+);
+// This would fire BEFORE the inner button's bubbling-phase handler</pre>
+
+        <!-- SECTION 6 -->
+        <h2 id="section6"><span class="level intermediate">INTERMEDIATE</span>6. stopPropagation()</h2>
+
+        <p><code>e.stopPropagation()</code> stops an event from continuing its journey through the bubbling (or capturing) phases — ancestor listeners further along the path will NOT fire.</p>
+
+        <pre>const outer = document.querySelector("#outer");
+const inner = document.querySelector("#inner");
+
+outer.addEventListener("click", () => console.log("outer clicked"));
+inner.addEventListener("click", (e) => {
+    console.log("inner clicked");
+    e.stopPropagation(); // outer's handler will NOT run
+});
+
+// Clicking #inner now only logs:
+// "inner clicked"</pre>
+
+        <div class="warning">
+            <strong>⚠️ Use Sparingly:</strong> Overusing <code>stopPropagation()</code> can break event delegation patterns elsewhere in your app that rely on bubbling to a common ancestor. Only stop propagation when you have a specific reason to isolate the event.
+        </div>
+
+        <!-- SECTION 7 -->
+        <h2 id="section7"><span class="level advanced">ADVANCED</span>7. Event Delegation</h2>
+
+        <p><strong>Event delegation</strong> exploits bubbling: instead of attaching a listener to every child element, attach ONE listener to a shared parent and inspect <code>e.target</code> to determine what was actually clicked. This automatically works for elements added LATER, too.</p>
+
+        <pre>const list = document.querySelector("ul");
+
+// One listener handles clicks on ALL current AND future <li> elements
+list.addEventListener("click", (e) => {
+    if (!e.target.matches("li")) return; // ignore clicks that aren't on an <li>
+    e.target.classList.toggle("done");
+    console.log("Toggled:", e.target.textContent);
+});
+
+// New items added later are automatically handled — no extra listeners needed!
+const newItem = document.createElement("li");
+newItem.textContent = "New task";
+list.append(newItem);</pre>
+
+        <div class="example">
+            <strong>Why this matters:</strong> Attaching a listener directly to a dynamically-created element only works if you remember to re-attach it every time. Delegation on a stable parent means you register the listener ONCE and never worry about it again.
+        </div>
+
+        <!-- SECTION 8 -->
+        <h2 id="section8"><span class="level advanced">ADVANCED</span>8. Removing Listeners</h2>
+
+        <p><code>removeEventListener</code> requires the EXACT SAME function reference used in <code>addEventListener</code> — an inline arrow function or anonymous function can never be removed because there's no way to refer back to it.</p>
+
+        <pre>// ❌ Cannot be removed — no reference was kept
+btn.addEventListener("click", () => console.log("clicked"));
+// btn.removeEventListener("click", () => console.log("clicked")); // does NOTHING — different function!
+
+// ✅ Store the function in a variable to remove it later
+function handleClick() {
+    console.log("clicked");
+}
+btn.addEventListener("click", handleClick);
+btn.removeEventListener("click", handleClick); // works — same reference
+
+// { once: true } — auto-removes the listener after it fires ONE time
+btn.addEventListener("click", () => console.log("only once"), { once: true });</pre>
+
+        <!-- SECTION 9 -->
+        <h2 id="section9"><span class="level advanced">ADVANCED</span>9. Common Pitfalls</h2>
+
+        <h3>1. Using onclick Instead of addEventListener</h3>
+        <pre>// ❌ Only one handler can ever exist — later assignments silently replace earlier ones
+el.onclick = handlerA;
+el.onclick = handlerB; // handlerA is gone!
+
+// ✅ addEventListener lets multiple parts of code listen independently
+el.addEventListener("click", handlerA);
+el.addEventListener("click", handlerB);</pre>
+
+        <h3>2. Forgetting preventDefault on Forms</h3>
+        <pre>// ❌ Page reloads, losing all JS state, before your handler even finishes
+form.addEventListener("submit", (e) => {
+    sendData(); // too late — page is already navigating away
+});
+
+// ✅ Prevent default FIRST
+form.addEventListener("submit", (e) => {
+    e.preventDefault();
+    sendData();
+});</pre>
+
+        <h3>3. Attaching a New Listener to Every List Item</h3>
+        <pre>// ❌ Doesn't scale, and misses items added later
+document.querySelectorAll("li").forEach(li => {
+    li.addEventListener("click", handleClick);
+});
+
+// ✅ Delegate to the parent instead (see Section 7)
+document.querySelector("ul").addEventListener("click", (e) => {
+    if (e.target.matches("li")) handleClick(e);
+});</pre>
+
+        <h3>4. Memory Leaks from Un-Removed Listeners</h3>
+        <pre>// ❌ If this element is repeatedly created/destroyed without removing its
+// listener, each old listener + its closure stays in memory
+function setup() {
+    const el = document.createElement("div");
+    el.addEventListener("click", () => console.log("clicked"));
+    return el;
+}
+
+// ✅ Clean up listeners when an element/component is removed for good
+el.removeEventListener("click", handler);</pre>
+
+        <!-- SECTION 10 -->
+        <h2 id="section10"><span class="level intermediate">INTERMEDIATE</span>10. Best Practices</h2>
+
+        <h3>1. Always Use addEventListener, Never on* Properties</h3>
+        <pre>// ✅ Composable, doesn't silently overwrite
+el.addEventListener("click", handler);</pre>
+
+        <h3>2. Delegate Events for Dynamic Lists</h3>
+        <pre>// ✅ One listener, works for present and future items
+container.addEventListener("click", (e) => {
+    if (e.target.matches(".item")) handleItemClick(e.target);
+});</pre>
+
+        <h3>3. Store Handler References for Later Removal</h3>
+        <pre>// ✅ Enables clean removal
+const handler = () => console.log("clicked");
+el.addEventListener("click", handler);
+// later: el.removeEventListener("click", handler);</pre>
+
+        <h3>4. Use { once: true } for One-Time Listeners</h3>
+        <pre>// ✅ No manual cleanup needed
+el.addEventListener("click", showTooltip, { once: true });</pre>
+
+        <h3>5. Call preventDefault() Early in the Handler</h3>
+        <pre>// ✅ Prevent the default action before anything else can go wrong
+form.addEventListener("submit", (e) => {
+    e.preventDefault();
+    // ... rest of the logic
+});</pre>
+
+        <!-- SUMMARY -->
+        <h2 style="margin-top: 40px;">📋 Quick Reference Summary</h2>
+
+        <div class="table-wrap">
+        <table>
+            <tr>
+                <th>Concept</th>
+                <th>Key Points</th>
+            </tr>
+            <tr>
+                <td><strong>addEventListener</strong></td>
+                <td>Registers handlers without overwriting existing ones; supports options like <code>once</code>/<code>capture</code>.</td>
+            </tr>
+            <tr>
+                <td><strong>Event object</strong></td>
+                <td><code>e.target</code> (origin), <code>e.currentTarget</code> (listener's element), <code>e.type</code>, <code>e.key</code>.</td>
+            </tr>
+            <tr>
+                <td><strong>preventDefault()</strong></td>
+                <td>Cancels the browser's built-in default action (navigation, form submit/reload).</td>
+            </tr>
+            <tr>
+                <td><strong>Bubbling/Capturing</strong></td>
+                <td>Events travel down (capture) then up (bubble) through the DOM tree.</td>
+            </tr>
+            <tr>
+                <td><strong>stopPropagation()</strong></td>
+                <td>Stops the event from reaching ancestor listeners further along the path.</td>
+            </tr>
+            <tr>
+                <td><strong>Delegation</strong></td>
+                <td>One listener on a parent, checking <code>e.target</code> — scales to dynamic children.</td>
+            </tr>
+        </table>
+        </div>
+
+        <div style="margin-top: 40px; padding: 20px; background: #ecf0f1; border-radius: 5px;">
+            <h3>🎓 Learning Path</h3>
+            <p><strong>Beginner:</strong> Master sections 1, 2, 3</p>
+            <p><strong>Intermediate:</strong> Understand sections 4, 5, 6, 10</p>
+            <p><strong>Advanced:</strong> Deep dive into sections 7, 8, 9</p>
+        </div>
+
+    </div>
+</body>
+</html>

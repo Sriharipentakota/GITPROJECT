@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TypeScript Modules & Namespaces: Complete Guide</title>
+    <link rel="stylesheet" href="/guides/guide-base.css">
+</head>
+<body>
+    <div class="container">
+        <h1>📦 TypeScript Modules & Namespaces: Complete Guide</h1>
+        <p style="font-size: 1.1em; color: #7f8c8d; margin-bottom: 20px;">
+            A comprehensive journey from fundamental concepts to advanced techniques
+        </p>
+
+        <div class="toc">
+            <h3>📚 Table of Contents</h3>
+            <ul>
+                <li><a href="#section1">1. What Makes a File a Module?</a></li>
+                <li><a href="#section2">2. Named Exports and Imports</a></li>
+                <li><a href="#section3">3. Default Exports</a></li>
+                <li><a href="#section4">4. Re-exporting and Barrel Files</a></li>
+                <li><a href="#section5">5. Type-Only Imports and Exports</a></li>
+                <li><a href="#section6">6. Dynamic import()</a></li>
+                <li><a href="#section7">7. Declaration Files (.d.ts)</a></li>
+                <li><a href="#section8">8. Namespaces</a></li>
+                <li><a href="#section9">9. Module Resolution and CommonJS Interop</a></li>
+                <li><a href="#section10">10. Best Practices</a></li>
+            </ul>
+        </div>
+
+        <!-- SECTION 1 -->
+        <h2 id="section1"><span class="level beginner">BEGINNER</span>1. What Makes a File a Module?</h2>
+
+        <h3>Definition</h3>
+        <p>In TypeScript (as in modern JavaScript), any file containing a top-level <code>import</code> or <code>export</code> is treated as a <strong>module</strong> — its declarations are scoped to that file rather than shared globally.</p>
+
+        <div class="example">
+            <strong>Real-world analogy:</strong> A module is like a sealed room — nothing inside is visible from outside unless you explicitly hand it through the door (<code>export</code>), and you can only bring things in through the door too (<code>import</code>).
+        </div>
+
+        <pre>// math.ts - has an export, so it's a module
+export function add(a: number, b: number): number {
+    return a + b;
+}
+
+// A file with no import/export is a "script" - its declarations
+// are global and visible to every other script in the project</pre>
+
+        <div class="note">
+            <strong>💡 Tip:</strong> If a file genuinely has nothing to import or export but you still want it scoped as a module, add <code>export {};</code> at the top — a common fix for "duplicate declaration" errors in standalone <code>.ts</code> files.
+        </div>
+
+        <!-- SECTION 2 -->
+        <h2 id="section2"><span class="level beginner">BEGINNER</span>2. Named Exports and Imports</h2>
+
+        <pre>// utils.ts
+export const PI = 3.14159;
+
+export function double(n: number): number {
+    return n * 2;
+}
+
+export interface Point {
+    x: number;
+    y: number;
+}</pre>
+
+        <pre>// main.ts
+import { PI, double, Point } from "./utils";
+
+const p: Point = { x: 1, y: 2 };
+console.log(double(PI));   // 6.28318</pre>
+
+        <h3>Renaming on Import/Export with as</h3>
+        <pre>// utils.ts
+export { double as multiplyByTwo };
+
+// main.ts
+import { multiplyByTwo as timesTwo } from "./utils";
+console.log(timesTwo(5));   // 10</pre>
+
+        <h3>Importing Everything as a Namespace Object</h3>
+        <pre>import * as MathUtils from "./utils";
+
+console.log(MathUtils.PI);
+console.log(MathUtils.double(4));</pre>
+
+        <!-- SECTION 3 -->
+        <h2 id="section3"><span class="level beginner">BEGINNER</span>3. Default Exports</h2>
+
+        <pre>// logger.ts
+export default class Logger {
+    log(message: string): void {
+        console.log(`[LOG] ${message}`);
+    }
+}</pre>
+
+        <pre>// main.ts
+import Logger from "./logger";   // no curly braces - default import can be named anything
+
+const logger = new Logger();
+logger.log("App started");</pre>
+
+        <h3>Default Export of a Function</h3>
+        <pre>// greet.ts
+export default function greet(name: string): string {
+    return `Hello, ${name}`;
+}
+
+// main.ts
+import greet from "./greet";
+console.log(greet("Sam"));</pre>
+
+        <div class="warning">
+            <strong>⚠️ Common Pitfall:</strong> A module can only have <strong>one</strong> default export but any number of named exports. Mixing conventions inconsistently across a codebase makes imports harder to predict — pick one style and stick with it (see Best Practices).
+        </div>
+
+        <!-- SECTION 4 -->
+        <h2 id="section4"><span class="level intermediate">INTERMEDIATE</span>4. Re-exporting and Barrel Files</h2>
+
+        <p>A "barrel" file re-exports everything from several modules through one entry point, simplifying imports elsewhere in the app.</p>
+
+        <pre>// components/Button.ts
+export interface ButtonProps { label: string; }
+export function Button(props: ButtonProps) { /* ... */ }
+
+// components/Input.ts
+export interface InputProps { placeholder: string; }
+export function Input(props: InputProps) { /* ... */ }
+
+// components/index.ts (the barrel file)
+export * from "./Button";
+export * from "./Input";</pre>
+
+        <pre>// main.ts - one import instead of two
+import { Button, Input, ButtonProps, InputProps } from "./components";</pre>
+
+        <h3>Re-exporting with Renaming</h3>
+        <pre>// index.ts
+export { Button as PrimaryButton } from "./Button";</pre>
+
+        <!-- SECTION 5 -->
+        <h2 id="section5"><span class="level intermediate">INTERMEDIATE</span>5. Type-Only Imports and Exports</h2>
+
+        <p>Since TypeScript 3.8, you can mark an import or export as <strong>type-only</strong>, guaranteeing it's completely erased from the compiled JavaScript output.</p>
+
+        <pre>// types.ts
+export interface User {
+    id: number;
+    name: string;
+}
+
+// main.ts
+import type { User } from "./types";
+// or mix value and type imports:
+import { someFunction, type User as UserType } from "./mixed";
+
+const user: User = { id: 1, name: "Nico" };</pre>
+
+        <div class="example">
+            <strong>Why it matters:</strong> Build tools that compile files independently (like esbuild or ts-jest with <code>isolatedModules</code>) can't always tell whether an import is a type or a value. <code>import type</code> removes the ambiguity and guarantees no runtime import is emitted for something that's purely a type.
+        </div>
+
+        <!-- SECTION 6 -->
+        <h2 id="section6"><span class="level intermediate">INTERMEDIATE</span>6. Dynamic import()</h2>
+
+        <p>The dynamic <code>import()</code> function loads a module asynchronously at runtime, returning a Promise — useful for code splitting and lazy loading.</p>
+
+        <pre>async function loadChart() {
+    const { renderChart } = await import("./chart");
+    renderChart();
+}
+
+// Typing the resolved module
+async function loadUtils() {
+    const utils = await import("./utils");
+    console.log(utils.PI);   // fully typed, same as a static import
+}</pre>
+
+        <div class="note">
+            <strong>💡 Tip:</strong> Dynamic <code>import()</code> is commonly used for route-based code splitting in frameworks like React (<code>React.lazy(() => import("./Page"))</code>) so large bundles only load when actually needed.
+        </div>
+
+        <!-- SECTION 7 -->
+        <h2 id="section7"><span class="level advanced">ADVANCED</span>7. Declaration Files (.d.ts)</h2>
+
+        <p>A <code>.d.ts</code> file contains only type information — no runtime code — describing the shape of JavaScript that TypeScript otherwise couldn't understand, such as an untyped npm package.</p>
+
+        <pre>// legacy-lib.d.ts
+declare module "legacy-lib" {
+    export function formatCurrency(amount: number): string;
+    export const VERSION: string;
+}</pre>
+
+        <pre>// main.ts
+import { formatCurrency, VERSION } from "legacy-lib";
+console.log(formatCurrency(1000));   // fully type-checked, even though
+                                       // legacy-lib itself is plain JS</pre>
+
+        <h3>Global Ambient Declarations</h3>
+        <pre>// globals.d.ts
+declare const APP_VERSION: string;   // e.g. injected by a bundler at build time
+
+console.log(APP_VERSION);   // usable anywhere, no import needed</pre>
+
+        <div class="note">
+            <strong>💡 Tip:</strong> Many popular packages ship their own <code>.d.ts</code> files, or the community maintains them separately under <code>@types/package-name</code> (the DefinitelyTyped project) — install with <code>npm i -D @types/package-name</code>.
+        </div>
+
+        <!-- SECTION 8 -->
+        <h2 id="section8"><span class="level advanced">ADVANCED</span>8. Namespaces</h2>
+
+        <p>Namespaces predate ES modules and provide a way to group related code under a single named object, generating actual runtime code (unlike modules, which use the file system as the boundary).</p>
+
+        <pre>namespace Validation {
+    export interface StringValidator {
+        isValid(s: string): boolean;
+    }
+
+    export class EmailValidator implements StringValidator {
+        isValid(s: string): boolean {
+            return /^[^@]+@[^@]+\.[^@]+$/.test(s);
+        }
+    }
+}
+
+const validator = new Validation.EmailValidator();
+console.log(validator.isValid("test@example.com"));   // true</pre>
+
+        <h3>Nested Namespaces</h3>
+        <pre>namespace App {
+    export namespace Models {
+        export interface User { id: number; }
+    }
+}
+
+const user: App.Models.User = { id: 1 };</pre>
+
+        <div class="warning">
+            <strong>⚠️ Common Pitfall:</strong> For new projects, prefer ES modules (<code>import</code>/<code>export</code>) over namespaces. Namespaces are mostly kept for legacy codebases, global browser scripts without a bundler, and augmenting third-party global types.
+        </div>
+
+        <!-- SECTION 9 -->
+        <h2 id="section9"><span class="level advanced">ADVANCED</span>9. Module Resolution and CommonJS Interop</h2>
+
+        <p>TypeScript's <code>moduleResolution</code> setting controls how it locates the files behind an import specifier, and <code>esModuleInterop</code> smooths over differences between ES modules and older CommonJS (Node's original <code>require</code>-based) modules.</p>
+
+        <pre>// tsconfig.json (relevant excerpt)
+{
+  "compilerOptions": {
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "esModuleInterop": true
+  }
+}</pre>
+
+        <h3>Importing a CommonJS-Only Package</h3>
+        <pre>// Without esModuleInterop, this pattern is often required:
+import * as express from "express";
+
+// With esModuleInterop: true, the more familiar default-import
+// syntax works even though express itself is CommonJS:
+import express from "express";
+
+const app = express();</pre>
+
+        <div class="note">
+            <strong>💡 Tip:</strong> The full picture of module-related compiler flags (<code>module</code>, <code>moduleResolution</code>, <code>esModuleInterop</code>, <code>isolatedModules</code>) is covered in depth in the tsconfig guide.
+        </div>
+
+        <!-- SECTION 10 -->
+        <h2 id="section10"><span class="level advanced">ADVANCED</span>10. Best Practices</h2>
+
+        <h3>1. Prefer Named Exports Over Default Exports</h3>
+        <pre>// ✅ Good - consistent names everywhere, easier refactors and auto-imports
+export function formatDate(date: Date): string { return date.toISOString(); }
+
+// ❌ Riskier - importer can name it anything, drifting names across files
+export default function formatDate(date: Date): string { return date.toISOString(); }</pre>
+
+        <h3>2. Use import type for Type-Only Imports</h3>
+        <pre>// ✅ Good - guarantees zero runtime footprint
+import type { User } from "./types";</pre>
+
+        <h3>3. Keep Barrel Files Shallow</h3>
+        <p>Deeply nested barrel re-exports (<code>index.ts</code> re-exporting other <code>index.ts</code> files) can slow builds and create circular import issues — keep them to one level where possible.</p>
+
+        <h3>4. Avoid Namespaces in New Code</h3>
+        <pre>// ✅ Good - use ES modules
+export interface StringValidator { isValid(s: string): boolean; }</pre>
+
+        <h3>5. Ship or Install Proper Type Declarations</h3>
+        <pre>// ✅ Good
+// npm install --save-dev @types/lodash</pre>
+
+        <!-- SUMMARY -->
+        <h2 style="margin-top: 40px;">📋 Quick Reference Summary</h2>
+
+        <div class="table-wrap">
+        <table>
+            <tr>
+                <th>Concept</th>
+                <th>Key Points</th>
+            </tr>
+            <tr>
+                <td><strong>Module</strong></td>
+                <td>Any file with top-level import/export; scoped, not global</td>
+            </tr>
+            <tr>
+                <td><strong>Named export/import</strong></td>
+                <td>Multiple per file, explicit names, renamable with <code>as</code></td>
+            </tr>
+            <tr>
+                <td><strong>Default export</strong></td>
+                <td>One per file, imported with any local name</td>
+            </tr>
+            <tr>
+                <td><strong>Barrel file</strong></td>
+                <td>Single entry point re-exporting several modules</td>
+            </tr>
+            <tr>
+                <td><strong>import type</strong></td>
+                <td>Erased at compile time; guarantees no runtime import</td>
+            </tr>
+            <tr>
+                <td><strong>Dynamic import()</strong></td>
+                <td>Async, Promise-based module loading for code splitting</td>
+            </tr>
+            <tr>
+                <td><strong>.d.ts files</strong></td>
+                <td>Type-only descriptions of JS code, no runtime output</td>
+            </tr>
+            <tr>
+                <td><strong>Namespaces</strong></td>
+                <td>Legacy grouping mechanism; prefer ES modules in new code</td>
+            </tr>
+        </table>
+        </div>
+
+        <div style="margin-top: 40px; padding: 20px; background: #ecf0f1; border-radius: 5px;">
+            <h3>🎓 Learning Path</h3>
+            <p><strong>Beginner:</strong> Master sections 1, 2, 3</p>
+            <p><strong>Intermediate:</strong> Understand sections 4, 5, 6</p>
+            <p><strong>Advanced:</strong> Deep dive into sections 7, 8, 9, 10</p>
+        </div>
+
+    </div>
+</body>
+</html>

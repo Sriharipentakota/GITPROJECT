@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Playwright Authentication & State: Complete Guide</title>
+    <link rel="stylesheet" href="/guides/guide-base.css">
+</head>
+<body>
+    <div class="container">
+        <h1>🔐 Playwright Authentication & State: Complete Guide</h1>
+        <p style="font-size: 1.1em; color: #7f8c8d; margin-bottom: 20px;">
+            Log in once, reuse everywhere — storageState, setup projects, and multi-role testing
+        </p>
+
+        <div class="toc">
+            <h3>📚 Table of Contents</h3>
+            <ul>
+                <li><a href="#section1">1. Why Reuse Authentication State?</a></li>
+                <li><a href="#section2">2. Saving State with storageState()</a></li>
+                <li><a href="#section3">3. The Auth Setup Project Pattern</a></li>
+                <li><a href="#section4">4. Wiring Dependencies in playwright.config.ts</a></li>
+                <li><a href="#section5">5. Testing Multiple Roles</a></li>
+                <li><a href="#section6">6. HTTP Basic Auth</a></li>
+                <li><a href="#section7">7. Manual Cookie and Storage Control</a></li>
+                <li><a href="#section8">8. API-Based Login (Fastest)</a></li>
+                <li><a href="#section9">9. Common Pitfalls</a></li>
+            </ul>
+        </div>
+
+        <!-- SECTION 1 -->
+        <h2 id="section1"><span class="level beginner">BEGINNER</span>1. Why Reuse Authentication State?</h2>
+
+        <p>Logging in through the UI before every single test is slow and repetitive. A login that takes 2 seconds costs 200 seconds across 100 tests — pure overhead unrelated to what those tests are actually verifying.</p>
+
+        <p>Playwright lets you save a browser context's cookies, localStorage, and sessionStorage to a JSON file after logging in once, then reload that state instantly in any subsequent test.</p>
+
+        <div class="example">
+            <strong>The math:</strong> one login (2s) + 100 instant file-based state loads (~0s each) vs. 100 logins (200s). At scale, this is the difference between a 3-minute suite and a 15-minute one.
+        </div>
+
+        <!-- SECTION 2 -->
+        <h2 id="section2"><span class="level beginner">BEGINNER</span>2. Saving State with storageState()</h2>
+
+        <pre>await page.goto('/login');
+await page.getByLabel('Email').fill('user@example.com');
+await page.getByLabel('Password').fill('secret');
+await page.getByRole('button', { name: 'Sign in' }).click();
+await page.waitForURL('/dashboard');
+
+await page.context().storageState({ path: 'playwright/.auth/user.json' });</pre>
+
+        <p>This writes a JSON file containing every cookie and every <code>localStorage</code>/<code>sessionStorage</code> entry for the context — everything the app needs to consider the browser "logged in."</p>
+
+        <!-- SECTION 3 -->
+        <h2 id="section3"><span class="level intermediate">INTERMEDIATE</span>3. The Auth Setup Project Pattern</h2>
+
+        <p>The recommended, idiomatic pattern uses a dedicated <strong>setup project</strong> that logs in once before the real test projects run.</p>
+
+        <pre>// auth.setup.ts
+import { test as setup } from '@playwright/test';
+const authFile = 'playwright/.auth/user.json';
+
+setup('authenticate', async ({ page }) => {
+  await page.goto('/login');
+  await page.getByLabel('Email').fill(process.env.TEST_EMAIL!);
+  await page.getByLabel('Password').fill(process.env.TEST_PASSWORD!);
+  await page.getByRole('button', { name: 'Sign in' }).click();
+  await page.waitForURL('/dashboard');
+
+  await page.context().storageState({ path: authFile });
+});</pre>
+
+        <div class="note">
+            <strong>💡 Tip:</strong> Note that <code>setup</code> here is imported as <code>test as setup</code> — it's the same underlying API, just aliased for readability so it's obvious this file is a setup step, not a real test.
+        </div>
+
+        <!-- SECTION 4 -->
+        <h2 id="section4"><span class="level intermediate">INTERMEDIATE</span>4. Wiring Dependencies in playwright.config.ts</h2>
+
+        <pre>import { defineConfig, devices } from '@playwright/test';
+
+export default defineConfig({
+  projects: [
+    { name: 'setup', testMatch: /auth\.setup\.ts/ },
+    {
+      name: 'chromium',
+      use: {
+        ...devices['Desktop Chrome'],
+        storageState: 'playwright/.auth/user.json',
+      },
+      dependencies: ['setup'],
+    },
+  ],
+});</pre>
+
+        <p>The <code>dependencies: ['setup']</code> array guarantees Playwright runs the <code>setup</code> project first and waits for it to complete before starting the <code>chromium</code> project — so the state file is guaranteed to exist by the time real tests need it. Each new browser context in the <code>chromium</code> project then loads that state automatically via <code>use.storageState</code>.</p>
+
+        <!-- SECTION 5 -->
+        <h2 id="section5"><span class="level advanced">ADVANCED</span>5. Testing Multiple Roles</h2>
+
+        <p>Maintain a separate state file — and a separate setup project — per role (admin, editor, viewer) to test role-based access control end-to-end.</p>
+
+        <pre>// playwright.config.ts
+projects: [
+  { name: 'setup:user',  testMatch: /user\.setup\.ts/  },
+  { name: 'setup:admin', testMatch: /admin\.setup\.ts/ },
+  {
+    name: 'user-tests',
+    use: { storageState: 'playwright/.auth/user.json' },
+    dependencies: ['setup:user'],
+  },
+  {
+    name: 'admin-tests',
+    use: { storageState: 'playwright/.auth/admin.json' },
+    dependencies: ['setup:admin'],
+  },
+],</pre>
+
+        <p>You can also override just one test's role without a whole extra project, using <code>test.use()</code>:</p>
+
+        <pre>test.use({ storageState: 'playwright/.auth/admin.json' });
+test('admin can delete posts', async ({ page }) => {
+  await page.goto('/posts');
+  await expect(page.getByRole('button', { name: 'Delete' })).toBeVisible();
+});</pre>
+
+        <!-- SECTION 6 -->
+        <h2 id="section6"><span class="level intermediate">INTERMEDIATE</span>6. HTTP Basic Auth</h2>
+
+        <pre>// playwright.config.ts
+use: { httpCredentials: { username: 'user', password: 'pass' } }</pre>
+
+        <p><code>httpCredentials</code> handles sites protected by HTTP Basic Auth at the network layer — a completely different mechanism from a login form, and one that <code>storageState</code> does not cover.</p>
+
+        <!-- SECTION 7 -->
+        <h2 id="section7"><span class="level advanced">ADVANCED</span>7. Manual Cookie and Storage Control</h2>
+
+        <pre>// Cookies
+const cookies = await context.cookies();
+await context.addCookies([{
+  name: 'sid', value: 'abc', domain: 'example.com', path: '/'
+}]);
+await context.clearCookies();
+
+// localStorage / sessionStorage (via page.evaluate)
+await page.evaluate(() => localStorage.setItem('token', 'abc123'));
+const token = await page.evaluate(() => localStorage.getItem('token'));
+await page.evaluate(() => sessionStorage.clear());</pre>
+
+        <p>These fine-grained APIs are useful when you need to inject or inspect a specific piece of state without going through a full login flow — for example, setting a feature flag stored in localStorage before a test.</p>
+
+        <!-- SECTION 8 -->
+        <h2 id="section8"><span class="level advanced">ADVANCED</span>8. API-Based Login (Fastest)</h2>
+
+        <p>If your backend exposes a login API endpoint, authenticating directly via <code>request</code> is dramatically faster than driving the UI login form — often around 100ms instead of 1-2 seconds.</p>
+
+        <pre>// auth.setup.ts
+import { test as setup, request } from '@playwright/test';
+
+setup('authenticate via API', async ({ page }) => {
+  const apiCtx = await request.newContext({ baseURL: 'https://example.com' });
+
+  const resp = await apiCtx.post('/api/auth/login', {
+    data: { email: 'user@example.com', password: 'secret' },
+  });
+  const { sessionToken } = await resp.json();
+
+  await page.context().addCookies([{
+    name: 'session', value: sessionToken, domain: 'example.com', path: '/'
+  }]);
+
+  await page.context().storageState({ path: 'playwright/.auth/user.json' });
+  await apiCtx.dispose();
+});</pre>
+
+        <div class="comparison">
+            <div>
+                <strong>UI login (slower, more realistic):</strong>
+                <pre>await page.goto('/login');
+await page.getByLabel('Email').fill(email);
+await page.getByLabel('Password').fill(pw);
+await page.getByRole('button', { name: 'Sign in' }).click();
+// ~1-2 seconds</pre>
+            </div>
+            <div>
+                <strong>API login (faster, less end-to-end coverage):</strong>
+                <pre>const resp = await apiCtx.post('/api/auth/login', {
+  data: { email, password: pw },
+});
+// ~100ms</pre>
+            </div>
+        </div>
+
+        <div class="note">
+            <strong>💡 Tip:</strong> Keep <em>one</em> UI-based login test to verify the login form itself still works end-to-end — then use the faster API method for every other test's setup, where the login flow isn't what's actually being tested.
+        </div>
+
+        <!-- SECTION 9 -->
+        <h2 id="section9"><span class="level advanced">ADVANCED</span>9. Common Pitfalls</h2>
+
+        <div class="warning">
+            <strong>⚠️ Pitfall 1 — Committing real credentials or state files:</strong> Never commit <code>playwright/.auth/*.json</code> files or hardcoded passwords to version control — use environment variables for credentials and add the auth directory to <code>.gitignore</code>.
+        </div>
+
+        <div class="warning">
+            <strong>⚠️ Pitfall 2 — Stale or expired state files:</strong> If your app's session tokens expire (e.g. after 24 hours), a cached <code>storageState</code> from a previous CI run will cause every test to fail with "not authenticated" errors. Regenerate the state file at the start of every CI run rather than caching it across runs indefinitely.
+        </div>
+
+        <!-- SUMMARY -->
+        <h2 style="margin-top: 40px;">📋 Quick Reference Summary</h2>
+
+        <div class="table-wrap">
+        <table>
+            <tr>
+                <th>Concept</th>
+                <th>Key Points</th>
+            </tr>
+            <tr>
+                <td><strong>storageState()</strong></td>
+                <td>Serializes cookies + localStorage/sessionStorage to a JSON file for reuse.</td>
+            </tr>
+            <tr>
+                <td><strong>Setup project pattern</strong></td>
+                <td>auth.setup.ts logs in once; dependencies: ['setup'] guarantees it runs first.</td>
+            </tr>
+            <tr>
+                <td><strong>Multiple roles</strong></td>
+                <td>One state file + setup project per role; or test.use({ storageState }) per test.</td>
+            </tr>
+            <tr>
+                <td><strong>httpCredentials</strong></td>
+                <td>Handles HTTP Basic Auth — different mechanism from form login / storageState.</td>
+            </tr>
+            <tr>
+                <td><strong>Manual control</strong></td>
+                <td>context.cookies()/addCookies()/clearCookies(); page.evaluate() for localStorage.</td>
+            </tr>
+            <tr>
+                <td><strong>API login</strong></td>
+                <td>~10-20x faster than UI login; use for setup once the login form itself is verified.</td>
+            </tr>
+        </table>
+        </div>
+
+        <div style="margin-top: 40px; padding: 20px; background: #ecf0f1; border-radius: 5px;">
+            <h3>🎓 Learning Path</h3>
+            <p><strong>Beginner:</strong> Master sections 1, 2</p>
+            <p><strong>Intermediate:</strong> Understand sections 3, 4, 6</p>
+            <p><strong>Advanced:</strong> Deep dive into sections 5, 7, 8, 9</p>
+        </div>
+
+    </div>
+</body>
+</html>

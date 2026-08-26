@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TypeScript Type Annotations & Basic Types: Complete Guide</title>
+    <link rel="stylesheet" href="/guides/guide-base.css">
+</head>
+<body>
+    <div class="container">
+        <h1>🔷 TypeScript Type Annotations & Basic Types: Complete Guide</h1>
+        <p style="font-size: 1.1em; color: #7f8c8d; margin-bottom: 20px;">
+            A comprehensive journey from fundamental concepts to advanced techniques
+        </p>
+
+        <div class="toc">
+            <h3>📚 Table of Contents</h3>
+            <ul>
+                <li><a href="#section1">1. What is TypeScript and Why Types?</a></li>
+                <li><a href="#section2">2. Basic Primitive Types</a></li>
+                <li><a href="#section3">3. Type Annotations on Variables</a></li>
+                <li><a href="#section4">4. The any and unknown Types</a></li>
+                <li><a href="#section5">5. The void, null, undefined and never Types</a></li>
+                <li><a href="#section6">6. Object Type Annotations</a></li>
+                <li><a href="#section7">7. Literal Types</a></li>
+                <li><a href="#section8">8. Type Inference vs Explicit Annotation</a></li>
+                <li><a href="#section9">9. Strictness and Compiler Flags</a></li>
+                <li><a href="#section10">10. Best Practices for Basic Types</a></li>
+            </ul>
+        </div>
+
+        <!-- SECTION 1 -->
+        <h2 id="section1"><span class="level beginner">BEGINNER</span>1. What is TypeScript and Why Types?</h2>
+
+        <h3>Definition</h3>
+        <p>TypeScript is a strongly typed superset of JavaScript that compiles down to plain JavaScript. It adds a static type system on top of JavaScript, letting you describe the shape of data <strong>before</strong> your code runs, so mistakes are caught by the compiler instead of by your users.</p>
+
+        <div class="example">
+            <strong>Real-world analogy:</strong> JavaScript is like a form with no field labels — you can put anything anywhere. TypeScript adds labels ("Name: text", "Age: number") so you immediately notice when someone tries to put a word where a number belongs.
+        </div>
+
+        <h3>Why do we need types?</h3>
+        <ul style="margin: 15px 0; margin-left: 20px;">
+            <li><strong>Catch errors early:</strong> Typos and mismatched data are flagged at compile time, not at 2am in production</li>
+            <li><strong>Self-documenting code:</strong> Function signatures tell you exactly what to pass in and what comes out</li>
+            <li><strong>Better tooling:</strong> Autocomplete, refactoring, and "go to definition" all become dramatically more reliable</li>
+            <li><strong>Safer refactors:</strong> Rename a property and the compiler shows you every place that breaks</li>
+        </ul>
+
+        <h3>Your First TypeScript File</h3>
+        <pre>// greet.ts
+function greet(name: string): string {
+    return `Hello, ${name}!`;
+}
+
+console.log(greet("Alice"));   // Output: Hello, Alice!
+// console.log(greet(42));     // ❌ Compile error: Argument of type 'number'
+//                                 is not assignable to parameter of type 'string'.</pre>
+
+        <div class="note">
+            <strong>💡 Tip:</strong> TypeScript code (<code>.ts</code>) is compiled ("transpiled") to JavaScript (<code>.js</code>) using the <code>tsc</code> compiler. Browsers and Node.js never run <code>.ts</code> files directly.
+        </div>
+
+        <h3>How TypeScript Fits into the Toolchain</h3>
+        <pre>// Compile a single file
+tsc greet.ts
+// Produces greet.js, which you run with node greet.js
+
+// Watch mode - recompiles on save
+tsc greet.ts --watch
+
+// Compile an entire project using tsconfig.json
+tsc</pre>
+
+        <!-- SECTION 2 -->
+        <h2 id="section2"><span class="level beginner">BEGINNER</span>2. Basic Primitive Types</h2>
+
+        <p>TypeScript mirrors JavaScript's primitive types and lets you label variables, parameters, and return values with them.</p>
+
+        <h3>string, number, boolean</h3>
+        <pre>let username: string = "morgan";
+let age: number = 29;
+let isAdmin: boolean = false;
+
+username = "casey";   // ✅ OK - still a string
+// age = "29";        // ❌ Error: Type 'string' is not assignable to type 'number'</pre>
+
+        <div class="table-wrap">
+        <table class="table-compact">
+            <tr>
+                <th>Type</th>
+                <th>Example Values</th>
+                <th>Notes</th>
+            </tr>
+            <tr>
+                <td><code>string</code></td>
+                <td><code>"hi"</code>, <code>'hi'</code>, <code>`hi ${name}`</code></td>
+                <td>Any textual data, including template literals</td>
+            </tr>
+            <tr>
+                <td><code>number</code></td>
+                <td><code>42</code>, <code>3.14</code>, <code>0xFF</code></td>
+                <td>No separate int/float — all numbers share one type</td>
+            </tr>
+            <tr>
+                <td><code>boolean</code></td>
+                <td><code>true</code>, <code>false</code></td>
+                <td>Never <code>0</code>/<code>1</code> or truthy/falsy values</td>
+            </tr>
+            <tr>
+                <td><code>bigint</code></td>
+                <td><code>100n</code></td>
+                <td>For integers beyond <code>Number.MAX_SAFE_INTEGER</code></td>
+            </tr>
+            <tr>
+                <td><code>symbol</code></td>
+                <td><code>Symbol("id")</code></td>
+                <td>Unique, immutable identifiers</td>
+            </tr>
+        </table>
+        </div>
+
+        <h3>bigint and symbol</h3>
+        <pre>let big: bigint = 9007199254740993n;
+let id: symbol = Symbol("userId");
+
+// bigint and number cannot be mixed directly
+// let total = big + 1;   // ❌ Error: mixing BigInt and number</pre>
+
+        <!-- SECTION 3 -->
+        <h2 id="section3"><span class="level beginner">BEGINNER</span>3. Type Annotations on Variables, Parameters, and Returns</h2>
+
+        <p>An annotation is the <code>: Type</code> syntax you attach after a name to declare what it's allowed to hold.</p>
+
+        <h3>Variable Annotations</h3>
+        <pre>let score: number;   // declared, not yet assigned
+score = 95;           // ✅ OK
+// score = "95";      // ❌ Error
+
+const title: string = "TypeScript Guide";</pre>
+
+        <h3>Function Parameter and Return Annotations</h3>
+        <pre>function add(a: number, b: number): number {
+    return a + b;
+}
+
+add(2, 3);        // 5
+// add(2, "3");   // ❌ Error: Argument of type 'string' is not
+//                   assignable to parameter of type 'number'</pre>
+
+        <h3>Optional and Default Parameters</h3>
+        <pre>function buildUrl(path: string, host?: string): string {
+    return `${host ?? "https://api.example.com"}${path}`;
+}
+
+buildUrl("/users");                        // uses default host
+buildUrl("/users", "https://dev.local");   // explicit host
+
+function greet(name: string = "Guest"): string {
+    return `Hi, ${name}`;
+}
+
+greet();          // "Hi, Guest"
+greet("Priya");   // "Hi, Priya"</pre>
+
+        <div class="warning">
+            <strong>⚠️ Common Pitfall:</strong> Optional parameters (<code>host?</code>) must come after required ones. TypeScript will reject a required parameter placed after an optional one.
+        </div>
+
+        <!-- SECTION 4 -->
+        <h2 id="section4"><span class="level intermediate">INTERMEDIATE</span>4. The any and unknown Types</h2>
+
+        <h3>any — Opting Out of Type Checking</h3>
+        <p><code>any</code> tells the compiler "trust me, don't check this." It disables type safety entirely for that value.</p>
+
+        <pre>let payload: any = { id: 1 };
+payload = "now a string";     // ✅ allowed, no error
+payload.toUpperCase();        // ✅ compiles, but crashes at runtime if not a string
+payload();                    // ✅ compiles, crashes at runtime - payload isn't callable</pre>
+
+        <div class="warning">
+            <strong>⚠️ Common Pitfall:</strong> Overusing <code>any</code> defeats the entire purpose of TypeScript. It's sometimes necessary (e.g. gradually migrating a JS codebase), but should be the exception, not the default.
+        </div>
+
+        <h3>unknown — The Type-Safe any</h3>
+        <p><code>unknown</code> can hold any value too, but you must narrow it before using it.</p>
+
+        <pre>let input: unknown = getUserInput();
+
+// input.toUpperCase();   // ❌ Error: Object is of type 'unknown'
+
+if (typeof input === "string") {
+    input.toUpperCase();  // ✅ OK - narrowed to string inside this block
+}
+
+function getUserInput(): unknown {
+    return "some text";
+}</pre>
+
+        <div class="comparison">
+            <div>
+                <strong>any (Unsafe):</strong>
+                <pre>let x: any = fetchData();
+x.doAnything();   // no compiler help</pre>
+            </div>
+            <div>
+                <strong>unknown (Safe):</strong>
+                <pre>let x: unknown = fetchData();
+if (typeof x === "object" && x) {
+    // safely narrowed
+}</pre>
+            </div>
+        </div>
+
+        <div class="note">
+            <strong>💡 Tip:</strong> Prefer <code>unknown</code> over <code>any</code> whenever a value's shape is genuinely not known ahead of time, such as data from <code>JSON.parse</code> or an external API.
+        </div>
+
+        <!-- SECTION 5 -->
+        <h2 id="section5"><span class="level intermediate">INTERMEDIATE</span>5. The void, null, undefined and never Types</h2>
+
+        <h3>void — No Meaningful Return Value</h3>
+        <pre>function logMessage(message: string): void {
+    console.log(message);
+    // no return statement, or "return;" with no value
+}</pre>
+
+        <h3>null and undefined</h3>
+        <pre>let a: null = null;
+let b: undefined = undefined;
+
+// With strictNullChecks enabled (recommended), a variable typed
+// 'string' cannot also be null or undefined unless you say so:
+let name: string | null = null;
+name = "Sam";     // ✅ OK
+name = null;      // ✅ OK</pre>
+
+        <h3>never — Values That Never Occur</h3>
+        <p><code>never</code> represents a function that never returns normally — either it always throws or loops forever.</p>
+
+        <pre>function fail(message: string): never {
+    throw new Error(message);
+}
+
+function infiniteLoop(): never {
+    while (true) {
+        // runs forever
+    }
+}</pre>
+
+        <div class="table-wrap">
+        <table class="table-compact">
+            <tr>
+                <th>Type</th>
+                <th>Meaning</th>
+                <th>Typical Use</th>
+            </tr>
+            <tr>
+                <td><code>void</code></td>
+                <td>Function returns nothing useful</td>
+                <td>Event handlers, logging functions</td>
+            </tr>
+            <tr>
+                <td><code>null</code></td>
+                <td>Intentional absence of a value</td>
+                <td>Explicit "empty" state</td>
+            </tr>
+            <tr>
+                <td><code>undefined</code></td>
+                <td>Value has not been assigned</td>
+                <td>Uninitialized variables, missing properties</td>
+            </tr>
+            <tr>
+                <td><code>never</code></td>
+                <td>Code path is unreachable</td>
+                <td>Throwing functions, exhaustive switch checks</td>
+            </tr>
+        </table>
+        </div>
+
+        <!-- SECTION 6 -->
+        <h2 id="section6"><span class="level intermediate">INTERMEDIATE</span>6. Object Type Annotations</h2>
+
+        <p>You can describe the shape of an object inline, without needing a separate named type.</p>
+
+        <pre>let user: { id: number; name: string; isActive: boolean } = {
+    id: 1,
+    name: "Dana",
+    isActive: true
+};
+
+// user.email;          // ❌ Error: Property 'email' does not exist
+// user = { id: 2 };    // ❌ Error: missing 'name' and 'isActive'</pre>
+
+        <h3>Optional Properties</h3>
+        <pre>let profile: { name: string; bio?: string } = { name: "Lee" };
+profile.bio = "TypeScript enthusiast";   // ✅ OK, bio is optional</pre>
+
+        <h3>Readonly Properties</h3>
+        <pre>let point: { readonly x: number; readonly y: number } = { x: 0, y: 0 };
+// point.x = 10;   // ❌ Error: Cannot assign to 'x' because it is a read-only property</pre>
+
+        <div class="example">
+            <strong>When to use inline object types vs interfaces:</strong> Inline types are fine for quick, one-off shapes. For anything reused across your codebase, prefer an <code>interface</code> or <code>type</code> alias (covered in the Interfaces guide) so you don't repeat yourself.
+        </div>
+
+        <!-- SECTION 7 -->
+        <h2 id="section7"><span class="level intermediate">INTERMEDIATE</span>7. Literal Types</h2>
+
+        <p>Literal types narrow a primitive down to one exact value (or a small set of values), which is extremely useful for flags, statuses, and configuration options.</p>
+
+        <pre>let direction: "up" | "down" | "left" | "right";
+direction = "up";      // ✅ OK
+// direction = "north"; // ❌ Error: Type '"north"' is not assignable
+
+let httpStatus: 200 | 404 | 500;
+httpStatus = 200;      // ✅ OK
+// httpStatus = 201;   // ❌ Error</pre>
+
+        <h3>const vs let with Literal Types</h3>
+        <pre>const method = "GET";        // type is literally "GET" (never changes)
+let method2 = "GET";         // type widens to string (could change later)
+
+function request(method: "GET" | "POST", url: string) {
+    // ...
+}
+
+request(method, "/api");    // ✅ OK - "GET" matches the literal union
+// request(method2, "/api"); // ❌ Error - method2 is widened to 'string'</pre>
+
+        <div class="note">
+            <strong>💡 Tip:</strong> This is exactly why <code>const</code> is preferred for literal-typed values — <code>let</code> "widens" the inferred type because the compiler assumes it might be reassigned.
+        </div>
+
+        <!-- SECTION 8 -->
+        <h2 id="section8"><span class="level intermediate">INTERMEDIATE</span>8. Type Inference vs Explicit Annotation</h2>
+
+        <p>TypeScript can often figure out a type on its own without you writing it. This is called <strong>inference</strong>.</p>
+
+        <pre>let count = 10;          // inferred as number
+let label = "score";     // inferred as string
+let items = [1, 2, 3];   // inferred as number[]
+
+// count = "ten";        // ❌ Error - still checked, even without explicit annotation</pre>
+
+        <h3>When to Annotate Explicitly</h3>
+        <ul style="margin: 15px 0; margin-left: 20px;">
+            <li>Function parameters — TypeScript cannot infer these from usage alone</li>
+            <li>When the inferred type would be too wide or too narrow for your intent</li>
+            <li>Public API boundaries (exported functions), for clarity and stability</li>
+            <li>Empty structures like <code>let results = [];</code> which infer as <code>any[]</code></li>
+        </ul>
+
+        <pre>// Parameters always need annotations
+function double(n: number): number {
+    return n * 2;
+}
+
+// Return type is usually inferred fine, but explicit annotation
+// documents intent and catches accidental mismatches
+function parseAge(input: string): number {
+    return Number(input);
+}</pre>
+
+        <div class="warning">
+            <strong>⚠️ Common Pitfall:</strong> <code>let results = [];</code> without an annotation infers <code>any[]</code>, silently disabling type checks on every element you push. Prefer <code>let results: number[] = [];</code>.
+        </div>
+
+        <!-- SECTION 9 -->
+        <h2 id="section9"><span class="level advanced">ADVANCED</span>9. Strictness and Compiler Flags</h2>
+
+        <p>How aggressively TypeScript enforces these rules is controlled by flags in <code>tsconfig.json</code> (see the dedicated tsconfig guide for the full picture).</p>
+
+        <pre>{
+  "compilerOptions": {
+    "strict": true,              // enables all strict flags below
+    "strictNullChecks": true,    // null/undefined must be explicit
+    "noImplicitAny": true,       // error when a type can't be inferred
+    "strictFunctionTypes": true  // stricter checking of function parameters
+  }
+}</pre>
+
+        <h3>noImplicitAny in Action</h3>
+        <pre>// With noImplicitAny: true
+function process(data) {   // ❌ Error: Parameter 'data' implicitly has an 'any' type
+    return data.value;
+}
+
+// Fixed
+function process(data: { value: number }) {
+    return data.value;
+}</pre>
+
+        <div class="example">
+            <strong>Why turn strict mode on:</strong> Projects that start with <code>strict: true</code> catch far more bugs at compile time. Turning it on for an existing loose codebase can be painful, but new projects should almost always start strict.
+        </div>
+
+        <!-- SECTION 10 -->
+        <h2 id="section10"><span class="level advanced">ADVANCED</span>10. Best Practices for Basic Types</h2>
+
+        <h3>1. Prefer unknown Over any</h3>
+        <pre>// ✅ Good
+function handle(data: unknown) { /* narrow before use */ }
+
+// ❌ Avoid
+function handle(data: any) { /* no safety net */ }</pre>
+
+        <h3>2. Let Inference Work for Local Variables</h3>
+        <pre>// ✅ Good - obvious from the right-hand side
+const total = 0;
+const name = "TypeScript";
+
+// ❌ Redundant
+const total: number = 0;
+const name: string = "TypeScript";</pre>
+
+        <h3>3. Always Annotate Function Signatures</h3>
+        <pre>// ✅ Good - clear contract at a glance
+export function calculateTax(amount: number, rate: number): number {
+    return amount * rate;
+}</pre>
+
+        <h3>4. Enable strict Mode From Day One</h3>
+        <pre>{ "compilerOptions": { "strict": true } }</pre>
+
+        <h3>5. Use Literal Unions Instead of Loose Strings</h3>
+        <pre>// ✅ Good
+type Status = "pending" | "active" | "closed";
+
+// ❌ Avoid
+type Status = string;</pre>
+
+        <!-- SUMMARY -->
+        <h2 style="margin-top: 40px;">📋 Quick Reference Summary</h2>
+
+        <div class="table-wrap">
+        <table>
+            <tr>
+                <th>Concept</th>
+                <th>Key Points</th>
+            </tr>
+            <tr>
+                <td><strong>string / number / boolean</strong></td>
+                <td>Core primitives, checked strictly at every assignment</td>
+            </tr>
+            <tr>
+                <td><strong>any</strong></td>
+                <td>Disables checking entirely — use sparingly</td>
+            </tr>
+            <tr>
+                <td><strong>unknown</strong></td>
+                <td>Safe alternative to any; must be narrowed before use</td>
+            </tr>
+            <tr>
+                <td><strong>void / never</strong></td>
+                <td>No useful return value / function never returns</td>
+            </tr>
+            <tr>
+                <td><strong>Object types</strong></td>
+                <td>Inline shapes with optional (<code>?</code>) and readonly modifiers</td>
+            </tr>
+            <tr>
+                <td><strong>Literal types</strong></td>
+                <td>Narrow a primitive to exact allowed values</td>
+            </tr>
+            <tr>
+                <td><strong>Inference</strong></td>
+                <td>Let TypeScript deduce obvious types; annotate function signatures</td>
+            </tr>
+            <tr>
+                <td><strong>strict mode</strong></td>
+                <td>Turns on the full set of safety checks; enable from project start</td>
+            </tr>
+        </table>
+        </div>
+
+        <div style="margin-top: 40px; padding: 20px; background: #ecf0f1; border-radius: 5px;">
+            <h3>🎓 Learning Path</h3>
+            <p><strong>Beginner:</strong> Master sections 1, 2, 3</p>
+            <p><strong>Intermediate:</strong> Understand sections 4, 5, 6, 7, 8</p>
+            <p><strong>Advanced:</strong> Deep dive into sections 9, 10</p>
+        </div>
+
+    </div>
+</body>
+</html>

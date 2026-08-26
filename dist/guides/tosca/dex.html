@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tosca Distributed Execution (DEX): Complete Guide</title>
+    <link rel="stylesheet" href="/guides/guide-base.css">
+</head>
+<body>
+    <div class="container">
+        <h1>🌐 Tosca Distributed Execution (DEX): Complete Guide</h1>
+        <p style="font-size: 1.1em; color: #7f8c8d; margin-bottom: 20px;">
+            Running your regression suite across a pool of agents instead of one machine, one test at a time
+        </p>
+
+        <div class="toc">
+            <h3>📚 Table of Contents</h3>
+            <ul>
+                <li><a href="#section1">1. What Is DEX?</a></li>
+                <li><a href="#section2">2. DEX Architecture: Server and Agents</a></li>
+                <li><a href="#section3">3. Configuring an Execution List for DEX</a></li>
+                <li><a href="#section4">4. Parallel Execution: The Time Savings</a></li>
+                <li><a href="#section5">5. Agent Tags and Requirements-Based Routing</a></li>
+                <li><a href="#section6">6. Tosca Cloud (SaaS DEX)</a></li>
+                <li><a href="#section7">7. Triggering a DEX Run from CI</a></li>
+                <li><a href="#section8">8. Test Data Considerations Under Parallelism</a></li>
+                <li><a href="#section9">9. Common Pitfalls</a></li>
+                <li><a href="#section10">10. Best Practices</a></li>
+            </ul>
+        </div>
+
+        <!-- SECTION 1 -->
+        <h2 id="section1"><span class="level beginner">BEGINNER</span>1. What Is DEX?</h2>
+
+        <h3>Definition</h3>
+        <p><strong>DEX (Distributed Execution)</strong> is Tosca's parallel test execution infrastructure. Instead of running an entire Execution List serially on the tester's own machine, DEX distributes Test Cases across a pool of <strong>execution agents</strong> managed by a central <strong>DEX Server</strong>, cutting overall wall-clock run time by running multiple tests simultaneously.</p>
+
+        <div class="example">
+            <strong>Real-world analogy:</strong> DEX is like a food delivery dispatch centre. One central dispatcher (DEX Server) receives a large order (Execution List) and routes individual items to the nearest available delivery driver (agent). All drivers work in parallel; the dispatcher collects all delivery confirmations and sends one combined bill (results report) to the restaurant.
+        </div>
+
+        <!-- SECTION 2 -->
+        <h2 id="section2"><span class="level beginner">BEGINNER</span>2. DEX Architecture: Server and Agents</h2>
+
+        <pre>// DEX architecture
+DEX Server ← central orchestrator
+  └── Agent Pool
+      ├── Agent 1 (Windows / Chrome)
+      ├── Agent 2 (Windows / Firefox)
+      ├── Agent 3 (Linux / headless)
+      └── Agent 4 (Mac / Safari)</pre>
+
+        <p>A <strong>DEX agent</strong> is simply a machine with Tosca installed and the DEX Agent service running. It registers itself with the DEX Server and waits idle for work. When a run is triggered, the DEX Server slices the Execution List into units of work and dispatches each unit to an available agent; each agent runs its assigned slice independently and reports results back to the central repository.</p>
+
+        <div class="table-wrap">
+        <table class="table-compact">
+            <tr>
+                <th>Component</th>
+                <th>Role</th>
+            </tr>
+            <tr>
+                <td>DEX Server</td>
+                <td>Central orchestrator: receives the run request, slices work, dispatches to agents, aggregates results</td>
+            </tr>
+            <tr>
+                <td>DEX Agent</td>
+                <td>A registered machine that executes an assigned slice of the Execution List</td>
+            </tr>
+            <tr>
+                <td>Common Repository</td>
+                <td>Where all agents ultimately write their results, so the run appears as one unified report</td>
+            </tr>
+        </table>
+        </div>
+
+        <!-- SECTION 3 -->
+        <h2 id="section3"><span class="level beginner">BEGINNER</span>3. Configuring an Execution List for DEX</h2>
+
+        <pre>// Configuring an Execution List for DEX
+ExecutionList → Properties
+  ExecutionMode: Distributed
+  DEX Agent:     AgentGroup_QA
+  Parallel:      4 (run 4 test cases simultaneously)</pre>
+
+        <div class="example">
+            <strong>Step by step:</strong>
+            <pre>1. Open the Execution List's Properties
+2. Set ExecutionMode = Distributed
+3. Choose the target agent group (a named pool of registered agents)
+4. Set the desired parallelism (how many test cases run concurrently)
+5. Run → the DEX Server takes over dispatching automatically</pre>
+        </div>
+
+        <!-- SECTION 4 -->
+        <h2 id="section4"><span class="level intermediate">INTERMEDIATE</span>4. Parallel Execution: The Time Savings</h2>
+
+        <pre>// Without DEX: 100 test cases × 30s each = 50 minutes (serial)
+
+// With DEX (4 agents):
+Agent 1: TC001–TC025  → 12.5 minutes
+Agent 2: TC026–TC050  → 12.5 minutes
+Agent 3: TC051–TC075  → 12.5 minutes
+Agent 4: TC076–TC100  → 12.5 minutes
+Total wall-clock time: ~13 minutes (4× faster)</pre>
+
+        <div class="table-wrap">
+        <table>
+            <tr>
+                <th>Agent Count</th>
+                <th>Theoretical Speedup</th>
+                <th>Realistic Speedup</th>
+            </tr>
+            <tr>
+                <td>1 (baseline)</td>
+                <td>1x</td>
+                <td>1x</td>
+            </tr>
+            <tr>
+                <td>4</td>
+                <td>4x</td>
+                <td>~3–3.5x (dispatch/aggregation overhead)</td>
+            </tr>
+            <tr>
+                <td>10</td>
+                <td>10x</td>
+                <td>~7–8x, more if data contention is well managed</td>
+            </tr>
+        </table>
+        </div>
+
+        <div class="note">
+            <strong>💡 Tip:</strong> Realistic speedup is always somewhat below the theoretical linear number due to dispatch overhead, agent startup time, and any shared-resource contention (see Section 8). Measure actual speedup on your own suite rather than assuming perfect linear scaling.
+        </div>
+
+        <!-- SECTION 5 -->
+        <h2 id="section5"><span class="level intermediate">INTERMEDIATE</span>5. Agent Tags and Requirements-Based Routing</h2>
+
+        <p>Not every Test Case can run on any agent — a SAP transaction test needs an agent with SAP GUI installed; a Safari test needs a Mac agent. DEX solves this with <strong>tags</strong> on agents and matching <strong>requirements</strong> declared on Test Cases.</p>
+
+        <pre>// Agents can have tags/requirements
+Agent 1: Tags = ["Windows", "Chrome", "English"]
+Agent 2: Tags = ["Windows", "SAP", "German"]
+Agent 3: Tags = ["Mac", "Safari", "iOS"]
+
+// Test cases declare required agent tags
+TC_SAP_Invoice: RequiresAgent = ["SAP", "German"]
+→ DEX routes it only to Agent 2
+
+TC_Safari_Checkout: RequiresAgent = ["Mac", "Safari"]
+→ DEX routes it only to Agent 3</pre>
+
+        <div class="warning">
+            <strong>⚠️ Common Pitfall:</strong> A Test Case with overly specific or conflicting tag requirements that no registered agent satisfies will sit unassigned indefinitely (or error out) during a DEX run. Audit your agent pool's tags against your Test Cases' requirements before scaling up parallelism.
+        </div>
+
+        <!-- SECTION 6 -->
+        <h2 id="section6"><span class="level advanced">ADVANCED</span>6. Tosca Cloud (SaaS DEX)</h2>
+
+        <p><strong>Tosca Cloud</strong> is a cloud-hosted pool of DEX agents that can be scaled on demand, without the team managing its own physical or virtual agent machines. It integrates directly into the TCM Execution List through a cloud agent configuration, functioning as just another agent group from the Execution List's point of view.</p>
+
+        <div class="table-wrap">
+        <table class="table-compact">
+            <tr>
+                <th>Aspect</th>
+                <th>Self-Hosted DEX Agents</th>
+                <th>Tosca Cloud</th>
+            </tr>
+            <tr>
+                <td>Infrastructure ownership</td>
+                <td>Your team provisions and maintains VMs</td>
+                <td>Tricentis manages the agent pool</td>
+            </tr>
+            <tr>
+                <td>Scaling</td>
+                <td>Manual — add more VMs as needed</td>
+                <td>On-demand, elastic scaling</td>
+            </tr>
+            <tr>
+                <td>Best for</td>
+                <td>Environments requiring specific internal network access, specialised software (SAP, mainframe emulators)</td>
+                <td>Standard web/API testing needing burst capacity without capital investment</td>
+            </tr>
+        </table>
+        </div>
+
+        <!-- SECTION 7 -->
+        <h2 id="section7"><span class="level advanced">ADVANCED</span>7. Triggering a DEX Run from CI</h2>
+
+        <p>ToscaCI (covered in the CI/CD Integration guide) can trigger a Distributed Execution run directly from a build pipeline, letting a CI stage benefit from parallelism without any manual TCM interaction.</p>
+
+        <pre>// Starting a DEX run from CI
+ToscaCI.exe run
+  --executionEnvironment "DEX"
+  --agentGroup "QA_Agents"
+  --executionList "Full_Regression"</pre>
+
+        <div class="example">
+            <strong>Typical pipeline shape:</strong> Deploy → ToscaCI triggers a DEX-distributed Full_Regression run across 8 QA agents → pipeline waits on the aggregated exit code → publishes the merged JUnit XML result, all without the pipeline needing to know or care how many physical agents were involved.
+        </div>
+
+        <!-- SECTION 8 -->
+        <h2 id="section8"><span class="level intermediate">INTERMEDIATE</span>8. Test Data Considerations Under Parallelism</h2>
+
+        <p>Introducing parallel execution surfaces a class of problems that simply don't exist in serial runs: two agents might simultaneously grab the same "available" test user, order record, or shared resource, causing intermittent, hard-to-reproduce failures.</p>
+
+        <pre>// Problem: two agents both pick "the next available test user" from a shared Excel row
+Agent 1: uses TestUser_003 for TC010
+Agent 2: uses TestUser_003 for TC045   ← collision!
+→ Both tests fail unpredictably depending on execution order
+
+// Solution: partition data per agent, or use TDM Server reservation
+Agent 1: assigned TestUser_001–010
+Agent 2: assigned TestUser_011–020
+// or: TDM Server reserves+releases records automatically</pre>
+
+        <div class="note">
+            <strong>💡 Tip:</strong> See the Test Data Management guide's coverage of the Tricentis TDM Server's reservation feature — this is precisely the problem it's designed to solve at scale.
+        </div>
+
+        <!-- SECTION 9 -->
+        <h2 id="section9"><span class="level intermediate">INTERMEDIATE</span>9. Common Pitfalls</h2>
+
+        <ul style="margin: 15px 0; margin-left: 20px;">
+            <li><strong>Assuming linear speedup:</strong> planning capacity around theoretical Nx speedup instead of the realistic, somewhat lower figure due to overhead.</li>
+            <li><strong>Untagged or mis-tagged agents:</strong> Test Cases silently failing to get scheduled because no agent in the pool matches their declared requirements.</li>
+            <li><strong>Shared mutable test data:</strong> data collisions between agents that don't manifest until parallelism is introduced, producing "it worked yesterday" flakiness.</li>
+            <li><strong>Over-provisioning parallelism beyond data/environment capacity:</strong> running more parallel Test Cases than the target environment (e.g. a shared QA database) can actually handle without contention.</li>
+        </ul>
+
+        <!-- SECTION 10 -->
+        <h2 id="section10"><span class="level beginner">BEGINNER</span>10. Best Practices</h2>
+
+        <h3>1. Tag Agents and Test Cases Deliberately</h3>
+        <p>Keep tag vocabulary consistent (OS, browser, language, specialised software) and audit for gaps before scaling.</p>
+
+        <h3>2. Partition or Reserve Shared Test Data</h3>
+        <p>Design data sources so concurrent agents cannot collide on the same record.</p>
+
+        <h3>3. Start Small, Measure, Scale</h3>
+        <pre>Run with 2 agents → measure actual speedup
+Run with 4 agents → measure again
+// Only scale further once you confirm the environment
+// and data layer can support the added concurrency</pre>
+
+        <h3>4. Separate Smoke (Fast, Low Parallelism) from Full Regression (High Parallelism)</h3>
+        <p>A quick smoke gate may not even need DEX; save the parallel agent pool for the larger regression run where the time savings matter most.</p>
+
+        <h3>5. Monitor Agent Health</h3>
+        <p>Regularly confirm registered agents are online and correctly tagged — stale or crashed agents silently reduce your effective parallelism.</p>
+
+        <!-- SUMMARY -->
+        <h2 style="margin-top: 40px;">📋 Quick Reference Summary</h2>
+
+        <div class="table-wrap">
+        <table>
+            <tr>
+                <th>Concept</th>
+                <th>Key Points</th>
+            </tr>
+            <tr>
+                <td><strong>DEX</strong></td>
+                <td>Distributed Execution — parallel test running across a pool of agents.</td>
+            </tr>
+            <tr>
+                <td><strong>DEX Server</strong></td>
+                <td>Central orchestrator that slices and dispatches work to agents.</td>
+            </tr>
+            <tr>
+                <td><strong>DEX Agent</strong></td>
+                <td>A registered machine that executes an assigned slice of an Execution List.</td>
+            </tr>
+            <tr>
+                <td><strong>Agent tags / requirements</strong></td>
+                <td>Route specific Test Cases only to agents with matching capabilities.</td>
+            </tr>
+            <tr>
+                <td><strong>Tosca Cloud</strong></td>
+                <td>Elastic, cloud-hosted agent pool requiring no self-managed infrastructure.</td>
+            </tr>
+            <tr>
+                <td><strong>Data collisions</strong></td>
+                <td>The main new risk introduced by parallelism — mitigate via partitioning/reservation.</td>
+            </tr>
+        </table>
+        </div>
+
+        <div style="margin-top: 40px; padding: 20px; background: #ecf0f1; border-radius: 5px;">
+            <h3>🎓 Learning Path</h3>
+            <p><strong>Beginner:</strong> Master sections 1, 2, 3, 10</p>
+            <p><strong>Intermediate:</strong> Understand sections 4, 5, 8, 9</p>
+            <p><strong>Advanced:</strong> Deep dive into sections 6, 7</p>
+        </div>
+
+    </div>
+</body>
+</html>

@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Playwright Page & Navigation: Complete Guide</title>
+    <link rel="stylesheet" href="/guides/guide-base.css">
+</head>
+<body>
+    <div class="container">
+        <h1>🧭 Playwright Page & Navigation: Complete Guide</h1>
+        <p style="font-size: 1.1em; color: #7f8c8d; margin-bottom: 20px;">
+            Navigating reliably, waiting for the right load state, and asserting the destination
+        </p>
+
+        <div class="toc">
+            <h3>📚 Table of Contents</h3>
+            <ul>
+                <li><a href="#section1">1. page.goto() Basics</a></li>
+                <li><a href="#section2">2. The waitUntil Option</a></li>
+                <li><a href="#section3">3. Waiting After a Triggered Navigation</a></li>
+                <li><a href="#section4">4. Reading Current State: url() vs title()</a></li>
+                <li><a href="#section5">5. Asserting Navigation with expect()</a></li>
+                <li><a href="#section6">6. Browser History: back, forward, reload</a></li>
+                <li><a href="#section7">7. Multi-Page and Popup Navigation</a></li>
+                <li><a href="#section8">8. Common Pitfalls</a></li>
+            </ul>
+        </div>
+
+        <!-- SECTION 1 -->
+        <h2 id="section1"><span class="level beginner">BEGINNER</span>1. page.goto() Basics</h2>
+
+        <p><code>page.goto(url, options)</code> is the primary way to navigate. It accepts a full URL, or a relative path if <code>baseURL</code> is configured in <code>playwright.config.ts</code>.</p>
+
+        <pre>await page.goto('https://example.com');
+await page.goto('/login');                          // baseURL prepended
+await page.goto('/slow', { timeout: 60_000 });      // per-call timeout override</pre>
+
+        <div class="note">
+            <strong>💡 Tip:</strong> Setting <code>use: { baseURL: 'http://localhost:3000' }</code> once in the config means every test can use short relative paths, and switching environments (staging vs. production) is a one-line config change instead of a find-and-replace across every test file.
+        </div>
+
+        <!-- SECTION 2 -->
+        <h2 id="section2"><span class="level beginner">BEGINNER</span>2. The waitUntil Option</h2>
+
+        <p>By default, <code>page.goto()</code> waits for the <code>load</code> event — meaning all scripts, images, and stylesheets have finished loading. You can choose an earlier or later point with <code>waitUntil</code>:</p>
+
+        <div class="table-wrap">
+        <table class="table-compact">
+            <tr>
+                <th>Value</th>
+                <th>Waits until</th>
+                <th>When to use</th>
+            </tr>
+            <tr>
+                <td><code>'commit'</code></td>
+                <td>First byte of the response received</td>
+                <td>Earliest possible — rarely used directly in tests</td>
+            </tr>
+            <tr>
+                <td><code>'domcontentloaded'</code></td>
+                <td>HTML parsed, before external resources finish</td>
+                <td>Fast SPAs where you don't need images/fonts loaded</td>
+            </tr>
+            <tr>
+                <td><code>'load'</code> (default)</td>
+                <td>All resources (scripts, images, CSS) loaded</td>
+                <td>General-purpose default — safe for most pages</td>
+            </tr>
+            <tr>
+                <td><code>'networkidle'</code></td>
+                <td>No network activity for 500 ms</td>
+                <td>Data-heavy pages that fetch content after initial load</td>
+            </tr>
+        </table>
+        </div>
+
+        <pre>await page.goto('/static-page', { waitUntil: 'domcontentloaded' }); // fastest
+await page.goto('/regular-page', { waitUntil: 'load' });             // default
+await page.goto('/data-heavy-page', { waitUntil: 'networkidle' });   // thorough</pre>
+
+        <div class="warning">
+            <strong>⚠️ Common Pitfall:</strong> <code>'networkidle'</code> is tempting for "wait until everything is really done," but pages with polling requests (analytics beacons, live chat widgets, websocket keep-alives) never go network-idle — the navigation will hang until timeout. Prefer waiting for a specific element or using a web-first assertion instead of leaning on <code>networkidle</code> as a catch-all.
+        </div>
+
+        <!-- SECTION 3 -->
+        <h2 id="section3"><span class="level beginner">BEGINNER</span>3. Waiting After a Triggered Navigation</h2>
+
+        <p>Not every navigation happens via <code>page.goto()</code> — clicking a link or submitting a form can trigger one too. In those cases, use <code>waitForURL()</code> or <code>waitForLoadState()</code> after the action.</p>
+
+        <pre>await page.getByRole('link', { name: 'Products' }).click();
+await page.waitForURL('/products');                // exact string
+await page.waitForURL(/\/profile\/\d+/);           // regex pattern
+await page.waitForURL('**/checkout**');            // glob pattern
+await page.waitForLoadState('networkidle');</pre>
+
+        <!-- SECTION 4 -->
+        <h2 id="section4"><span class="level intermediate">INTERMEDIATE</span>4. Reading Current State: url() vs title()</h2>
+
+        <p>This is a small but important distinction that trips up newcomers:</p>
+
+        <div class="comparison">
+            <div>
+                <strong>page.url() — synchronous:</strong>
+                <pre>const url = page.url();
+// Returns the string immediately —
+// no Promise, no await needed</pre>
+            </div>
+            <div>
+                <strong>page.title() — asynchronous:</strong>
+                <pre>const title = await page.title();
+// Returns a Promise — must be awaited
+// because it queries the DOM</pre>
+            </div>
+        </div>
+
+        <div class="note">
+            <strong>💡 Tip:</strong> <code>page.url()</code> is fast because Playwright already tracks the current URL internally without a round trip. <code>page.title()</code> has to read the live <code>&lt;title&gt;</code> element from the page, which requires a call across the automation protocol — hence the Promise.
+        </div>
+
+        <!-- SECTION 5 -->
+        <h2 id="section5"><span class="level intermediate">INTERMEDIATE</span>5. Asserting Navigation with expect()</h2>
+
+        <p>Always prefer the web-first assertions over manually comparing <code>page.url()</code> or <code>page.title()</code> — they auto-retry, which makes them resilient to redirects and in-flight navigation.</p>
+
+        <pre>await expect(page).toHaveURL('/dashboard');
+await expect(page).toHaveURL(/\/user\/\d+/);
+await expect(page).toHaveTitle('My App — Home');
+await expect(page).toHaveTitle(/Dashboard/);</pre>
+
+        <h3>Full Login-Redirect Example</h3>
+        <pre>test('login redirects to dashboard', async ({ page }) => {
+  await page.goto('/login');
+
+  await page.getByLabel('Email').fill('user@example.com');
+  await page.getByLabel('Password').fill('secret');
+  await page.getByRole('button', { name: 'Sign in' }).click();
+
+  // Auto-retries until the redirect completes — no manual wait needed
+  await expect(page).toHaveURL('/dashboard');
+  await expect(page).toHaveTitle(/Dashboard/);
+});</pre>
+
+        <div class="example">
+            <strong>Why this beats <code>expect(page.url()).toBe(...)</code>:</strong> if the redirect takes 200ms to complete, a raw equality check on <code>page.url()</code> called too early will see the old URL and fail — even though the app is working correctly. <code>toHaveURL()</code> keeps checking until it matches or times out.
+        </div>
+
+        <!-- SECTION 6 -->
+        <h2 id="section6"><span class="level intermediate">INTERMEDIATE</span>6. Browser History: back, forward, reload</h2>
+
+        <pre>await page.goto('/home');
+await page.getByRole('link', { name: 'About' }).click();
+await expect(page).toHaveURL('/about');
+
+await page.goBack();
+await expect(page).toHaveURL('/home');
+
+await page.goForward();
+await expect(page).toHaveURL('/about');
+
+await page.reload();
+await expect(page).toHaveURL('/about');
+await page.reload({ waitUntil: 'networkidle' });</pre>
+
+        <p>These methods mirror exactly what a real user does with the browser's back/forward buttons and refresh — useful for verifying that state (form input, scroll position, selected tab) survives or resets as expected.</p>
+
+        <!-- SECTION 7 -->
+        <h2 id="section7"><span class="level advanced">ADVANCED</span>7. Multi-Page and Popup Navigation</h2>
+
+        <pre>test('external link opens a new tab', async ({ context, page }) => {
+  await page.goto('/docs');
+
+  const [newPage] = await Promise.all([
+    context.waitForEvent('page'),
+    page.getByRole('link', { name: 'View on GitHub' }).click(),
+  ]);
+
+  await newPage.waitForLoadState();
+  await expect(newPage).toHaveURL(/github\.com/);
+});</pre>
+
+        <div class="warning">
+            <strong>⚠️ Common Pitfall:</strong> If you click the link first and <em>then</em> call <code>context.waitForEvent('page')</code>, the new page may have already opened before your listener attached, and the promise will hang. Always start the listener and the triggering click together inside <code>Promise.all()</code>.
+        </div>
+
+        <!-- SECTION 8 -->
+        <h2 id="section8"><span class="level advanced">ADVANCED</span>8. Common Pitfalls</h2>
+
+        <div class="warning">
+            <strong>⚠️ Pitfall 1 — Racing a client-side redirect:</strong> Single-page apps often navigate via JavaScript router (no full page load), so <code>waitForLoadState('load')</code> may resolve before the router-driven URL change happens. Prefer <code>waitForURL()</code> or a web-first <code>expect(page).toHaveURL()</code> which watches the URL directly.
+        </div>
+
+        <div class="warning">
+            <strong>⚠️ Pitfall 2 — Hardcoding full URLs everywhere:</strong> Without a configured <code>baseURL</code>, tests scattered with <code>https://staging.myapp.com/...</code> become a maintenance burden the moment the environment changes. Centralize the origin in config.
+        </div>
+
+        <div class="note">
+            <strong>💡 Tip:</strong> If a navigation seems to hang indefinitely, check whether the page fires ongoing background requests (websockets, polling) that prevent <code>'networkidle'</code> from ever being reached — switch to <code>'load'</code> or <code>'domcontentloaded'</code> instead.
+        </div>
+
+        <!-- SUMMARY -->
+        <h2 style="margin-top: 40px;">📋 Quick Reference Summary</h2>
+
+        <div class="table-wrap">
+        <table>
+            <tr>
+                <th>Concept</th>
+                <th>Key Points</th>
+            </tr>
+            <tr>
+                <td><strong>page.goto()</strong></td>
+                <td>Primary navigation method; accepts relative paths when baseURL is set.</td>
+            </tr>
+            <tr>
+                <td><strong>waitUntil</strong></td>
+                <td>commit → domcontentloaded → load (default) → networkidle, in order of thoroughness.</td>
+            </tr>
+            <tr>
+                <td><strong>waitForURL / waitForLoadState</strong></td>
+                <td>Use after link clicks or form submits that trigger navigation.</td>
+            </tr>
+            <tr>
+                <td><strong>url() vs title()</strong></td>
+                <td>url() is synchronous; title() returns a Promise and must be awaited.</td>
+            </tr>
+            <tr>
+                <td><strong>Assertions</strong></td>
+                <td>Prefer expect(page).toHaveURL()/toHaveTitle() — they auto-retry through redirects.</td>
+            </tr>
+            <tr>
+                <td><strong>History</strong></td>
+                <td>goBack(), goForward(), reload() mirror real browser navigation controls.</td>
+            </tr>
+        </table>
+        </div>
+
+        <div style="margin-top: 40px; padding: 20px; background: #ecf0f1; border-radius: 5px;">
+            <h3>🎓 Learning Path</h3>
+            <p><strong>Beginner:</strong> Master sections 1, 2, 3</p>
+            <p><strong>Intermediate:</strong> Understand sections 4, 5, 6</p>
+            <p><strong>Advanced:</strong> Deep dive into sections 7, 8</p>
+        </div>
+
+    </div>
+</body>
+</html>

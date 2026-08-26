@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TypeScript Type Inference & Assertions: Complete Guide</title>
+    <link rel="stylesheet" href="/guides/guide-base.css">
+</head>
+<body>
+    <div class="container">
+        <h1>🎯 TypeScript Type Inference & Assertions: Complete Guide</h1>
+        <p style="font-size: 1.1em; color: #7f8c8d; margin-bottom: 20px;">
+            A comprehensive journey from fundamental concepts to advanced techniques
+        </p>
+
+        <div class="toc">
+            <h3>📚 Table of Contents</h3>
+            <ul>
+                <li><a href="#section1">1. How Type Inference Works</a></li>
+                <li><a href="#section2">2. Best Common Type Inference</a></li>
+                <li><a href="#section3">3. Contextual Typing</a></li>
+                <li><a href="#section4">4. Type Widening and Literal Narrowing</a></li>
+                <li><a href="#section5">5. const Assertions (as const)</a></li>
+                <li><a href="#section6">6. Type Assertions (as Type)</a></li>
+                <li><a href="#section7">7. The Non-Null Assertion Operator (!)</a></li>
+                <li><a href="#section8">8. satisfies Operator</a></li>
+                <li><a href="#section9">9. When Inference Fails You</a></li>
+                <li><a href="#section10">10. Best Practices</a></li>
+            </ul>
+        </div>
+
+        <!-- SECTION 1 -->
+        <h2 id="section1"><span class="level beginner">BEGINNER</span>1. How Type Inference Works</h2>
+
+        <h3>Definition</h3>
+        <p>Type inference is TypeScript's ability to figure out a value's type automatically, based on how it's initialized or used, without you writing an explicit annotation.</p>
+
+        <pre>let age = 25;              // inferred: number
+let name = "Priya";        // inferred: string
+let active = true;         // inferred: boolean
+let list = [1, 2, 3];      // inferred: number[]
+
+// age = "twenty-five";    // ❌ Error - still checked, even without annotation</pre>
+
+        <div class="example">
+            <strong>Real-world analogy:</strong> Inference is like a waiter noting your order without you having to spell out the recipe — TypeScript observes what you handed it and remembers exactly what kind of thing it is.
+        </div>
+
+        <h3>Inference in Function Return Types</h3>
+        <pre>function add(a: number, b: number) {
+    return a + b;   // return type inferred as number
+}
+
+// Hovering over 'add' in an editor shows:
+// function add(a: number, b: number): number</pre>
+
+        <!-- SECTION 2 -->
+        <h2 id="section2"><span class="level beginner">BEGINNER</span>2. Best Common Type Inference</h2>
+
+        <p>When inferring the type of an array literal with mixed but related elements, TypeScript picks the "best common type" that fits every element.</p>
+
+        <pre>let mixed = [1, 2, null];
+// inferred as (number | null)[]
+
+let animals = [{ name: "Cat" }, { name: "Dog", legs: 4 }];
+// inferred as { name: string; legs?: number }[]
+// TypeScript infers a union-ish "best fit" for objects too</pre>
+
+        <h3>When No Best Common Type Exists</h3>
+        <pre>let values = [1, "two", true];
+// inferred as (string | number | boolean)[]
+// TypeScript falls back to a union of all element types</pre>
+
+        <!-- SECTION 3 -->
+        <h2 id="section3"><span class="level intermediate">INTERMEDIATE</span>3. Contextual Typing</h2>
+
+        <p>Contextual typing infers a value's type from <em>where</em> it's used, not just how it's written — most visible with callback parameters.</p>
+
+        <pre>window.addEventListener("click", (event) => {
+    // 'event' is contextually inferred as MouseEvent
+    console.log(event.clientX, event.clientY);
+});
+
+const numbers: number[] = [1, 2, 3];
+numbers.forEach((n) => {
+    // 'n' is contextually inferred as number, from numbers' element type
+    console.log(n.toFixed(2));
+});</pre>
+
+        <h3>Contextual Typing with Function Type Aliases</h3>
+        <pre>type ClickHandler = (event: { x: number; y: number }) => void;
+
+const handleClick: ClickHandler = (event) => {
+    // 'event' is inferred to match ClickHandler's parameter, no annotation needed
+    console.log(event.x, event.y);
+};</pre>
+
+        <!-- SECTION 4 -->
+        <h2 id="section4"><span class="level intermediate">INTERMEDIATE</span>4. Type Widening and Literal Narrowing</h2>
+
+        <p>By default, TypeScript "widens" literal values assigned with <code>let</code> to their general type, because the compiler assumes the variable might be reassigned later.</p>
+
+        <pre>let status = "active";
+// inferred as 'string' (widened), NOT the literal type "active"
+status = "inactive";   // ✅ allowed since it widened to string
+
+const status2 = "active";
+// inferred as the literal type "active" (narrow), since const can't be reassigned</pre>
+
+        <h3>Widening Inside Object Literals</h3>
+        <pre>function move(config: { direction: "up" | "down" }) {}
+
+const config = { direction: "up" };
+// config.direction is widened to 'string' inside the object literal
+
+// move(config);   // ❌ Error: 'string' is not assignable to '"up" | "down"'
+move({ direction: "up" });   // ✅ OK - inline literal stays narrow</pre>
+
+        <div class="warning">
+            <strong>⚠️ Common Pitfall:</strong> This is one of the most common sources of confusing TypeScript errors for newcomers — a variable "should" be a specific literal but got widened to its general type because it wasn't declared <code>const</code> or explicitly annotated.
+        </div>
+
+        <!-- SECTION 5 -->
+        <h2 id="section5"><span class="level intermediate">INTERMEDIATE</span>5. const Assertions (as const)</h2>
+
+        <p><code>as const</code> tells TypeScript to infer the narrowest possible type for a literal, treating arrays as readonly tuples and object properties as readonly literals.</p>
+
+        <pre>let point = { x: 10, y: 20 } as const;
+// type: { readonly x: 10; readonly y: 20 }
+// point.x = 5;   // ❌ Error - readonly
+
+let colors = ["red", "green", "blue"] as const;
+// type: readonly ["red", "green", "blue"]
+// colors.push("yellow");   // ❌ Error - readonly, and fixed length</pre>
+
+        <h3>as const with Function Config Objects</h3>
+        <pre>function move(config: { direction: "up" | "down" }) {}
+
+const config = { direction: "up" } as const;
+move(config);   // ✅ OK now - "up" stays as the literal type "up"</pre>
+
+        <div class="note">
+            <strong>💡 Tip:</strong> A common pattern is <code>const LOCALES = ["en", "fr", "es"] as const; type Locale = typeof LOCALES[number];</code> — deriving a precise union type directly from a runtime array.
+        </div>
+
+        <!-- SECTION 6 -->
+        <h2 id="section6"><span class="level intermediate">INTERMEDIATE</span>6. Type Assertions (as Type)</h2>
+
+        <p>A type assertion tells the compiler "I know more about this value's type than you do" — it does not perform any runtime conversion or checking.</p>
+
+        <pre>const input = document.getElementById("email") as HTMLInputElement;
+console.log(input.value);   // ✅ OK - TypeScript trusts the assertion
+
+// Alternative angle-bracket syntax (not usable in .tsx files)
+const input2 = <HTMLInputElement>document.getElementById("email");</pre>
+
+        <h3>Asserting unknown to a Specific Type</h3>
+        <pre>function parseConfig(json: string) {
+    const data = JSON.parse(json) as { host: string; port: number };
+    return data;
+}</pre>
+
+        <div class="warning">
+            <strong>⚠️ Common Pitfall:</strong> Type assertions are a promise, not a guarantee. <code>JSON.parse(json) as { host: string }</code> compiles fine even if the actual JSON has no <code>host</code> field — the mismatch only surfaces as a runtime bug. Prefer validation (or a type guard) when the data's shape truly isn't known.
+        </div>
+
+        <h3>Double Assertions for Unrelated Types</h3>
+        <pre>const value = "hello" as unknown as number;
+// Forces a conversion TypeScript would otherwise reject as too different -
+// use only when you are certain, e.g. bridging poorly-typed third-party code</pre>
+
+        <!-- SECTION 7 -->
+        <h2 id="section7"><span class="level advanced">ADVANCED</span>7. The Non-Null Assertion Operator (!)</h2>
+
+        <p>The <code>!</code> postfix operator tells TypeScript "trust me, this is not <code>null</code> or <code>undefined</code>," removing those from the type without any runtime check.</p>
+
+        <pre>function findUser(id: number): { name: string } | undefined {
+    return id === 1 ? { name: "Robin" } : undefined;
+}
+
+const user = findUser(1)!;   // asserts the result is NOT undefined
+console.log(user.name);      // ✅ compiles - but crashes at runtime if actually undefined!</pre>
+
+        <h3>Common Use: DOM Elements Known to Exist</h3>
+        <pre>const canvas = document.querySelector("#game-canvas")!;
+const ctx = (canvas as HTMLCanvasElement).getContext("2d")!;
+ctx.fillRect(0, 0, 100, 100);</pre>
+
+        <div class="warning">
+            <strong>⚠️ Common Pitfall:</strong> Overusing <code>!</code> silently reintroduces the very null-related crashes that <code>strictNullChecks</code> was meant to prevent. Prefer explicit checks (<code>if (user)</code>) whenever the possibility of <code>null</code>/<code>undefined</code> is real rather than purely theoretical.
+        </div>
+
+        <!-- SECTION 8 -->
+        <h2 id="section8"><span class="level advanced">ADVANCED</span>8. satisfies Operator</h2>
+
+        <p><code>satisfies</code> (TypeScript 4.9+) checks that a value matches a type <strong>without widening or changing the value's own inferred type</strong> — the best of both <code>as const</code> and explicit annotations.</p>
+
+        <pre>type Colors = Record<string, [number, number, number]>;
+
+const palette = {
+    red: [255, 0, 0],
+    green: [0, 255, 0]
+} satisfies Colors;
+
+// palette.red is still inferred as [number, number, number], a tuple -
+// with a plain ': Colors' annotation it would widen to number[]
+console.log(palette.red[0]);   // ✅ 255, and palette.red has exactly 3 elements
+
+// palette.blue;   // ❌ Error - satisfies still checks unknown properties don't exist</pre>
+
+        <h3>satisfies vs Plain Annotation</h3>
+        <div class="comparison">
+            <div>
+                <strong>Plain annotation (widens):</strong>
+                <pre>const config: Record<string, string | number> = {
+    host: "localhost",
+    port: 8080
+};
+// config.port is 'string | number', not 'number'</pre>
+            </div>
+            <div>
+                <strong>satisfies (keeps precise type):</strong>
+                <pre>const config = {
+    host: "localhost",
+    port: 8080
+} satisfies Record<string, string | number>;
+// config.port is still 'number'</pre>
+            </div>
+        </div>
+
+        <!-- SECTION 9 -->
+        <h2 id="section9"><span class="level advanced">ADVANCED</span>9. When Inference Fails You</h2>
+
+        <h3>Empty Collections Infer as any</h3>
+        <pre>let items = [];        // inferred as any[] without an annotation
+items.push("text");
+items.push(42);        // no error - any[] accepts anything
+
+// Fix:
+let items2: string[] = [];</pre>
+
+        <h3>Generic Inference Gaps</h3>
+        <pre>function wrap<T>(value: T): { value: T } {
+    return { value };
+}
+
+const wrapped = wrap(null);
+// T inferred as 'null' - probably not what you wanted
+
+const wrapped2 = wrap<string | null>(null);   // explicit type argument fixes it</pre>
+
+        <h3>Return Type Inference Across Recursive Functions</h3>
+        <pre>// TypeScript cannot infer the return type of a directly recursive
+// function without an explicit annotation in some cases:
+function factorial(n: number): number {   // annotation required here
+    return n <= 1 ? 1 : n * factorial(n - 1);
+}</pre>
+
+        <!-- SECTION 10 -->
+        <h2 id="section10"><span class="level advanced">ADVANCED</span>10. Best Practices</h2>
+
+        <h3>1. Let Inference Handle Obvious Local Variables</h3>
+        <pre>// ✅ Good
+const count = 0;
+const name = "TypeScript";</pre>
+
+        <h3>2. Use as const for Fixed Configuration Data</h3>
+        <pre>// ✅ Good
+const ROUTES = ["/home", "/about", "/contact"] as const;</pre>
+
+        <h3>3. Prefer satisfies Over as When You Still Want Inference</h3>
+        <pre>// ✅ Good - validates shape, keeps precise inferred type
+const theme = { primary: "#000", secondary: "#fff" } satisfies Record<string, string>;</pre>
+
+        <h3>4. Avoid the Non-Null Assertion Unless You're Certain</h3>
+        <pre>// ✅ Better - explicit check instead of !
+const el = document.querySelector("#app");
+if (el) {
+    el.textContent = "Ready";
+}</pre>
+
+        <h3>5. Annotate Empty Arrays and Recursive Function Returns</h3>
+        <pre>// ✅ Good
+const results: string[] = [];
+function sumTo(n: number): number { return n <= 0 ? 0 : n + sumTo(n - 1); }</pre>
+
+        <!-- SUMMARY -->
+        <h2 style="margin-top: 40px;">📋 Quick Reference Summary</h2>
+
+        <div class="table-wrap">
+        <table>
+            <tr>
+                <th>Concept</th>
+                <th>Key Points</th>
+            </tr>
+            <tr>
+                <td><strong>Inference</strong></td>
+                <td>TypeScript deduces types from initializers, usage, and context automatically</td>
+            </tr>
+            <tr>
+                <td><strong>Widening</strong></td>
+                <td><code>let</code> broadens literals to their general type; <code>const</code> keeps them narrow</td>
+            </tr>
+            <tr>
+                <td><strong>as const</strong></td>
+                <td>Forces the narrowest possible readonly literal type</td>
+            </tr>
+            <tr>
+                <td><strong>as Type</strong></td>
+                <td>Compile-time-only override; no runtime check or conversion</td>
+            </tr>
+            <tr>
+                <td><strong>! (non-null assertion)</strong></td>
+                <td>Removes null/undefined from a type without checking; use sparingly</td>
+            </tr>
+            <tr>
+                <td><strong>satisfies</strong></td>
+                <td>Validates against a type while preserving the value's precise inferred type</td>
+            </tr>
+        </table>
+        </div>
+
+        <div style="margin-top: 40px; padding: 20px; background: #ecf0f1; border-radius: 5px;">
+            <h3>🎓 Learning Path</h3>
+            <p><strong>Beginner:</strong> Master sections 1, 2</p>
+            <p><strong>Intermediate:</strong> Understand sections 3, 4, 5, 6</p>
+            <p><strong>Advanced:</strong> Deep dive into sections 7, 8, 9, 10</p>
+        </div>
+
+    </div>
+</body>
+</html>

@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tosca Workspaces & Collaboration: Complete Guide</title>
+    <link rel="stylesheet" href="/guides/guide-base.css">
+</head>
+<body>
+    <div class="container">
+        <h1>🤝 Tosca Workspaces & Collaboration: Complete Guide</h1>
+        <p style="font-size: 1.1em; color: #7f8c8d; margin-bottom: 20px;">
+            Working safely as a team against one shared repository, without stepping on each other's changes
+        </p>
+
+        <div class="toc">
+            <h3>📚 Table of Contents</h3>
+            <ul>
+                <li><a href="#section1">1. The Common Repository Model</a></li>
+                <li><a href="#section2">2. Check-Out / Check-In Locking</a></li>
+                <li><a href="#section3">3. Workspaces: Private Sandboxes</a></li>
+                <li><a href="#section4">4. A Full Team Workflow Example</a></li>
+                <li><a href="#section5">5. Merge Conflicts and Resolution</a></li>
+                <li><a href="#section6">6. Workspaces vs Git Branching</a></li>
+                <li><a href="#section7">7. Integrating with External Version Control</a></li>
+                <li><a href="#section8">8. Repository Permissions and Access Control</a></li>
+                <li><a href="#section9">9. Common Pitfalls</a></li>
+                <li><a href="#section10">10. Best Practices</a></li>
+            </ul>
+        </div>
+
+        <!-- SECTION 1 -->
+        <h2 id="section1"><span class="level beginner">BEGINNER</span>1. The Common Repository Model</h2>
+
+        <h3>Definition</h3>
+        <p>Tosca's <strong>Common Repository</strong> is a central SQL/Oracle database that every team member connects to, ensuring everyone works against the same single version of all test assets — Modules, Test Cases, Execution Lists, Requirements. There is no per-developer local copy of the "codebase" the way there is with file-based version control.</p>
+
+        <div class="example">
+            <strong>Real-world analogy:</strong> The Tosca repository is like a shared Google Doc with track-changes and private drafts. The main document (common repository) is always the official version. Workspaces are personal drafts — you refine your writing privately, then propose a merge into the main document. If someone else edited the same sentence, Google Docs highlights the conflict for manual resolution.
+        </div>
+
+        <!-- SECTION 2 -->
+        <h2 id="section2"><span class="level beginner">BEGINNER</span>2. Check-Out / Check-In Locking</h2>
+
+        <p>Multi-user access is coordinated through <strong>check-out/check-in</strong> locking: when you edit a Test Case or Module, you check it out — locking it for others — make your changes, then check it back in, at which point the new version becomes immediately available to the whole team.</p>
+
+        <pre>// Check-out / Check-in flow
+Right-click asset → Check Out     → locks asset for you
+[make changes]
+Right-click asset → Check In      → saves and unlocks</pre>
+
+        <div class="table-wrap">
+        <table class="table-compact">
+            <tr>
+                <th>State</th>
+                <th>What It Means</th>
+            </tr>
+            <tr>
+                <td>Checked in (default)</td>
+                <td>Anyone can check it out to edit; everyone sees the latest committed version</td>
+            </tr>
+            <tr>
+                <td>Checked out by you</td>
+                <td>You can edit freely; others see it as locked and read-only</td>
+            </tr>
+            <tr>
+                <td>Checked out by someone else</td>
+                <td>You can view but not edit until they check it back in</td>
+            </tr>
+        </table>
+        </div>
+
+        <!-- SECTION 3 -->
+        <h2 id="section3"><span class="level beginner">BEGINNER</span>3. Workspaces: Private Sandboxes</h2>
+
+        <p><strong>Workspaces</strong> are private sandboxes within the common repository. A tester can check out assets into their personal Workspace, develop and test changes in isolation, then merge them back to the shared repository — conceptually similar to a feature branch in Git, but implemented at the database level rather than as file diffs.</p>
+
+        <pre>// Workspace operations
+TCM → Workspaces → New Workspace  → creates private sandbox
+Move asset to Workspace           → isolated development
+Merge Workspace → merge back to common repository</pre>
+
+        <div class="note">
+            <strong>💡 Tip:</strong> Working in a Workspace prevents unstable, in-progress changes from breaking other testers' runs — teammates continue running the last checked-in, stable version of an asset while you develop your changes in isolation.
+        </div>
+
+        <!-- SECTION 4 -->
+        <h2 id="section4"><span class="level intermediate">INTERMEDIATE</span>4. A Full Team Workflow Example</h2>
+
+        <pre>// Alice: develop new Login module in workspace
+1. Alice creates Workspace_Alice
+2. Checks out LoginPage module → moves to workspace
+3. Adds new attribute: RememberMeCheckbox
+4. Runs local tests in workspace → passes
+5. Merges Workspace_Alice → Common Repository
+6. Bob can now see and use RememberMeCheckbox
+
+// Bob: blocked scenario (without workspace)
+1. Bob opens LoginPage module → sees "Checked out by Alice"
+2. Cannot edit until Alice checks in
+// → Use workspaces to avoid this bottleneck</pre>
+
+        <div class="example">
+            <strong>The key insight:</strong> without a Workspace, a simple check-out/check-in already prevents two people from corrupting each other's edits — but it also fully blocks Bob from making <em>any</em> progress on that asset until Alice finishes. A Workspace lets Alice develop over multiple days without indefinitely locking the shared asset for everyone else.
+        </div>
+
+        <!-- SECTION 5 -->
+        <h2 id="section5"><span class="level intermediate">INTERMEDIATE</span>5. Merge Conflicts and Resolution</h2>
+
+        <p>When two users have modified the same asset concurrently (e.g. in separate Workspaces) and both attempt to merge back, TCM detects the conflict and presents a visual resolution dialog rather than silently overwriting one person's change.</p>
+
+        <pre>// Two users edit same test case simultaneously
+Alice: modifies TC001 Step 3 value to "admin@new.com"
+Bob:   modifies TC001 Step 3 value to "user@new.com"
+
+// When Bob merges:
+TCM shows Merge Conflict dialog
+  Alice's version: "admin@new.com"
+  Bob's version:   "user@new.com"
+  Current value:   "alice@test.com" (original)
+→ Bob chooses: Keep Mine / Take Theirs / Merge manually</pre>
+
+        <div class="warning">
+            <strong>⚠️ Common Pitfall:</strong> Reflexively clicking "Keep Mine" on every conflict without reading what the other change actually was can silently discard a teammate's legitimate fix. Always read both versions before resolving.
+        </div>
+
+        <!-- SECTION 6 -->
+        <h2 id="section6"><span class="level advanced">ADVANCED</span>6. Workspaces vs Git Branching</h2>
+
+        <p>Testers coming from a software development background naturally reach for a Git mental model when learning Workspaces. The analogy is useful but imperfect — understanding where it breaks down avoids confusion.</p>
+
+        <div class="table-wrap">
+        <table class="table-compact">
+            <tr>
+                <th>Aspect</th>
+                <th>Git Branch</th>
+                <th>Tosca Workspace</th>
+            </tr>
+            <tr>
+                <td>Storage</td>
+                <td>Full repository clone/branch as files</td>
+                <td>Database-level isolation within one shared repository</td>
+            </tr>
+            <tr>
+                <td>Offline work</td>
+                <td>Fully supported — commit locally without network</td>
+                <td>Requires live connection to the Common Repository</td>
+            </tr>
+            <tr>
+                <td>History/diffing</td>
+                <td>Rich native commit history and text diffs</td>
+                <td>More limited built-in history; XML export needed for true diffing</td>
+            </tr>
+            <tr>
+                <td>Conflict detection</td>
+                <td>Line-level text merge conflicts</td>
+                <td>Asset-level (whole Module/TestCase field) merge conflicts</td>
+            </tr>
+        </table>
+        </div>
+
+        <!-- SECTION 7 -->
+        <h2 id="section7"><span class="level advanced">ADVANCED</span>7. Integrating with External Version Control</h2>
+
+        <p>Because the repository database itself isn't naturally diff-friendly, larger teams often pair Tosca's Workspace model with its <strong>XML export/import</strong> capability (or a dedicated plugin) to get meaningful change history into an external system like Git.</p>
+
+        <pre>// Conceptual XML export/import for external VCS tracking
+TCM → Repository → Export → XML  → produces versionable XML files
+[commit XML files to Git for history/diff/audit trail]
+
+TCM → Repository → Import → XML  → restores/migrates assets
+[used for environment promotion or disaster recovery]</pre>
+
+        <div class="note">
+            <strong>💡 Tip:</strong> This XML export/import path is also commonly used to promote a stable set of Modules and Test Cases from a development repository into a separate QA or Production Tosca repository, independent of any day-to-day Workspace activity.
+        </div>
+
+        <!-- SECTION 8 -->
+        <h2 id="section8"><span class="level intermediate">INTERMEDIATE</span>8. Repository Permissions and Access Control</h2>
+
+        <p>Connecting to the Common Repository requires configured credentials and, in most enterprise setups, role-based permissions restricting who can check out, edit, or delete specific folders of assets.</p>
+
+        <pre>// Common Repository connection
+TCM → Options → Repository → Server URL + DB credentials</pre>
+
+        <div class="table-wrap">
+        <table>
+            <tr>
+                <th>Role</th>
+                <th>Typical Permissions</th>
+            </tr>
+            <tr>
+                <td>Test Author</td>
+                <td>Check out/in Test Cases and Modules in assigned folders</td>
+            </tr>
+            <tr>
+                <td>Automation Lead</td>
+                <td>Full read/write across the repository, plus Execution List and PCD management</td>
+            </tr>
+            <tr>
+                <td>Read-only Stakeholder</td>
+                <td>View Test Cases and Reports without edit rights</td>
+            </tr>
+        </table>
+        </div>
+
+        <!-- SECTION 9 -->
+        <h2 id="section9"><span class="level intermediate">INTERMEDIATE</span>9. Common Pitfalls</h2>
+
+        <ul style="margin: 15px 0; margin-left: 20px;">
+            <li><strong>Forgetting to check in:</strong> leaving an asset checked out overnight or over a weekend, blocking teammates unnecessarily.</li>
+            <li><strong>Editing shared assets without a Workspace:</strong> long-running changes directly against the Common Repository lock out collaborators for the entire development period.</li>
+            <li><strong>Resolving conflicts without reading both versions:</strong> reflexively choosing "Keep Mine," silently discarding a teammate's fix.</li>
+            <li><strong>No external change history:</strong> lacking an XML export/Git pairing, making it hard to answer "what changed and why" months later.</li>
+        </ul>
+
+        <!-- SECTION 10 -->
+        <h2 id="section10"><span class="level beginner">BEGINNER</span>10. Best Practices</h2>
+
+        <h3>1. Always Check Out Before Editing</h3>
+        <p>Never attempt to edit a shared asset without checking it out first — this is the baseline protection against concurrent overwrites.</p>
+
+        <h3>2. Check In Promptly</h3>
+        <p>Don't hold a check-out lock longer than necessary; check in as soon as your change is stable enough to share.</p>
+
+        <h3>3. Use Workspaces for Anything Multi-Day</h3>
+        <pre>// Good ongoing practice
+- Small, quick fix?      → Check out, edit, check in same session
+- Feature development
+  spanning days?         → Use a dedicated Workspace</pre>
+
+        <h3>4. Read Both Sides of Every Merge Conflict</h3>
+        <p>Take the time to understand what changed on both sides before choosing Keep Mine / Take Theirs / Merge manually.</p>
+
+        <h3>5. Pair Workspaces with XML Export for Auditability</h3>
+        <p>If your organisation needs change history or compliance audit trails, establish a regular XML export into Git alongside normal Workspace usage.</p>
+
+        <!-- SUMMARY -->
+        <h2 style="margin-top: 40px;">📋 Quick Reference Summary</h2>
+
+        <div class="table-wrap">
+        <table>
+            <tr>
+                <th>Concept</th>
+                <th>Key Points</th>
+            </tr>
+            <tr>
+                <td><strong>Common Repository</strong></td>
+                <td>Central SQL/Oracle database holding the single shared version of all assets.</td>
+            </tr>
+            <tr>
+                <td><strong>Check-out / Check-in</strong></td>
+                <td>Locking mechanism preventing concurrent overwrites of the same asset.</td>
+            </tr>
+            <tr>
+                <td><strong>Workspace</strong></td>
+                <td>Private sandbox for isolated, multi-day development before merging back.</td>
+            </tr>
+            <tr>
+                <td><strong>Merge Conflict dialog</strong></td>
+                <td>Visual resolution UI when two users modify the same asset concurrently.</td>
+            </tr>
+            <tr>
+                <td><strong>Workspace vs Git</strong></td>
+                <td>Similar branching concept, but database-level, requires connectivity, less native diffing.</td>
+            </tr>
+            <tr>
+                <td><strong>XML export/import</strong></td>
+                <td>Bridges Tosca assets to external version control and environment promotion.</td>
+            </tr>
+        </table>
+        </div>
+
+        <div style="margin-top: 40px; padding: 20px; background: #ecf0f1; border-radius: 5px;">
+            <h3>🎓 Learning Path</h3>
+            <p><strong>Beginner:</strong> Master sections 1, 2, 3, 10</p>
+            <p><strong>Intermediate:</strong> Understand sections 4, 5, 8, 9</p>
+            <p><strong>Advanced:</strong> Deep dive into sections 6, 7</p>
+        </div>
+
+    </div>
+</body>
+</html>
