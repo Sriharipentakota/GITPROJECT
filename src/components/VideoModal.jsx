@@ -140,6 +140,31 @@ export default function VideoModal({ topic, phaseId, onClose }) {
     }
   }, [isExpanded])
 
+  // A pinch (or double-tap) landing on the video can't be intercepted by our
+  // JS at all — touches over a cross-origin iframe are delivered entirely to
+  // that iframe's own document, never to ours (true for any iframe, not a
+  // security restriction we can request around). Left alone, the browser's
+  // fallback is its own native page-zoom, which zooms the whole rendered
+  // page rather than the video specifically — that's the "zooms the entire
+  // video instead of fitting it to the screen" bug. The fix is to disable
+  // browser-native pinch/double-tap zoom while our custom fullscreen view is
+  // open, via the same viewport-meta mechanism a page normally uses to opt
+  // out of zoom, so the video is guaranteed to stay exactly fit to the
+  // screen — this does NOT add pinch-to-zoom (not achievable on top of a
+  // cross-origin iframe without replacing YouTube's own player controls
+  // entirely — see the earlier evaluation), it only prevents the broken
+  // zoom from happening. Scoped to only while expanded and restored on
+  // collapse/close, so normal zoom behavior everywhere else in the app —
+  // including the non-expanded video modal — is completely unaffected.
+  useEffect(() => {
+    if (!isExpanded) return
+    const viewportMeta = document.querySelector('meta[name="viewport"]')
+    if (!viewportMeta) return
+    const original = viewportMeta.getAttribute('content')
+    viewportMeta.setAttribute('content', `${original}, maximum-scale=1, user-scalable=no`)
+    return () => { viewportMeta.setAttribute('content', original) }
+  }, [isExpanded])
+
   // Mobile browsers (mainly iOS Safari) can leave the fullscreened video
   // undersized — with visible gaps — after a landscape rotation, because the
   // fullscreen element's box isn't reliably recalculated from CSS alone on
@@ -247,7 +272,7 @@ export default function VideoModal({ topic, phaseId, onClose }) {
             addition to, YouTube's own native fullscreen button. */}
         <div
           className={isExpanded
-            ? 'fixed inset-0 z-[70] bg-black flex items-center justify-center overflow-hidden'
+            ? 'fixed inset-0 z-[70] bg-black flex items-center justify-center overflow-hidden touch-none'
             : 'video-modal-video-area relative w-full bg-black'}
         >
           {hasVideo ? (
