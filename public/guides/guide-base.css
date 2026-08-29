@@ -28,6 +28,75 @@ html {
        comfortable reading size. */
     font-size: clamp(15px, 3.6vw, 16px);
 }
+
+/* ── "Back to Mastery Lab" bar ────────────────────────────────────────────
+ * Injected by /guides/guide-back-nav.js (linked from every guide page) —
+ * this stylesheet only needs to style the classes that script creates.
+ * Sticks to the top of the page, above .container, on every guide.
+ */
+.guide-back-bar {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(255, 255, 255, 0.92);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border-bottom: 1px solid #e2e6ef;
+}
+.guide-back-bar-inner {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 10px clamp(14px, 4vw, 20px);
+}
+.guide-back-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: inherit;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-decoration: none;
+    color: #2c3e50;
+    background: #ecf0f1;
+    border: 1px solid #dfe4ea;
+    border-radius: 999px;
+    padding: 7px 14px;
+    min-height: 44px;
+    cursor: pointer;
+    transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+}
+.guide-back-btn:hover {
+    background: #3498db;
+    color: #fff;
+    border-color: #3498db;
+    transform: translateX(-2px);
+}
+.guide-back-btn:active {
+    transform: translateX(-2px) scale(0.97);
+}
+.guide-back-btn:focus-visible {
+    outline: 2px solid #3498db;
+    outline-offset: 2px;
+}
+.guide-back-btn svg {
+    flex-shrink: 0;
+}
+@media (prefers-color-scheme: dark) {
+    .guide-back-bar {
+        background: rgba(20, 21, 29, 0.92);
+        border-bottom-color: #2d3348;
+    }
+    .guide-back-btn {
+        background: #1e2230;
+        color: #ecf0f1;
+        border-color: #2d3348;
+    }
+    .guide-back-btn:hover {
+        background: #3498db;
+        color: #fff;
+        border-color: #3498db;
+    }
+}
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     line-height: 1.6;
@@ -36,6 +105,12 @@ body {
     /* Mobile browsers box-shadow/scroll oddities are avoided by never
        letting anything (long code lines included) push past 100%. */
     overflow-x: hidden;
+    /* Defensive net for prose, not just <code>/<pre> (which already scroll
+       horizontally): a single unusually long word or URL mentioned in plain
+       text — easy to miss across 60 independently-authored guide files —
+       would otherwise force the whole page wider than the viewport instead
+       of just wrapping. */
+    overflow-wrap: break-word;
 }
 .container {
     max-width: 1000px;
